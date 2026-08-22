@@ -11,6 +11,7 @@ import {
   Plus,
   ShieldCheck,
   Sparkles,
+  Film,
   User,
   WandSparkles,
   X
@@ -21,6 +22,7 @@ import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { BrandBrain } from "./components/BrandBrain";
 import { SourceRegistry } from "./components/SourceRegistry";
 import { CreativeIntake } from "./components/CreativeIntake";
+import { CreativeTwinEditor } from "./components/CreativeTwinEditor";
 import { fetchSourcesForWorkspace, type SourceRegistryRow } from "./lib/sourceRegistry";
 import { fetchWorkspaceAssets, type CreativeAssetRow } from "./lib/creativeIntake";
 import { fetchBrandForWorkspace, type Brand } from "./lib/brandBrain";
@@ -366,7 +368,8 @@ function Workspace({
   const [sources, setSources] = useState<SourceRegistryRow[]>([]);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [assets, setAssets] = useState<CreativeAssetRow[]>([]);
-  const [activePanel, setActivePanel] = useState<"decision" | "brand" | "sources" | "intake">("decision");
+  const [activePanel, setActivePanel] = useState<"decision" | "brand" | "sources" | "intake" | "twin">("decision");
+  const [selectedTwinId, setSelectedTwinId] = useState<string | null>(null);
   const [newWsModalOpen, setNewWsModalOpen] = useState(false);
   const [newWsName, setNewWsName] = useState("");
   const [creatingWs, setCreatingWs] = useState(false);
@@ -488,6 +491,11 @@ function Workspace({
           <button className={`side-link ${activePanel === "intake" ? "active" : ""}`} onClick={() => setActivePanel("intake")}>
             <WandSparkles size={17} /> Creative intake
           </button>
+          {selectedTwinId && (
+            <button className={`side-link ${activePanel === "twin" ? "active" : ""}`} onClick={() => setActivePanel("twin")}>
+              <Film size={17} /> Structured Twin
+            </button>
+          )}
           <button className={`side-link ${activePanel === "sources" ? "active" : ""}`} onClick={() => setActivePanel("sources")}>
             <Compass size={17} /> Source registry
           </button>
@@ -532,6 +540,8 @@ function Workspace({
                 ? "Brand Brain"
                 : activePanel === "intake"
                 ? "Creative Intake"
+                : activePanel === "twin"
+                ? "Structured Creative Twin"
                 : activePanel === "sources"
                 ? "Source Registry"
                 : "Start with what you can prove."}
@@ -556,6 +566,19 @@ function Workspace({
               workspaceId={activeWorkspace.id}
               userId={user.id}
               isAdmin={activeWorkspace.role === "owner" || activeWorkspace.role === "admin"}
+              onOpenTwin={(twinId) => {
+                setSelectedTwinId(twinId);
+                setActivePanel("twin");
+              }}
+            />
+          </div>
+        ) : activePanel === "twin" && activeWorkspace && user && selectedTwinId ? (
+          <div style={{ marginTop: 32 }}>
+            <CreativeTwinEditor
+              twinId={selectedTwinId}
+              workspaceId={activeWorkspace.id}
+              userId={user.id}
+              onBack={() => setActivePanel("intake")}
             />
           </div>
         ) : activePanel === "sources" && activeWorkspace && user ? (

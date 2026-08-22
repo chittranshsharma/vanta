@@ -16,6 +16,7 @@
 - [x] Implement the Brand Brain (Ticket 2.2 complete).
 - [x] Ticket 3.1: Evidence Layer & Source Registry — sources, evidence items, metric definitions, citability validation, composite FKs (Ticket 3.1 complete).
 - [x] Ticket 3.2: Ingestion Workflows — structured script/asset parsing, import preview, CSV/copy schema validation (Ticket 3.2 complete).
-- [ ] Ticket 4.1: Creative Twin — structured creative representation, feature extraction, manual correction.
+- [x] Ticket 4.1: Creative Twin — structured scene decomposition, reading burden (WPM), traceable claim extraction with character offsets, Brand Codex alignment matching, immutable version snapshots, and atomic user correction workflows (Ticket 4.1 complete).
+- [ ] Ticket 4.2: Creative Decision Matrix & Timeline Doctor UI — variant comparisons, timeline failure moments, precise edit briefs, 5-class evidence badges.
 - [ ] Add compliant trend, publishing, and outcome-calibration workflows.
 - [ ] Verify functionality, security boundaries, visual quality, and documented limitations.

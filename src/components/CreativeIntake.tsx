@@ -38,11 +38,13 @@ import {
   type CreativeTwinRow,
   type AssetKind
 } from "../lib/creativeIntake";
+import { initializeStructuredTwin } from "../lib/creativeTwin";
 
 interface CreativeIntakeProps {
   workspaceId: string;
   userId: string;
   isAdmin: boolean;
+  onOpenTwin?: (twinId: string) => void;
 }
 
 const ASSET_KIND_LABELS: Record<AssetKind, { label: string; icon: typeof FileText }> = {
@@ -57,7 +59,7 @@ const ASSET_KIND_LABELS: Record<AssetKind, { label: string; icon: typeof FileTex
   other: { label: "Other Asset", icon: Database }
 };
 
-export function CreativeIntake({ workspaceId, userId, isAdmin }: CreativeIntakeProps) {
+export function CreativeIntake({ workspaceId, userId, isAdmin, onOpenTwin }: CreativeIntakeProps) {
   const [assets, setAssets] = useState<CreativeAssetRow[]>([]);
   const [twins, setTwins] = useState<CreativeTwinRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +157,13 @@ export function CreativeIntake({ workspaceId, userId, isAdmin }: CreativeIntakeP
 
       if (res.asset) {
         setAssets((prev) => [res.asset!, ...prev]);
-        if (res.twin) setTwins((prev) => [res.twin!, ...prev]);
+        if (res.twin) {
+          setTwins((prev) => [res.twin!, ...prev]);
+          // Automatically decompose text assets into structured scenes & claims
+          if (manualText.trim()) {
+            await initializeStructuredTwin(res.twin.id, workspaceId, userId, manualText.trim());
+          }
+        }
         setSelectedAssetId(res.asset.id);
         setShowModal(false);
         resetForm();
@@ -457,9 +465,28 @@ export function CreativeIntake({ workspaceId, userId, isAdmin }: CreativeIntakeP
                 </div>
               </div>
 
-              {/* Provenance Badge */}
-              <div style={{ fontSize: 11, color: "#5d6978", borderTop: "1px solid rgba(255,255,255,.06)", paddingTop: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                <Link2 size={12} /> Bound to Source Registry: <code>{activeAsset.source_id.substring(0, 8)}…</code>
+              {/* Provenance Badge & Open Inspector */}
+              <div style={{ fontSize: 11, color: "#5d6978", borderTop: "1px solid rgba(255,255,255,.06)", paddingTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <Link2 size={12} /> Bound to Source Registry: <code>{activeAsset.source_id.substring(0, 8)}…</code>
+                </div>
+                {onOpenTwin && activeTwin && (
+                  <button
+                    onClick={() => onOpenTwin(activeTwin.id)}
+                    style={{
+                      padding: "4px 10px",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      borderRadius: 6,
+                      background: "rgba(16,185,129,.15)",
+                      border: "1px solid rgba(16,185,129,.3)",
+                      color: "#10b981",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Open Structured Twin Inspector →
+                  </button>
+                )}
               </div>
             </div>
           )}

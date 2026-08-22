@@ -2,7 +2,7 @@
 
 ## Current status
 
-Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer & Source Registry) + Ticket 3.2 (Creative Intake & Grounded Twins) complete. 47 tests pass. Build clean.
+Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer & Source Registry) + Ticket 3.2 (Creative Intake & Grounded Twins) + Ticket 4.1 (Creative Twin Structured Expansion & Versioning) complete. 62 tests pass. Build clean.
 
 ## Migration state (exact — do not re-apply)
 
@@ -12,6 +12,7 @@ Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer 
 | `20260822000002_brand_brain` | ✅ | `brands`, `brand_codex_versions`, `brand_audiences`, `brand_claims`, `brand_proof_points`, `brand_competitors`, `brand_tone_guidelines`, `brand_compliance_boundaries` |
 | `20260822000003_evidence_layer` | ✅ | `source_registry`, `evidence_items`, `metric_definitions` + `block_manual_connected_status` trigger + composite FK |
 | `20260822000004_creative_intake` | ✅ | `creative_assets`, `ingestion_runs`, `creative_twins` + `workspace-assets` private storage bucket + defensive `storage_workspace_id` helper + partial unique SHA-256 index |
+| `20260822000005_creative_twin_expansion` | ✅ | `creative_scenes`, `creative_claims`, `creative_twin_versions` + `block_twin_version_mutation` immutability trigger + composite FKs to `creative_twins(id, workspace_id)` and `brand_claims(id, workspace_id)` + atomic stored procedures `save_scene_correction_atomic` & `save_claim_correction_atomic` |
 
 ## Completed
 
@@ -21,7 +22,8 @@ Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer 
 - **RLS contract tests**: `src/lib/rls.test.ts` (8 tests) documents isolation invariants
 - **Ticket 2.2**: Brand Brain schema (8 tables), RLS (32 policies), typed queries (`src/lib/brandBrain.ts`), React component (`src/components/BrandBrain.tsx`) with versioned codex snapshots — no fake data
 - **Ticket 3.1**: Evidence Layer & Source Registry schema (3 tables), RLS (12 policies), DB trigger blocking manual `connected` status, composite FK on `evidence_items(source_id, workspace_id)`, typed queries and validation service (`src/lib/sourceRegistry.ts`), pure synchronous citability evaluation, 5-class evidence standard, `SourceRegistry.tsx` (Sources, Evidence Items, Metric Definitions), live evidence state in Decision Room
-- **Ticket 3.2**: Creative Intake & Grounded Twins schema (3 tables + private storage bucket `workspace-assets`), defensive `storage_workspace_id(name)` SQL helper, composite FK `(source_id, workspace_id)` on `creative_assets`, pure deterministic validators & guards (`src/lib/creativeIntake.ts`), 21 unit & invariant tests (`src/lib/creativeIntake.test.ts`), `CreativeIntake.tsx` component (Manual Text & File Import flows, privacy assurance banner, grounded twin inspector with deterministic features & explicit known gaps), intelligent Decision Room "Next safe action" routing.
+- **Ticket 3.2**: Creative Intake & Grounded Twins schema (3 tables + private storage bucket `workspace-assets`), defensive `storage_workspace_id(name)` SQL helper, composite FK `(source_id, workspace_id)` on `creative_assets`, pure deterministic validators & guards (`src/lib/creativeIntake.ts`), 23 unit & invariant tests (`src/lib/creativeIntake.test.ts`), `CreativeIntake.tsx` component (Manual Text & File Import flows, privacy assurance banner, grounded twin inspector with deterministic features & explicit known gaps), intelligent Decision Room "Next safe action" routing.
+- **Ticket 4.1**: Creative Twin Expansion & Structured Representation (`20260822000005_creative_twin_expansion.sql`): composite tenant FKs, database-enforced immutable version snapshots via trigger, atomic correction procedures, pure deterministic script parser (`src/lib/creativeTwin.ts`), reading burden WPM calculator, traceable regex claim extractor with character offsets and Brand Codex alignment matching, `CreativeTwinEditor.tsx` (Scene Timeline, Claims & Codex, Changelog, and Known Gaps tabs with inline correction modal).
 
 ## Test suite
 
@@ -30,29 +32,19 @@ Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer 
 - `src/lib/rls.test.ts` — 8 tests: RLS isolation contract documentation
 - `src/lib/sourceRegistry.test.ts` — 12 tests: pure citability evaluation, stale/unverified/blocked source guards, freshness window derivation
 - `src/lib/creativeIntake.test.ts` — 23 tests: manual text bounds, client-declared file validation, video byte rejection, filename sanitization, CSV header inspection, deterministic feature manifest, known gap derivation, intake failure & rollback invariants
+- `src/lib/creativeTwin.test.ts` — 13 tests: scene delimiter parsing, reading burden / WPM calculations, candidate claim extraction, character offsets, exact vs partial Brand Codex matching, failure and unknown invariants
 
-Total: 49 unit & contract tests passing.
-
-## Ticket 3.2 QA Addendum (Verified)
-
-1. **Pipeline & Linkage Proof:** Real authenticated user (`test-user@example.com`) in tenant workspace `workspace-id-redacted` verified end-to-end:
-   - `source_registry` (type: `manual`, status: `unverified`)
-   - `creative_assets` (status: `accepted`)
-   - `ingestion_runs` (status: `accepted`, validation metrics recorded)
-   - `creative_twins` (state: `grounded_stub`, deterministic features: character/word counts, zero predictive score/sentiment hallucination)
-   - `known_gaps` explicit list: `["no_target_audience_linked", "no_observed_performance_data", "unsupported_by_ai_analysis_gate"]`
-   - `audit_events` (action: `creative_asset.ingested`).
-2. **Failure & Rollback Path:** Simulated validation/storage upload failure confirmed to emit `status: failed` without creating phantom twin stubs or false success audit events. Interrupted uploads may leave private orphaned objects; cleanup is deferred to a separately approved maintenance ticket.
-3. **Privacy Copy Alignment:** Updated to state clearly that files/copy are kept inside the workspace's private Supabase storage and are not transmitted to AI model providers, social platforms, or external analysis services in this intake step.
+Total: 62 unit & contract tests passing.
 
 ## Supabase project state
 
 - Project ref: `ujxrapbhiedkwleccvqw`
 - URL: `https://ujxrapbhiedkwleccvqw.supabase.co`
 - Anon key in `.env` (publishable, safe with RLS active)
-- All 18 tenant tables have RLS enabled
+- All 21 tenant tables have RLS enabled
 - `handle_new_user` trigger: auto-creates profile + workspace + owner membership + audit event on signup
 - `trg_block_connected_status` trigger on `source_registry`: restricts `connected` status to service-role
+- `trg_block_twin_version_mutation` trigger on `creative_twin_versions`: prohibits UPDATE/DELETE
 - Private Supabase Storage bucket `workspace-assets` protected by `storage_workspace_id` RLS policies
 
 ## QA Requirements (Planned)
@@ -69,7 +61,7 @@ Total: 49 unit & contract tests passing.
 
 ## Next
 
-**Ticket 4.1: Creative Decision Matrix & Timeline Doctor Foundations**
-1. Multi-modal asset decomposition schema
-2. Scene / variant comparative matrix UI
-3. Typed diagnostic indicators with explicit gap markers (no hallucinated scores)
+**Ticket 4.2: Creative Decision Matrix & Timeline Doctor UI**
+1. Multi-variant comparative matrix UI (comparing 2-3 script/creative variants across objectives & audience segments)
+2. Timeline Doctor UI displaying likely failure moments with precise edit briefs
+3. Strict 5-class evidence badges with transparent provenance (no hallucinated virality or engagement scores)
