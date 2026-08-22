@@ -12,6 +12,7 @@
 - [x] Create a concise, token-efficient Antigravity operating prompt for continuing the Vanta implementation.
 - [x] Audit the repository to determine whether Ticket 3.1 has begun and reconcile its completed evidence-layer implementation state.
 - [x] Create a detailed Gemini Flash execution packet for Ticket 3.2: evidence-safe ingestion and the deterministic Creative Twin foundation.
+- [x] Document the honest Vanta capability roadmap, including the future Python, Node, infrastructure, and data-system upgrades required for the complete product vision.
 - [x] Add Supabase-backed authentication, tenant isolation, and persistent workspace data (Ticket 2.1 complete).
 - [x] Implement the Brand Brain (Ticket 2.2 complete).
 - [x] Ticket 3.1: Evidence Layer & Source Registry — sources, evidence items, metric definitions, citability validation, composite FKs (Ticket 3.1 complete).
