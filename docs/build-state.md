@@ -2,7 +2,7 @@
 
 ## Current status
 
-Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer & Source Registry) + Ticket 3.2 (Creative Intake & Grounded Twins) + Ticket 4.1 (Creative Twin Structured Expansion & Versioning) + Ticket 4.2 (Creative Decision Matrix & Timeline Doctor) complete. 74 tests pass across 7 suites. Build clean.
+Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer & Source Registry) + Ticket 3.2 (Creative Intake & Grounded Twins) + Ticket 4.1 (Creative Twin Structured Expansion & Versioning) + Ticket 4.2 (Creative Decision Matrix & Timeline Doctor) + Ticket 5.0 (Secure Server-Side Model Gateway Foundation — Local Authored) complete. 83 tests pass across 8 suites. Build clean.
 
 ## Migration state (exact — do not re-apply)
 
@@ -27,6 +27,7 @@ Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer 
 - **Ticket 4.1**: Creative Twin Expansion & Structured Representation (`20260822000005_creative_twin_expansion.sql`): composite tenant FKs, database-enforced immutable version snapshots via trigger, pure deterministic script parser (`src/lib/creativeTwin.ts`), reading burden WPM calculator, traceable regex claim extractor with character offsets and Brand Codex alignment matching, `CreativeTwinEditor.tsx` (Scene Timeline, Claims & Codex, Changelog, and Known Gaps tabs with inline correction modal).
 - **Ticket 4.1 Emergency Security Patch (`20260822000006_secure_twin_correction_rpcs.sql`)**: Remedied privilege escalation in atomic correction RPCs by removing `p_user_id` parameter, enforcing mandatory `auth.uid()` checks, restricting editing authority strictly to the asset creator or workspace owner/admin, adding per-twin transaction-scoped advisory locks, and revoking `EXECUTE` from `anon` and `PUBLIC`. Verified with 100% passing SQL security isolation tests.
 - **Ticket 4.2**: Creative Decision Matrix & Timeline Doctor: Pure in-memory derivation engine on read (`src/lib/creativeDoctor.ts`), strictly adhering to the canonical 5 evidence classes (`inference` for rule conclusions), neutral policy rules (`R-HOOK-001/002/GAP`, `R-PACE-001/GAP`, `R-CLAIM-001/002`, `R-CTA-001`, `R-VIS-GAP`), visible and configurable threshold parameters, separation of lexical Brand Codex alignment from verified evidence citations, explicit `unknown` audience evidence state, sequential/timed `TimelineDoctor.tsx` inspector with actionable edit recommendations, multi-variant comparative `DecisionMatrix.tsx` table with calculation provenance inspection, and full integration into workspace navigation.
+- **Ticket 5.0 (Local Scope)**: Secure Server-Side Model Gateway Foundation: Authored Deno/Edge Function `supabase/functions/model-gateway/index.ts` and `schemas.ts` enforcing strict request field validation (`workspace_id` + allowlisted `task_type` only; rejects extra fields), caller JWT authentication, admin/owner authorization check, best-effort audit rate limiting, cryptographic nonce verification, strict server schema validation (rejects extra keys), sanitized audit logging, and client adapter `src/lib/modelGateway.ts`. All 83 unit/contract tests passing. Deployment and live secret configuration pending explicit user confirmation.
 
 ## Test suite
 
@@ -37,8 +38,9 @@ Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer 
 - `src/lib/creativeIntake.test.ts` — 23 tests: manual text bounds, client-declared file validation, video byte rejection, filename sanitization, CSV header inspection, deterministic feature manifest, known gap derivation, intake failure & rollback invariants
 - `src/lib/creativeTwin.test.ts` — 13 tests: scene delimiter parsing, reading burden / WPM calculations, candidate claim extraction, character offsets, exact vs partial Brand Codex matching, failure and unknown invariants
 - `src/lib/creativeDoctor.test.ts` — 12 tests: 5-class evidence semantics, rule derivation with neutral non-predictive wording, hook window bounds, reading burden WPM thresholds, missing timecode gaps, proof citation vs lexical match separation, unknown audience disclosure, multi-variant comparative matrix derivation
+- `src/lib/modelGateway.test.ts` — 9 tests: task allowlist scoping, client secret absence assertion, workspace UUID validation, strict request body formatting, and fail-closed handling for 401, 403, 429, 502, and 503 response codes.
 
-Total: 74 unit & contract tests passing across 7 test suites.
+Total: 83 unit & contract tests passing across 8 test suites.
 
 ## Supabase project state
 
