@@ -610,7 +610,7 @@ export async function fetchStructuredTwin(
 export async function correctSceneAtomic(
   sceneId: string,
   workspaceId: string,
-  userId: string,
+  _userId: string,
   updates: {
     shotPurpose: ShotPurpose;
     spokenTranscript: string;
@@ -626,7 +626,6 @@ export async function correctSceneAtomic(
     const { data, error } = await supabase.rpc('save_scene_correction_atomic', {
       p_scene_id: sceneId,
       p_workspace_id: workspaceId,
-      p_user_id: userId,
       p_shot_purpose: updates.shotPurpose,
       p_spoken_transcript: updates.spokenTranscript,
       p_on_screen_text: updates.onScreenText || '',
@@ -651,7 +650,7 @@ export async function correctSceneAtomic(
 export async function correctClaimAtomic(
   claimId: string,
   workspaceId: string,
-  userId: string,
+  _userId: string,
   updates: {
     brandClaimId: string | null;
     claimText: string;
@@ -665,7 +664,6 @@ export async function correctClaimAtomic(
     const { data, error } = await supabase.rpc('save_claim_correction_atomic', {
       p_claim_id: claimId,
       p_workspace_id: workspaceId,
-      p_user_id: userId,
       p_brand_claim_id: updates.brandClaimId || '',
       p_claim_text: updates.claimText,
       p_claim_classification: updates.claimClassification,

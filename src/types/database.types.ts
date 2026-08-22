@@ -1239,7 +1239,6 @@ export type Database = {
           p_claim_id: string
           p_claim_text: string
           p_proof_reference: string
-          p_user_id: string
           p_workspace_id: string
         }
         Returns: Json
@@ -1255,7 +1254,6 @@ export type Database = {
           p_shot_purpose: string
           p_spoken_transcript: string
           p_start_seconds: number
-          p_user_id: string
           p_workspace_id: string
         }
         Returns: Json
