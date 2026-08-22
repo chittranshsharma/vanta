@@ -1,0 +1,19 @@
+{
+  "name": "vanta-job-worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Vanta durable job worker (Upgrade C). Service-role only; never runs in a browser.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/worker.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3"
+  }
+}

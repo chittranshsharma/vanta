@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+app/__init__.py
+app/contracts.py
+app/main.py
+app/normalize.py
+tests/test_api.py
+tests/test_normalize.py
+vanta_analysis_service.egg-info/PKG-INFO
+vanta_analysis_service.egg-info/SOURCES.txt
+vanta_analysis_service.egg-info/dependency_links.txt
+vanta_analysis_service.egg-info/requires.txt
+vanta_analysis_service.egg-info/top_level.txt

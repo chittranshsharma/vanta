@@ -1,6 +1,6 @@
 /**
- * Server-Held Task Schemas & Strict Validation for Model Gateway
- * 
+ * Server-Held Task Registry & Health-Check Schema Validation
+ *
  * Strict Post-Model Validation Rules:
  * 1. Validates exact required keys and types.
  * 2. Rejects unexpected or unknown keys.
@@ -14,9 +14,13 @@ export interface GatewayHealthCheckOutput {
   echo_nonce: string;
 }
 
-export type TaskType = 'gateway_health_check';
+export type TaskType = 'gateway_health_check' | 'claim_grounding_audit';
 
-export const ALLOWLISTED_TASKS: TaskType[] = ['gateway_health_check'];
+/** Every task the gateway knows how to run. Knowing is not the same as enabled: see flags.ts. */
+export const ALLOWLISTED_TASKS: readonly TaskType[] = ['gateway_health_check', 'claim_grounding_audit'] as const;
+
+/** Tasks that run without any ENABLED_TASKS configuration. User-content tasks are never on by default. */
+export const DEFAULT_ENABLED_TASKS: readonly TaskType[] = ['gateway_health_check'] as const;
 
 export interface SchemaValidationResult<T> {
   isValid: boolean;

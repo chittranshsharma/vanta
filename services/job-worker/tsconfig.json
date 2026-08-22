@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": "../..",
+    "allowImportingTsExtensions": false
+  },
+  "include": ["src/**/*.ts", "../../shared/jobs/policy.ts", "../../shared/media/magicBytes.ts", "../../shared/retrieval/gate.ts", "../../shared/connectors/rss.ts", "../../shared/connectors/access.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}
