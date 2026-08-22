@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Modal } from './Modal';
 import {
   fetchStructuredTwin,
   correctSceneAtomic,
@@ -15,6 +16,8 @@ import {
 } from '../lib/creativeTwin';
 import { fetchBrandForWorkspace, fetchBrandClaims, type BrandClaim } from '../lib/brandBrain';
 import { TimelineDoctor } from './TimelineDoctor';
+import { ClaimGroundingPanel } from './ClaimGroundingPanel';
+import { isFlagOn } from '../lib/flags';
 
 interface CreativeTwinEditorProps {
   twinId: string;
@@ -58,32 +61,37 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
 
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const loadData = async () => {
+  const [reloadToken, setReloadToken] = useState(0);
+
+  // Initial load runs with loading=true from state init; reload() is for user-triggered refreshes.
+  const reload = () => {
     setLoading(true);
     setError(null);
-
-    const [twinRes, brandRes] = await Promise.all([
-      fetchStructuredTwin(twinId, workspaceId),
-      fetchBrandForWorkspace(workspaceId),
-    ]);
-
-    if (twinRes.error) {
-      setError(twinRes.error);
-    } else {
-      setDetails(twinRes.data);
-    }
-
-    if (brandRes) {
-      const claims = await fetchBrandClaims(brandRes.id);
-      setBrandClaims(claims);
-    }
-
-    setLoading(false);
+    setReloadToken((t) => t + 1);
   };
 
   useEffect(() => {
-    loadData();
-  }, [twinId, workspaceId]);
+    const loadData = async () => {
+      const [twinRes, brandRes] = await Promise.all([
+        fetchStructuredTwin(twinId, workspaceId),
+        fetchBrandForWorkspace(workspaceId),
+      ]);
+
+      if (twinRes.error) {
+        setError(twinRes.error);
+      } else {
+        setDetails(twinRes.data);
+      }
+
+      if (brandRes) {
+        const claims = await fetchBrandClaims(brandRes.id);
+        setBrandClaims(claims);
+      }
+
+      setLoading(false);
+    };
+    void loadData();
+  }, [twinId, workspaceId, reloadToken]);
 
   // Handle Scene Edit
   const openSceneModal = (scene: CreativeSceneRow) => {
@@ -143,7 +151,7 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
         message: `Scene updated and Version ${res.newVersionNumber} snapshot created.`,
       });
       setEditingScene(null);
-      await loadData();
+      reload();
     }
   };
 
@@ -191,7 +199,7 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
         message: `Claim updated and Version ${res.newVersionNumber} snapshot created.`,
       });
       setEditingClaim(null);
-      await loadData();
+      reload();
     }
   };
 
@@ -246,7 +254,7 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
             </span>
           </h2>
           <p className="text-xs text-zinc-400 mt-1">
-            Structured Twin — deterministic text representation. No AI hallucinations or predicted scores.
+            Structured Twin: deterministic text representation. No AI hallucinations or predicted scores.
           </p>
         </div>
 
@@ -514,6 +522,10 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
               ))}
             </div>
           )}
+
+          {isFlagOn('claim_grounding_panel') && (
+            <ClaimGroundingPanel workspaceId={workspaceId} twinId={twinId} claims={claims} brandClaims={brandClaims} />
+          )}
         </div>
       )}
 
@@ -596,21 +608,13 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
       )}
 
       {/* MODAL: EDIT SCENE */}
-      {editingScene && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="text-base font-bold text-zinc-100">
-                Edit Scene {editingScene.scene_index + 1}
-              </h3>
-              <button
-                onClick={() => setEditingScene(null)}
-                className="text-zinc-400 hover:text-zinc-200 text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
+      <Modal
+        open={editingScene !== null}
+        onClose={() => setEditingScene(null)}
+        title={editingScene ? `Edit Scene ${editingScene.scene_index + 1}` : 'Edit Scene'}
+        maxWidth={620}
+      >
+        {editingScene && (
             <form onSubmit={handleSaveScene} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -736,26 +740,17 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* MODAL: EDIT CLAIM */}
-      {editingClaim && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="text-base font-bold text-zinc-100">
-                Edit Extracted Claim
-              </h3>
-              <button
-                onClick={() => setEditingClaim(null)}
-                className="text-zinc-400 hover:text-zinc-200 text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
+      <Modal
+        open={editingClaim !== null}
+        onClose={() => setEditingClaim(null)}
+        title="Edit Extracted Claim"
+        maxWidth={620}
+      >
+        {editingClaim && (
             <form onSubmit={handleSaveClaim} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono text-zinc-400 mb-1">
@@ -877,9 +872,8 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 };

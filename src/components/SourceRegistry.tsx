@@ -1,29 +1,21 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle,
-  BookOpen,
   CheckCircle2,
-  ChevronDown,
-  Circle,
-  Clock,
   Compass,
   Database,
   ExternalLink,
   HelpCircle,
   Info,
-  Layers3,
   Link2,
   Plus,
   Radio,
   ShieldAlert,
-  ShieldCheck,
-  Sparkles,
   Tag,
   XCircle,
-  Zap
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { EvidenceClass, CitabilityResult } from "../lib/evidence";
+import type { EvidenceClass } from "../lib/evidence";
 import {
   fetchSourcesForWorkspace,
   fetchEvidenceItems,
@@ -95,35 +87,40 @@ export function SourceRegistry({ workspaceId, userId, isAdmin }: SourceRegistryP
   const [metricDefs, setMetricDefs] = useState<MetricDefinitionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
 
   // Forms
   const [showSourceForm, setShowSourceForm] = useState(false);
   const [showEvidenceForm, setShowEvidenceForm] = useState(false);
   const [showMetricForm, setShowMetricForm] = useState(false);
 
-  const loadAll = async () => {
+  const [reloadToken, setReloadToken] = useState(0);
+
+  // Initial load runs with loading=true from state init; reload() is for user-triggered refreshes.
+  const reload = () => {
     setLoading(true);
     setError(null);
-    try {
-      const [s, e, m] = await Promise.all([
-        fetchSourcesForWorkspace(workspaceId),
-        fetchEvidenceItems(workspaceId),
-        fetchMetricDefinitions(workspaceId)
-      ]);
-      setSources(s);
-      setEvidenceItems(e);
-      setMetricDefs(m);
-    } catch (err: any) {
-      setError(err?.message || "Failed to load source registry.");
-    } finally {
-      setLoading(false);
-    }
+    setReloadToken((t) => t + 1);
   };
 
   useEffect(() => {
-    loadAll();
-  }, [workspaceId]);
+    const loadAll = async () => {
+      try {
+        const [s, e, m] = await Promise.all([
+          fetchSourcesForWorkspace(workspaceId),
+          fetchEvidenceItems(workspaceId),
+          fetchMetricDefinitions(workspaceId)
+        ]);
+        setSources(s);
+        setEvidenceItems(e);
+        setMetricDefs(m);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load source registry.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    void loadAll();
+  }, [workspaceId, reloadToken]);
 
   if (loading) {
     return (
@@ -136,9 +133,12 @@ export function SourceRegistry({ workspaceId, userId, isAdmin }: SourceRegistryP
 
   if (error) {
     return (
-      <div className="bb-error-state">
+      <div className="bb-error-state" role="alert">
         <ShieldAlert size={20} color="#f87171" />
         <span>{error}</span>
+        <button type="button" className="ghost-button-sm" onClick={reload}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -268,6 +268,7 @@ function SourcesTab({
   const [coverage, setCoverage] = useState<"complete" | "partial" | "unknown">("partial");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -290,6 +291,7 @@ function SourcesTab({
       userId
     );
     setSaving(false);
+    setFormError(error ? error.message : null);
 
     if (source) {
       onSourceAdded(source);
@@ -305,6 +307,7 @@ function SourcesTab({
     setStatusUpdating(sourceId);
     const { source, error } = await updateSourceStatus(sourceId, workspaceId, newStatus, userId);
     setStatusUpdating(null);
+    setFormError(error ? error.message : null);
     if (source) {
       onStatusChanged(sourceId, newStatus);
     }
@@ -324,6 +327,7 @@ function SourcesTab({
           </button>
         )}
       </div>
+      {formError && !showForm && <p className="error-text" role="alert">{formError}</p>}
 
       <AnimatePresence>
         {showForm && (
@@ -333,7 +337,7 @@ function SourcesTab({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             onSubmit={handleCreate}
-          >
+           aria-describedby="source-form-error-1" aria-busy={saving}>
             <div className="bb-form-notice">
               <Info size={13} /> All user-added sources register as <strong>unverified</strong> by default.
               Manual sources provide qualitative grounding but cannot back verified numeric claims without authorized platform verification.
@@ -416,6 +420,7 @@ function SourcesTab({
             </label>
 
             <div className="bb-form-actions">
+              {formError && <p id="source-form-error-1" className="error-text" role="alert">{formError}</p>}
               <button type="submit" className="primary-button" disabled={saving || !name.trim()}>
                 {saving ? "Registering…" : "Register Source"}
               </button>
@@ -559,6 +564,7 @@ function EvidenceItemsTab({
   const [citationUrl, setCitationUrl] = useState("");
   const [filterClass, setFilterClass] = useState<EvidenceClass | "all">("all");
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const filtered = filterClass === "all"
     ? evidenceItems
@@ -588,6 +594,7 @@ function EvidenceItemsTab({
       userId
     );
     setSaving(false);
+    setFormError(error ? error.message : null);
 
     if (item) {
       onItemAdded(item);
@@ -660,7 +667,7 @@ function EvidenceItemsTab({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             onSubmit={handleCreate}
-          >
+           aria-describedby="source-form-error-2" aria-busy={saving}>
             <div className="bb-form-notice">
               <Info size={13} /> Every evidence item must bind to an existing registered source in this workspace. Composite foreign key ensures cross-workspace consistency.
             </div>
@@ -784,6 +791,7 @@ function EvidenceItemsTab({
             </div>
 
             <div className="bb-form-actions">
+              {formError && <p id="source-form-error-2" className="error-text" role="alert">{formError}</p>}
               <button type="submit" className="primary-button" disabled={saving || !claimText.trim() || !selectedSourceId}>
                 {saving ? "Saving…" : "Add Evidence Item"}
               </button>
@@ -888,6 +896,7 @@ function MetricDefinitionsTab({
   const [method, setMethod] = useState("");
   const [sourceId, setSourceId] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -907,6 +916,7 @@ function MetricDefinitionsTab({
       userId
     );
     setSaving(false);
+    setFormError(error ? error.message : null);
 
     if (def) {
       onDefAdded(def);
@@ -941,7 +951,7 @@ function MetricDefinitionsTab({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             onSubmit={handleCreate}
-          >
+           aria-describedby="source-form-error-3" aria-busy={saving}>
             <div className="bb-form-notice">
               <Info size={13} /> Canonical metric definitions ensure every agent, report, and decision room metric has a clear, unambiguous definition across the workspace.
             </div>
@@ -1025,6 +1035,7 @@ function MetricDefinitionsTab({
             </label>
 
             <div className="bb-form-actions">
+              {formError && <p id="source-form-error-3" className="error-text" role="alert">{formError}</p>}
               <button type="submit" className="primary-button" disabled={saving || !metricKey.trim() || !definition.trim()}>
                 {saving ? "Saving…" : "Save Definition"}
               </button>

@@ -8,6 +8,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { verifyDeclaredType } from "../../shared/media/magicBytes";
 import type { Database } from "../types/database.types";
 
 export type CreativeAssetRow = Database["public"]["Tables"]["creative_assets"]["Row"];
@@ -194,7 +195,7 @@ export function sanitizeFilename(filename: string): string {
   const cleaned = base
     .trim()
     .replace(/[^\w.-]/g, "_")
-    .replace(/^(\.|\_)+/, "")
+    .replace(/^[._]+/, "")
     .replace(/\.+$/, "");
   return cleaned.substring(0, 120) || "unnamed_asset";
 }
@@ -265,8 +266,8 @@ export function buildDeterministicFeatures(input: {
   byteSize?: number | null;
   sha256?: string | null;
   csvHeaders?: string[];
-}): Record<string, any> {
-  const features: Record<string, any> = {};
+}): Record<string, string | number | boolean | string[] | null> {
+  const features: Record<string, string | number | boolean | string[] | null> = {};
 
   if (input.manualText !== undefined && input.manualText !== null) {
     features.character_count = input.manualText.length;
@@ -562,8 +563,15 @@ export async function ingestFileAsset(
     return { success: false, error: validation.error };
   }
 
-  // 2. Read array buffer & compute SHA-256
+  // 2. Read array buffer, verify magic bytes against the declared category, compute SHA-256
   const arrayBuffer = await file.arrayBuffer();
+  const typeCheck = verifyDeclaredType(new Uint8Array(arrayBuffer.slice(0, 8192)), validation.category);
+  if (typeCheck.verdict === "reject") {
+    return {
+      success: false,
+      error: `File content does not match its declared type. ${typeCheck.reason ?? ""} The asset was not created.`.trim()
+    };
+  }
   const sha256 = await computeSha256(arrayBuffer);
 
   // 3. Duplicate check within workspace

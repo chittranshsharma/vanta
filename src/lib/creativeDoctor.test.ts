@@ -2,11 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   deriveTimelineDiagnostics,
   generateDecisionMatrix,
-  DEFAULT_DIAGNOSTIC_RULES,
-  type TimelineDiagnosis,
 } from './creativeDoctor';
 import type { CreativeSceneRow, CreativeClaimRow, CreativeTwinRow } from './creativeTwin';
-import type { BrandClaim } from './brandBrain';
 
 describe('Creative Doctor & Decision Matrix Pure Derivation Engine', () => {
   const mockTwin: Pick<CreativeTwinRow, 'id' | 'title' | 'asset_kind' | 'known_gaps'> = {

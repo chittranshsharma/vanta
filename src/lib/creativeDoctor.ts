@@ -7,7 +7,7 @@
  * 3. Never predicts reach, virality, views, conversion, or platform algorithms.
  * 4. Separate lexical Brand Codex alignment from evidence substantiation and source citability.
  * 5. Audience state is explicitly declared 'unknown' until authorized audience data/simulations exist.
- * 6. Pure, in-memory derivation on read — never creates stale database records.
+ * 6. Pure, in-memory derivation on read; never creates stale database records.
  */
 
 import type { CreativeSceneRow, CreativeClaimRow, CreativeTwinRow } from './creativeTwin';
@@ -62,7 +62,8 @@ export function deriveTimelineDiagnostics(
   twin: Pick<CreativeTwinRow, 'id' | 'title' | 'asset_kind' | 'known_gaps'>,
   scenes: CreativeSceneRow[],
   claims: CreativeClaimRow[],
-  brandClaims: BrandClaim[] = [],
+  // Reserved for future proof-citation rules; lexical alignment already lives on each claim row.
+  _brandClaims: BrandClaim[] = [],
   config: DiagnosticRulesConfig = DEFAULT_DIAGNOSTIC_RULES
 ): TimelineDiagnosis[] {
   const diagnoses: TimelineDiagnosis[] = [];
@@ -567,7 +568,7 @@ export function generateDecisionMatrix(
       formattedValue: 'Unknown (No audience data/simulation)',
       evidenceClass: 'unknown',
       calculationProvenance:
-        'Audience evidence: unknown — no authorized audience data or simulation in this ticket.',
+        'Audience evidence: unknown; no authorized audience data or simulation in this ticket.',
       status: 'neutral',
     };
   });

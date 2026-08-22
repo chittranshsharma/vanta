@@ -1,3 +1,4 @@
+import type { Session, User } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "./supabase";
 import type { Database } from "../types/database.types";
 
@@ -13,7 +14,7 @@ export async function signUpWithEmail(
   email: string,
   password: string,
   fullName: string
-): Promise<{ error: Error | null; user: any | null }> {
+): Promise<{ error: Error | null; user: User | null }> {
   if (!isSupabaseConfigured) {
     return { error: new Error("Supabase is not configured with valid credentials."), user: null };
   }
@@ -34,7 +35,7 @@ export async function signUpWithEmail(
 export async function signInWithEmail(
   email: string,
   password: string
-): Promise<{ error: Error | null; user: any | null; session: any | null }> {
+): Promise<{ error: Error | null; user: User | null; session: Session | null }> {
   if (!isSupabaseConfigured) {
     return { error: new Error("Supabase is not configured with valid credentials."), user: null, session: null };
   }

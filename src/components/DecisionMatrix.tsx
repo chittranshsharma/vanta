@@ -13,12 +13,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   HelpCircle,
-  Clock,
   Sliders,
   Info,
   ArrowUpRight,
-  ShieldCheck,
-  Zap,
 } from 'lucide-react';
 
 interface DecisionMatrixProps {
@@ -71,7 +68,6 @@ export const DecisionMatrix: React.FC<DecisionMatrixProps> = ({
   scenesByTwinId,
   claimsByTwinId,
   brandClaims = [],
-  onOpenTwin,
   onOpenTimelineDoctor,
 }) => {
   const [selectedTwinIds, setSelectedTwinIds] = useState<string[]>(() =>
@@ -267,7 +263,7 @@ export const DecisionMatrix: React.FC<DecisionMatrixProps> = ({
 
                   {selectedTwins.map((t) => {
                     const cell = row.cellsByTwinId[t.id];
-                    if (!cell) return <td key={t.id} className="p-3 text-zinc-500">—</td>;
+                    if (!cell) return <td key={t.id} className="p-3 text-zinc-500" aria-label="not available">n/a</td>;
 
                     const style = STATUS_STYLE_CONFIG[cell.status];
                     const Icon = style.icon;

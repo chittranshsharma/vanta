@@ -1,7 +1,7 @@
 /**
  * Brand Brain typed queries
  * All functions are workspace-scoped and read their own brand only.
- * No fake data is ever seeded or returned — callers receive null if no brand exists.
+ * No fake data is ever seeded or returned; callers receive null if no brand exists.
  */
 
 import { supabase, isSupabaseConfigured } from "./supabase";

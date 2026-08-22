@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import {
   deriveTimelineDiagnostics,
   DEFAULT_DIAGNOSTIC_RULES,
-  type TimelineDiagnosis,
   type DiagnosticSeverity,
   type DiagnosticRulesConfig,
 } from '../lib/creativeDoctor';
@@ -14,7 +13,6 @@ import {
   Info,
   HelpCircle,
   Clock,
-  Zap,
   Sliders,
   ArrowRight,
   ShieldCheck,

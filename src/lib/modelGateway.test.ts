@@ -22,12 +22,13 @@ describe('Model Gateway Client Adapter & Security Invariants', () => {
 
   describe('1. Interface & Secret Isolation Invariants', () => {
     it('has only gateway_health_check in allowlisted tasks for this milestone', () => {
-      expect(ALLOWLISTED_TASK_TYPES).toEqual(['gateway_health_check']);
+      expect(ALLOWLISTED_TASK_TYPES).toEqual(['gateway_health_check', 'claim_grounding_audit']);
     });
 
     it('contains no GROQ_API_KEY in client bundle or environment', () => {
-      expect((import.meta as any).env?.GROQ_API_KEY).toBeUndefined();
-      expect((import.meta as any).env?.VITE_GROQ_API_KEY).toBeUndefined();
+      const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+      expect(env?.GROQ_API_KEY).toBeUndefined();
+      expect(env?.VITE_GROQ_API_KEY).toBeUndefined();
     });
 
     it('rejects invalid workspace UUIDs client-side before network call', async () => {
@@ -88,7 +89,7 @@ describe('Model Gateway Client Adapter & Security Invariants', () => {
               correlation_id: 'corr-401',
             }),
           },
-        } as any,
+        } as unknown as Error,
       });
 
       const res = await invokeGatewayHealthCheck(validWorkspaceId);
@@ -111,7 +112,7 @@ describe('Model Gateway Client Adapter & Security Invariants', () => {
               correlation_id: 'corr-403',
             }),
           },
-        } as any,
+        } as unknown as Error,
       });
 
       const res = await invokeGatewayHealthCheck(validWorkspaceId);
@@ -134,7 +135,7 @@ describe('Model Gateway Client Adapter & Security Invariants', () => {
               correlation_id: 'corr-429',
             }),
           },
-        } as any,
+        } as unknown as Error,
       });
 
       const res = await invokeGatewayHealthCheck(validWorkspaceId);
@@ -157,7 +158,7 @@ describe('Model Gateway Client Adapter & Security Invariants', () => {
               correlation_id: 'corr-503',
             }),
           },
-        } as any,
+        } as unknown as Error,
       });
 
       const res = await invokeGatewayHealthCheck(validWorkspaceId);
@@ -180,7 +181,7 @@ describe('Model Gateway Client Adapter & Security Invariants', () => {
               latency_ms: 220,
             }),
           },
-        } as any,
+        } as unknown as Error,
       });
 
       const res = await invokeGatewayHealthCheck(validWorkspaceId);

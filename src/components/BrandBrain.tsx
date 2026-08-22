@@ -32,7 +32,10 @@ import {
   type BrandClaim,
   type BrandAudience,
   type BrandCodexVersion,
-  type ClaimType
+  type ClaimType,
+  type BrandInsert,
+  type BrandClaimInsert,
+  type BrandAudienceInsert
 } from "../lib/brandBrain";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -71,6 +74,7 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
   const [codexVersions, setCodexVersions] = useState<BrandCodexVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Form state
@@ -184,6 +188,11 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
 
       {/* Content */}
       <div className="bb-content">
+        {saveError && (
+          <p className="error-text" role="alert" style={{ marginBottom: 12 }}>
+            Save failed: {saveError}. Your entries are still in the form.
+          </p>
+        )}
         {tab === "positioning" && (
           <PositioningTab
             brand={brand}
@@ -194,12 +203,13 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
             setShowForm={setShowBrandForm}
             onSave={async (payload) => {
               setSaving(true);
+              setSaveError(null);
               const { brand: saved, error: err } = await upsertBrand(
                 { ...payload, workspace_id: workspaceId },
                 userId
               );
               setSaving(false);
-              if (err) { setError(err.message); return; }
+              if (err) { setSaveError(err.message); return; }
               setBrand(saved);
               setShowBrandForm(false);
             }}
@@ -218,12 +228,13 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
             setShowForm={setShowClaimForm}
             onSave={async (payload) => {
               setSaving(true);
+              setSaveError(null);
               const { claim, error: err } = await insertBrandClaim(
                 { ...payload, brand_id: brand.id, workspace_id: workspaceId },
                 userId
               );
               setSaving(false);
-              if (err) { setError(err.message); return; }
+              if (err) { setSaveError(err.message); return; }
               if (claim) setClaims((prev) => [claim, ...prev]);
               setShowClaimForm(false);
             }}
@@ -242,12 +253,13 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
             setShowForm={setShowAudienceForm}
             onSave={async (payload) => {
               setSaving(true);
+              setSaveError(null);
               const { audience, error: err } = await insertBrandAudience(
                 { ...payload, brand_id: brand.id, workspace_id: workspaceId },
                 userId
               );
               setSaving(false);
-              if (err) { setError(err.message); return; }
+              if (err) { setSaveError(err.message); return; }
               if (audience) setAudiences((prev) => [...prev, audience]);
               setShowAudienceForm(false);
             }}
@@ -277,8 +289,6 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
 // ─── Positioning Tab ──────────────────────────────────────────────────────────
 function PositioningTab({
   brand,
-  workspaceId,
-  userId,
   isAdmin,
   showForm,
   setShowForm,
@@ -291,7 +301,7 @@ function PositioningTab({
   isAdmin: boolean;
   showForm: boolean;
   setShowForm: (v: boolean) => void;
-  onSave: (payload: any) => Promise<void>;
+  onSave: (payload: Omit<BrandInsert, "workspace_id" | "created_by">) => Promise<void>;
   saving: boolean;
 }) {
   const [name, setName] = useState(brand?.name || "");
@@ -308,7 +318,7 @@ function PositioningTab({
         <h3>No Brand Brain defined</h3>
         <p>
           Define your product name, positioning statement, core promise, and category to start.
-          No data will be fabricated — every field you leave blank will remain blank.
+          No data will be fabricated: every field you leave blank will remain blank.
         </p>
         <button className="primary-button" onClick={() => setShowForm(true)}>
           <Plus size={15} /> Create Brand Brain
@@ -393,9 +403,6 @@ function PositioningTab({
 
 // ─── Claims Tab ───────────────────────────────────────────────────────────────
 function ClaimsTab({
-  brandId,
-  workspaceId,
-  userId,
   claims,
   isAdmin,
   showForm,
@@ -410,7 +417,7 @@ function ClaimsTab({
   isAdmin: boolean;
   showForm: boolean;
   setShowForm: (v: boolean) => void;
-  onSave: (payload: any) => Promise<void>;
+  onSave: (payload: Omit<BrandClaimInsert, "brand_id" | "workspace_id" | "created_by">) => Promise<void>;
   saving: boolean;
 }) {
   const [claimText, setClaimText] = useState("");
@@ -465,7 +472,7 @@ function ClaimsTab({
             }}
           >
             <div className="bb-form-notice">
-              <Info size={13} /> Record what the brand can, cannot, or conditionally state. Never invent claims — only document what has been agreed by your team.
+              <Info size={13} /> Record what the brand can, cannot, or conditionally state. Never invent claims; only document what has been agreed by your team.
             </div>
             <BrandTextarea label="Claim text *" required value={claimText} onChange={setClaimText}
               hint='e.g. "Fastest checkout in the category" or "Do not reference competitor prices."' />
@@ -477,10 +484,10 @@ function ClaimsTab({
                 onChange={(e) => setClaimType(e.target.value as ClaimType)}
                 required
               >
-                <option value="approved">Approved — safe to use</option>
-                <option value="prohibited">Prohibited — must not use</option>
-                <option value="conditional">Conditional — only in specific contexts</option>
-                <option value="unknown">Unknown — not yet classified</option>
+                <option value="approved">Approved: safe to use</option>
+                <option value="prohibited">Prohibited: must not use</option>
+                <option value="conditional">Conditional: only in specific contexts</option>
+                <option value="unknown">Unknown: not yet classified</option>
               </select>
             </label>
             <BrandTextarea label="Rationale" value={rationale} onChange={setRationale}
@@ -550,9 +557,6 @@ function ClaimsTab({
 
 // ─── Audiences Tab ────────────────────────────────────────────────────────────
 function AudiencesTab({
-  brandId,
-  workspaceId,
-  userId,
   audiences,
   isAdmin,
   showForm,
@@ -567,7 +571,7 @@ function AudiencesTab({
   isAdmin: boolean;
   showForm: boolean;
   setShowForm: (v: boolean) => void;
-  onSave: (payload: any) => Promise<void>;
+  onSave: (payload: Omit<BrandAudienceInsert, "brand_id" | "workspace_id" | "created_by">) => Promise<void>;
   saving: boolean;
 }) {
   const [segmentName, setSegmentName] = useState("");

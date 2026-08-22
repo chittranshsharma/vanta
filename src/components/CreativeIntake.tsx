@@ -1,29 +1,20 @@
-import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
-  ChevronDown,
   Database,
   FileCode,
   FileSpreadsheet,
   FileText,
-  HelpCircle,
   ImageIcon,
-  Info,
   Layers3,
   Link2,
   Lock,
   Plus,
-  Radio,
-  Shield,
   ShieldAlert,
-  ShieldCheck,
   Sparkles,
   UploadCloud,
-  X,
-  XCircle,
   Zap
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -32,13 +23,13 @@ import {
   fetchWorkspaceTwins,
   ingestManualTextAsset,
   ingestFileAsset,
-  validateManualText,
   validateDeclaredFileMetadata,
   type CreativeAssetRow,
   type CreativeTwinRow,
   type AssetKind
 } from "../lib/creativeIntake";
 import { initializeStructuredTwin } from "../lib/creativeTwin";
+import { Modal } from "./Modal";
 
 interface CreativeIntakeProps {
   workspaceId: string;
@@ -59,7 +50,7 @@ const ASSET_KIND_LABELS: Record<AssetKind, { label: string; icon: typeof FileTex
   other: { label: "Other Asset", icon: Database }
 };
 
-export function CreativeIntake({ workspaceId, userId, isAdmin, onOpenTwin }: CreativeIntakeProps) {
+export function CreativeIntake({ workspaceId, userId, onOpenTwin }: CreativeIntakeProps) {
   const [assets, setAssets] = useState<CreativeAssetRow[]>([]);
   const [twins, setTwins] = useState<CreativeTwinRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,29 +72,35 @@ export function CreativeIntake({ workspaceId, userId, isAdmin, onOpenTwin }: Cre
   // Detail inspection state
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const [reloadToken, setReloadToken] = useState(0);
+
+  // Initial load runs with loading=true from state init; reload() is for user-triggered refreshes.
+  const reload = () => {
     setLoading(true);
     setError(null);
-    try {
-      const [a, t] = await Promise.all([
-        fetchWorkspaceAssets(workspaceId),
-        fetchWorkspaceTwins(workspaceId)
-      ]);
-      setAssets(a);
-      setTwins(t);
-      if (a.length > 0 && !selectedAssetId) {
-        setSelectedAssetId(a[0].id);
-      }
-    } catch (err: any) {
-      setError(err?.message || "Failed to load creative assets.");
-    } finally {
-      setLoading(false);
-    }
+    setReloadToken((t) => t + 1);
   };
 
   useEffect(() => {
-    loadData();
-  }, [workspaceId]);
+    const loadData = async () => {
+      try {
+        const [a, t] = await Promise.all([
+          fetchWorkspaceAssets(workspaceId),
+          fetchWorkspaceTwins(workspaceId)
+        ]);
+        setAssets(a);
+        setTwins(t);
+        if (a.length > 0) {
+          setSelectedAssetId((prev) => prev ?? a[0].id);
+        }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load creative assets.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    void loadData();
+  }, [workspaceId, reloadToken]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSubmitError(null);
@@ -219,9 +216,12 @@ export function CreativeIntake({ workspaceId, userId, isAdmin, onOpenTwin }: Cre
 
   if (error) {
     return (
-      <div className="bb-error-state">
+      <div className="bb-error-state" role="alert">
         <ShieldAlert size={20} color="#f87171" />
         <span>{error}</span>
+        <button type="button" className="ghost-button-sm" onClick={reload}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -494,22 +494,7 @@ export function CreativeIntake({ workspaceId, userId, isAdmin, onOpenTwin }: Cre
       )}
 
       {/* Ingestion Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <div className="modal-backdrop">
-            <motion.div
-              className="auth-card"
-              style={{ maxWidth: 540 }}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-            >
-              <div className="auth-card-header">
-                <h3>Intake Creative Material</h3>
-                <button className="modal-close" onClick={() => setShowModal(false)}>
-                  <X size={17} />
-                </button>
-              </div>
+      <Modal open={showModal} title="Intake Creative Material" onClose={() => setShowModal(false)} maxWidth={540}>
 
               {/* Mode Toggle */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
@@ -666,10 +651,7 @@ export function CreativeIntake({ workspaceId, userId, isAdmin, onOpenTwin }: Cre
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      </Modal>
     </div>
   );
 }
