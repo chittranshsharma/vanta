@@ -2,7 +2,7 @@
 
 ## Current status
 
-Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer & Source Registry) + Ticket 3.2 (Creative Intake & Grounded Twins) + Ticket 4.1 (Creative Twin Structured Expansion & Versioning) complete. 62 tests pass. Build clean.
+Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer & Source Registry) + Ticket 3.2 (Creative Intake & Grounded Twins) + Ticket 4.1 (Creative Twin Structured Expansion & Versioning) + Ticket 4.2 (Creative Decision Matrix & Timeline Doctor) complete. 74 tests pass across 7 suites. Build clean.
 
 ## Migration state (exact — do not re-apply)
 
@@ -26,6 +26,7 @@ Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer 
 - **Ticket 3.2**: Creative Intake & Grounded Twins schema (3 tables + private storage bucket `workspace-assets`), defensive `storage_workspace_id(name)` SQL helper, composite FK `(source_id, workspace_id)` on `creative_assets`, pure deterministic validators & guards (`src/lib/creativeIntake.ts`), 23 unit & invariant tests (`src/lib/creativeIntake.test.ts`), `CreativeIntake.tsx` component (Manual Text & File Import flows, privacy assurance banner, grounded twin inspector with deterministic features & explicit known gaps), intelligent Decision Room "Next safe action" routing.
 - **Ticket 4.1**: Creative Twin Expansion & Structured Representation (`20260822000005_creative_twin_expansion.sql`): composite tenant FKs, database-enforced immutable version snapshots via trigger, pure deterministic script parser (`src/lib/creativeTwin.ts`), reading burden WPM calculator, traceable regex claim extractor with character offsets and Brand Codex alignment matching, `CreativeTwinEditor.tsx` (Scene Timeline, Claims & Codex, Changelog, and Known Gaps tabs with inline correction modal).
 - **Ticket 4.1 Emergency Security Patch (`20260822000006_secure_twin_correction_rpcs.sql`)**: Remedied privilege escalation in atomic correction RPCs by removing `p_user_id` parameter, enforcing mandatory `auth.uid()` checks, restricting editing authority strictly to the asset creator or workspace owner/admin, adding per-twin transaction-scoped advisory locks, and revoking `EXECUTE` from `anon` and `PUBLIC`. Verified with 100% passing SQL security isolation tests.
+- **Ticket 4.2**: Creative Decision Matrix & Timeline Doctor: Pure in-memory derivation engine on read (`src/lib/creativeDoctor.ts`), strictly adhering to the canonical 5 evidence classes (`inference` for rule conclusions), neutral policy rules (`R-HOOK-001/002/GAP`, `R-PACE-001/GAP`, `R-CLAIM-001/002`, `R-CTA-001`, `R-VIS-GAP`), visible and configurable threshold parameters, separation of lexical Brand Codex alignment from verified evidence citations, explicit `unknown` audience evidence state, sequential/timed `TimelineDoctor.tsx` inspector with actionable edit recommendations, multi-variant comparative `DecisionMatrix.tsx` table with calculation provenance inspection, and full integration into workspace navigation.
 
 ## Test suite
 
@@ -35,8 +36,9 @@ Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer 
 - `src/lib/sourceRegistry.test.ts` — 12 tests: pure citability evaluation, stale/unverified/blocked source guards, freshness window derivation
 - `src/lib/creativeIntake.test.ts` — 23 tests: manual text bounds, client-declared file validation, video byte rejection, filename sanitization, CSV header inspection, deterministic feature manifest, known gap derivation, intake failure & rollback invariants
 - `src/lib/creativeTwin.test.ts` — 13 tests: scene delimiter parsing, reading burden / WPM calculations, candidate claim extraction, character offsets, exact vs partial Brand Codex matching, failure and unknown invariants
+- `src/lib/creativeDoctor.test.ts` — 12 tests: 5-class evidence semantics, rule derivation with neutral non-predictive wording, hook window bounds, reading burden WPM thresholds, missing timecode gaps, proof citation vs lexical match separation, unknown audience disclosure, multi-variant comparative matrix derivation
 
-Total: 62 unit & contract tests passing.
+Total: 74 unit & contract tests passing across 7 test suites.
 
 ## Supabase project state
 

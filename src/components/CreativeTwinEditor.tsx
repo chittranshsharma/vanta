@@ -14,6 +14,7 @@ import {
   type BrandAlignmentStatus,
 } from '../lib/creativeTwin';
 import { fetchBrandForWorkspace, fetchBrandClaims, type BrandClaim } from '../lib/brandBrain';
+import { TimelineDoctor } from './TimelineDoctor';
 
 interface CreativeTwinEditorProps {
   twinId: string;
@@ -32,7 +33,7 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
   const [brandClaims, setBrandClaims] = useState<BrandClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'timeline' | 'claims' | 'versions' | 'gaps'>('timeline');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'claims' | 'versions' | 'gaps' | 'doctor'>('timeline');
 
   // Scene edit modal state
   const [editingScene, setEditingScene] = useState<CreativeSceneRow | null>(null);
@@ -289,6 +290,16 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
             }`}
           >
             Known Gaps ({knownGaps.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('doctor')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition ${
+              activeTab === 'doctor'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : 'text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-zinc-800'
+            }`}
+          >
+            Timeline Doctor 🩺
           </button>
         </div>
       </div>
@@ -567,6 +578,21 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
             ))}
           </div>
         </div>
+      )}
+
+      {/* TAB 5: TIMELINE DOCTOR */}
+      {activeTab === 'doctor' && details && (
+        <TimelineDoctor
+          twin={details.twin}
+          scenes={details.scenes}
+          claims={details.claims}
+          brandClaims={brandClaims}
+          onOpenSceneEditor={(sceneId) => {
+            const target = details.scenes.find((s) => s.id === sceneId);
+            if (target) openSceneModal(target);
+          }}
+          onBack={() => setActiveTab('timeline')}
+        />
       )}
 
       {/* MODAL: EDIT SCENE */}

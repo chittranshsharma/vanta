@@ -13,6 +13,7 @@ import type { Database } from '../types/database.types';
 
 export type CreativeSceneRow = Database['public']['Tables']['creative_scenes']['Row'];
 export type CreativeClaimRow = Database['public']['Tables']['creative_claims']['Row'];
+export type CreativeTwinRow = Database['public']['Tables']['creative_twins']['Row'];
 export type CreativeTwinVersionRow = Database['public']['Tables']['creative_twin_versions']['Row'];
 export type BrandClaimRow = Database['public']['Tables']['brand_claims']['Row'];
 

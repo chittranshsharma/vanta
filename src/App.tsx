@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Sparkles,
   Film,
+  Columns3,
   User,
   WandSparkles,
   X
@@ -23,9 +24,16 @@ import { BrandBrain } from "./components/BrandBrain";
 import { SourceRegistry } from "./components/SourceRegistry";
 import { CreativeIntake } from "./components/CreativeIntake";
 import { CreativeTwinEditor } from "./components/CreativeTwinEditor";
+import { DecisionMatrix } from "./components/DecisionMatrix";
 import { fetchSourcesForWorkspace, type SourceRegistryRow } from "./lib/sourceRegistry";
 import { fetchWorkspaceAssets, type CreativeAssetRow } from "./lib/creativeIntake";
-import { fetchBrandForWorkspace, type Brand } from "./lib/brandBrain";
+import { fetchBrandForWorkspace, fetchBrandClaims, type Brand, type BrandClaim } from "./lib/brandBrain";
+import {
+  fetchStructuredTwin,
+  type CreativeTwinRow,
+  type CreativeSceneRow,
+  type CreativeClaimRow
+} from "./lib/creativeTwin";
 import {
   signInWithEmail,
   signUpWithEmail,
@@ -368,12 +376,57 @@ function Workspace({
   const [sources, setSources] = useState<SourceRegistryRow[]>([]);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [assets, setAssets] = useState<CreativeAssetRow[]>([]);
-  const [activePanel, setActivePanel] = useState<"decision" | "brand" | "sources" | "intake" | "twin">("decision");
+  const [activePanel, setActivePanel] = useState<"decision" | "brand" | "sources" | "intake" | "twin" | "matrix">("decision");
   const [selectedTwinId, setSelectedTwinId] = useState<string | null>(null);
+  const [matrixTwins, setMatrixTwins] = useState<CreativeTwinRow[]>([]);
+  const [matrixScenesMap, setMatrixScenesMap] = useState<Record<string, CreativeSceneRow[]>>({});
+  const [matrixClaimsMap, setMatrixClaimsMap] = useState<Record<string, CreativeClaimRow[]>>({});
+  const [matrixBrandClaims, setMatrixBrandClaims] = useState<BrandClaim[]>([]);
+  const [matrixLoading, setMatrixLoading] = useState(false);
   const [newWsModalOpen, setNewWsModalOpen] = useState(false);
   const [newWsName, setNewWsName] = useState("");
   const [creatingWs, setCreatingWs] = useState(false);
   const [wsError, setWsError] = useState<string | null>(null);
+
+  const loadMatrixData = async () => {
+    if (!activeWorkspace) return;
+    setMatrixLoading(true);
+    const { data: twinsData } = await supabase
+      .from("creative_twins")
+      .select("*")
+      .eq("workspace_id", activeWorkspace.id);
+
+    const twins = (twinsData || []) as CreativeTwinRow[];
+    setMatrixTwins(twins);
+
+    const sMap: Record<string, CreativeSceneRow[]> = {};
+    const cMap: Record<string, CreativeClaimRow[]> = {};
+
+    await Promise.all(
+      twins.map(async (t) => {
+        const details = await fetchStructuredTwin(t.id, activeWorkspace.id);
+        if (details.data) {
+          sMap[t.id] = details.data.scenes;
+          cMap[t.id] = details.data.claims;
+        }
+      })
+    );
+
+    setMatrixScenesMap(sMap);
+    setMatrixClaimsMap(cMap);
+
+    if (brand) {
+      const bClaims = await fetchBrandClaims(brand.id);
+      setMatrixBrandClaims(bClaims);
+    }
+    setMatrixLoading(false);
+  };
+
+  useEffect(() => {
+    if (activePanel === "matrix") {
+      loadMatrixData();
+    }
+  }, [activePanel, activeWorkspace?.id]);
 
   useEffect(() => {
     let mounted = true;
@@ -496,6 +549,9 @@ function Workspace({
               <Film size={17} /> Structured Twin
             </button>
           )}
+          <button className={`side-link ${activePanel === "matrix" ? "active" : ""}`} onClick={() => setActivePanel("matrix")}>
+            <Columns3 size={17} /> Decision matrix
+          </button>
           <button className={`side-link ${activePanel === "sources" ? "active" : ""}`} onClick={() => setActivePanel("sources")}>
             <Compass size={17} /> Source registry
           </button>
@@ -542,6 +598,8 @@ function Workspace({
                 ? "Creative Intake"
                 : activePanel === "twin"
                 ? "Structured Creative Twin"
+                : activePanel === "matrix"
+                ? "Creative Decision Matrix"
                 : activePanel === "sources"
                 ? "Source Registry"
                 : "Start with what you can prove."}
@@ -580,6 +638,27 @@ function Workspace({
               userId={user.id}
               onBack={() => setActivePanel("intake")}
             />
+          </div>
+        ) : activePanel === "matrix" && activeWorkspace && user ? (
+          <div style={{ marginTop: 32 }}>
+            {matrixLoading ? (
+              <div className="p-8 text-center text-xs font-mono text-zinc-400">Loading workspace variants…</div>
+            ) : (
+              <DecisionMatrix
+                twins={matrixTwins}
+                scenesByTwinId={matrixScenesMap}
+                claimsByTwinId={matrixClaimsMap}
+                brandClaims={matrixBrandClaims}
+                onOpenTwin={(twinId) => {
+                  setSelectedTwinId(twinId);
+                  setActivePanel("twin");
+                }}
+                onOpenTimelineDoctor={(twinId) => {
+                  setSelectedTwinId(twinId);
+                  setActivePanel("twin");
+                }}
+              />
+            )}
           </div>
         ) : activePanel === "sources" && activeWorkspace && user ? (
           <div style={{ marginTop: 32 }}>
