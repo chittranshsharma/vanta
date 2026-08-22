@@ -12,7 +12,8 @@
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%7C%20RLS-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(74%2F74)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(437%2F437)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![CI](https://img.shields.io/badge/CI-lint%20%7C%20typecheck%20%7C%20test%20%7C%20build-blue?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![Build](https://img.shields.io/badge/Production%20Build-Clean-emerald?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](#)
 
@@ -114,6 +115,7 @@ React / TypeScript / Vite (Product Shell & Interaction State)
 | Private text/file intake and grounded manifests | **Implemented** | Supabase Storage (`workspace-assets` bucket) + PostgreSQL + browser-side validators (`creativeIntake.ts`) |
 | Deterministic script parsing, scene representation, WPM pacing | **Implemented** | TypeScript pure functions + PostgreSQL immutable version snapshots (`creativeTwin.ts`) |
 | Creative Decision Matrix & Timeline Doctor | **Implemented** | Pure read-time derivation engine + interactive inspection UI (`creativeDoctor.ts`, `DecisionMatrix.tsx`, `TimelineDoctor.tsx`) |
+| Secure model gateway (health check only) | **Authored locally, not deployed** | Deno Edge Function (`supabase/functions/model-gateway/`) + client adapter (`modelGateway.ts`). Pure guards unit-tested. See `docs/model-gateway-deployment-readiness.md` |
 | AI analysis, creative predictions, agents, trend research, live social data, calibration | **Not implemented** | Requires future services and authorized data sources (see Roadmap below) |
 
 ---
@@ -133,31 +135,33 @@ These components remain central throughout Vanta's evolution:
 
 ## 🚀 Required Future Upgrades & Triggers
 
-### Upgrade A — Secure Application Backend for Groq & Connectors
+**Status (2026-08-23):** all seven upgrades are authored as repository-level code with contracts, tests, and migrations 010-015, reviewed one by one in [`docs/upgrade-reviews.md`](docs/upgrade-reviews.md). None is deployed or live-verified. The triggers below still govern when each runtime is switched on.
+
+### Upgrade A: Secure Application Backend for Groq & Connectors
 - **Trigger:** The first Groq feature, official OAuth connector, webhook, scheduled source refresh, or notification is approved.
 - **Architecture:** Browser never receives `GROQ_API_KEY`, service-role credentials, or OAuth secrets. Start with **Supabase Edge Functions** for authenticated calls; transition to a **Node.js TypeScript service** when orchestration, queues, retry policies, or SDKs outgrow edge functions.
 
-### Upgrade B — Python Analysis Service (FastAPI)
+### Upgrade B: Python Analysis Service (FastAPI)
 - **Trigger:** Real video/audio processing, transcript alignment, offline evaluation, campaign-outcome calibration, large CSV normalization, embeddings/clustering, or statistical model training.
 - **Architecture:** Small **FastAPI service / worker** with explicit job contracts. Python processes media/data and returns typed records with provenance metadata back to Postgres; it never becomes a separate source of truth or returns ungrounded marketing prose directly to the browser.
 
-### Upgrade C — Durable Job Queue & Workflow Engine
+### Upgrade C: Durable Job Queue & Workflow Engine
 - **Trigger:** Multi-step jobs, retries, multi-agent coordination, scheduled refreshes, video rendering, webhook recovery, or background work.
 - **Architecture:** Database-backed job records for simple tasks → managed queue/workflow engine for reliable multi-step executions with idempotency keys, dead-letter queues, cancellation, and human approval gates.
 
-### Upgrade D — Media Pipeline & Scalable Object Storage
+### Upgrade D: Media Pipeline & Scalable Object Storage
 - **Trigger:** Users upload real video bytes, frame sampling, audio transcription, or large media volume.
 - **Architecture:** Signed upload/download URLs, server-side MIME/magic-byte verification, dedicated media workers for thumbnail/frame extraction, retention lifecycle rules.
 
-### Upgrade E — Retrieval, Semantic Memory & Vector Search
+### Upgrade E: Retrieval, Semantic Memory & Vector Search
 - **Trigger:** Brand Brain guidelines, past creative tests, and campaign outcomes outgrow deterministic relational lookups.
 - **Architecture:** Vector retrieval as candidate search only. Every retrieved item must still pass workspace scoping, source freshness, evidence class, and citation checks before use in prompts.
 
-### Upgrade F — Real External Data & Official Platform Integrations
+### Upgrade F: Real External Data & Official Platform Integrations
 - **Trigger:** Owned-account analytics, live campaign metrics, audience activity, or publishing-time recommendations.
 - **Architecture:** User-authorized official APIs and account exports. Explicit `unknown` or `insufficient evidence` states whenever data is absent. Never promise private platform algorithm secrets or unverified audience scroll times.
 
-### Upgrade G — Observability, Feature Flags & Operational Safety
+### Upgrade G: Observability, Feature Flags & Operational Safety
 - **Trigger:** External users, paid usage, connector jobs, model calls, or background processing.
 - **Architecture:** Error tracking, structured logs, latency/cost observability, incident alerts, data-access audits, and real-JWT two-user E2E tests.
 
@@ -210,7 +214,7 @@ To eliminate AI hallucinations, every data point, benchmark, and score in Vanta 
 
 ## 🗄 Database Schema & Tenant Isolation (RLS)
 
-Vanta enforces multi-tenant row-level security across all PostgreSQL tables. Every query executes under the authenticated user's JWT context.
+Vanta is designed so every query executes under the authenticated user's JWT context with row-level security. **Honest status:** migrations 001 and 003-005 enable RLS and declare policies for 13 tables. Migration 002 (Brand Brain, 8 tables) shipped without RLS in the repository; migration 007 adds it and is **pending live apply**. The committed schema is contract-tested in `src/lib/migrations.test.ts` (every table must enable RLS and carry tenant-scoped policies). Whether the live project matches the repository has not been verified from this codebase; see `docs/supabase-deferred-validation.md`.
 
 ```
 ├── 20260822000001_auth_workspaces.sql
@@ -246,9 +250,11 @@ Vanta enforces multi-tenant row-level security across all PostgreSQL tables. Eve
 │   ├── creative_claims                 # Extracted claims linked to brand_claims(id, workspace_id)
 │   └── creative_twin_versions          # Immutable snapshots protected by mutation-blocking trigger
 │
-└── 20260822000006_secure_twin_correction_rpcs.sql
-    ├── save_scene_correction_atomic    # Hardened SECURITY DEFINER procedure (auth.uid() enforced, non-anon)
-    └── save_claim_correction_atomic    # Hardened SECURITY DEFINER procedure with per-twin advisory locks
+├── 20260822000006_secure_twin_correction_rpcs.sql
+│   ├── save_scene_correction_atomic    # Hardened SECURITY DEFINER procedure (auth.uid() enforced, non-anon)
+│   └── save_claim_correction_atomic    # Hardened SECURITY DEFINER procedure with per-twin advisory locks
+│
+└── 20260822000007_brand_brain_rls.sql  # PENDING LIVE APPLY: RLS + policies for the 8 Brand Brain tables
 ```
 
 ---
@@ -259,10 +265,11 @@ Vanta enforces multi-tenant row-level security across all PostgreSQL tables. Eve
 |---|---|---|
 | **Core Framework** | React 19.2 + TypeScript 5.9 | Strict type safety, React Server Component compatibility, modern concurrency |
 | **Build Tooling** | Vite 7.3 | Instant HMR, ESM native bundling, optimized chunk splitting |
-| **Styling & Motion** | Vanilla CSS + Framer Motion | Tokenized dark-mode aesthetic, zero Tailwind overhead, hardware-accelerated animations |
+| **Styling & Motion** | Vanilla CSS design system + Tailwind v4 utilities layer + Framer Motion | Hand-written tokens for the shell; Tailwind utilities (no preflight) for the Twin, Matrix, and Doctor panels |
 | **Icons** | Lucide React | Consistent, lightweight vector iconography |
 | **Database & Auth** | Supabase (PostgreSQL 15 + RLS) | Row Level Security, private file storage, automated onboarding triggers |
-| **Test Runner** | Vitest 2.1 | Fast in-memory unit testing, RLS contract assertion suites (74/74 tests passing) |
+| **Test Runner** | Vitest 2.1 + pytest + Playwright | 437 unit and static-contract tests (34 suites), 15 pytest cases for the analysis service, 30-check QA-1 isolation suite (runs only with staging credentials) |
+| **Lint / CI** | ESLint 9 (typescript-eslint, react-hooks) + GitHub Actions | `npm run verify` = lint, typecheck, test, build; CI runs the same on push and PR |
 | **Future Gateway** | Edge Functions / Node.js | Authenticated secret-holding server boundary for Groq / OAuth |
 | **Future ML/Media** | Python (FastAPI workers) | Video processing, transcript alignment, outcome calibration |
 
@@ -272,13 +279,23 @@ Vanta enforces multi-tenant row-level security across all PostgreSQL tables. Eve
 
 ```
 vanta/
+├── FABLE_CONTINUATION_PROMPT.md        # Agent operating contract for this repository
+├── VANTA_FINAL_PROJECT_SPECIFICATION.md # Canonical product handoff
+│
 ├── docs/                               # Durable Project Memory
 │   ├── architecture.md                 # System boundaries & component topology
 │   ├── blueprint-index.md              # Blueprint cross-reference sitemap
 │   ├── build-state.md                  # Migration states, test logs & active ticket
 │   ├── decisions.md                    # Architecture Decision Records (ADRs)
+│   ├── fable-audit.md                  # Phase 0 audit: P0/P1/P2 findings and status
+│   ├── supabase-deferred-validation.md # Live checks an operator must run (no live access here)
+│   ├── model-gateway-deployment-readiness.md
+│   ├── ticket-5.1-claim-grounding-audit.md # First model task: design + fail-closed output contract
+│   ├── upgrade-reviews.md              # Roadmap upgrades A-G: what was built, findings, verification
+│   ├── operations-runbook.md           # Kill switches, alerts, audit queries, rollback
 │   ├── product-constitution.md         # Non-negotiable anti-hallucination rules
-│   └── upgrade-roadmap.md              # Honest technical capability and upgrade roadmap
+│   ├── upgrade-roadmap.md              # Honest technical capability and upgrade roadmap
+│   └── archive/                        # Earlier agent scaffolding and blueprint documents
 │
 ├── supabase/migrations/                # Canonical Database Schema
 │   ├── 20260822000001_auth_workspaces.sql
@@ -286,15 +303,43 @@ vanta/
 │   ├── 20260822000003_evidence_layer.sql
 │   ├── 20260822000004_creative_intake.sql
 │   ├── 20260822000005_creative_twin_expansion.sql
-│   └── 20260822000006_secure_twin_correction_rpcs.sql
+│   ├── 20260822000006_secure_twin_correction_rpcs.sql
+│   ├── 20260822000007_brand_brain_rls.sql   # pending live apply
+│   ├── 20260822000008_bind_created_by.sql   # pending live apply
+│   ├── 20260822000009_composite_tenant_fks.sql # pending live apply
+│   └── 20260822000010 … 015                # model_task_runs, jobs, derived_artifacts, embeddings, connector_accounts, workspace_quotas (pending)
+│
+├── supabase/functions/model-gateway/   # Edge Function (not deployed)
+│   ├── index.ts                        # Auth, authorization, quota, task routing, audit, structured logs
+│   ├── guards.ts / flags.ts / log.ts   # Pure guards, operator task flags, JSON logging (unit-tested)
+│   ├── provider.ts                     # Provider adapter with bounded retry + schema repair
+│   ├── schemas.ts                      # Task registry + health-check validation
+│   └── tasks/                          # claimGroundingAudit (validator), claimGroundingPrompt (context + prompt)
+│
+├── services/job-worker/                # Node worker: claims jobs via service-role RPCs (not deployed)
+├── services/analysis-worker/           # Python FastAPI analysis service (not deployed)
+├── shared/                             # Pure modules shared by web, gateway, worker: jobs policy, magic bytes, retrieval gate, connectors, experiments, agents, publishing
+├── e2e/                                # QA-1 two-user isolation suite (Playwright, needs staging credentials)
 │
 ├── src/
 │   ├── components/
 │   │   ├── BrandBrain.tsx              # Brand Brain & Codex snapshot management UI
 │   │   ├── CreativeIntake.tsx          # Text & file intake with client-side guards
 │   │   ├── CreativeTwinEditor.tsx      # Structured Twin inspector, timeline, changelog, known gaps
+│   │   ├── AuthModal.tsx               # Sign in / create account dialog
+│   │   ├── AgentWorkflowPanel.tsx      # Creative Council task graph, role contracts, runtime gate (no runs)
+│   │   ├── ConnectorsPanel.tsx         # Authorized-source access states, consent-intent request/revoke (flag)
+│   │   ├── ExperimentsPanel.tsx        # Hypotheses, variants, readiness blockers, calibration readiness
+│   │   ├── HistoryImportModal.tsx      # Posting-history CSV import with reviewed plan
+│   │   ├── OutcomeImportModal.tsx      # Outcome CSV import: source, mapping, reviewed plan, provenance
+│   │   ├── JobsPanel.tsx               # Durable job records, approve/cancel (flag)
+│   │   ├── PublishingPlanner.tsx       # Test-window planning; unknown until owned observed history exists
+│   │   ├── SetupStatus.tsx             # Build configuration rows + explicit gateway probe
 │   │   ├── DecisionMatrix.tsx          # Multi-variant comparative matrix table
+│   │   ├── LandingPage.tsx             # Public marketing page
+│   │   ├── Modal.tsx                   # Accessible dialog (focus trap, Escape, reduced motion)
 │   │   ├── SourceRegistry.tsx          # Sources, Evidence Items, and Metric Definitions UI
+│   │   ├── Workspace.tsx               # Tenant workspace shell, panel routing, Decision Room
 │   │   └── TimelineDoctor.tsx          # Sequential scene diagnostics & actionable edit briefs
 │   │
 │   ├── lib/
@@ -309,22 +354,27 @@ vanta/
 │   │   ├── creativeTwin.test.ts        # 13 twin parsing & alignment tests
 │   │   ├── evidence.ts                 # Pure synchronous numeric claim guards & citability types
 │   │   ├── evidence.test.ts            # Numeric provenance validation tests
-│   │   ├── rls.test.ts                 # 8-point RLS isolation contract verification suite
+│   │   ├── migrations.test.ts          # 81 static contract tests over the committed SQL (RLS, policies, SECURITY DEFINER, composite FKs)
+│   │   ├── modelGateway.ts             # Client adapter: sends only workspace_id + task_type
+│   │   ├── modelGateway.test.ts        # 9 fail-closed client tests
 │   │   ├── sourceRegistry.ts           # Source registry queries & async citability resolver
 │   │   ├── sourceRegistry.test.ts      # 12 citability evaluation & freshness tests
-│   │   └── supabase.ts                 # Client initialization with publishable key safety
+│   │   ├── supabase.ts                 # Client initialization with publishable key safety
+│   │   ├── workspaceOverview.ts        # Decision Room loader that reports read failures instead of faking empty states
+│   │   └── workspaceOverview.test.ts
 │   │
 │   ├── types/
 │   │   └── database.types.ts           # Auto-generated database typings (21 tables + hardened RPCs)
 │   │
-│   ├── App.tsx                         # Main landing experience & tenant workspace shell
+│   ├── App.tsx                         # Auth session + view routing shell
 │   ├── styles.css                      # Tokenized cinematic design system
 │   └── main.tsx                        # React application bootstrap
 │
-├── signalforge_final_blueprint.md      # Master product design blueprint
+├── .github/workflows/ci.yml            # Lint, typecheck, test, build
+├── eslint.config.js
 ├── package.json                        # Scripts & dependencies
 ├── todo.md                             # Live execution checklist
-└── vite.config.ts                      # Bundler configuration
+└── vite.config.ts                      # Bundler, manual chunks, vitest include
 ```
 
 ---
@@ -355,10 +405,10 @@ VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-publishable-anon-key
 ```
 
-### 4. Run the Test Suite
-Verify all 74 unit and contract tests pass across 7 test suites:
+### 4. Run the Full Verification
+Lint, typecheck (web + worker), 437 unit and static-contract tests across 34 suites, then a production build:
 ```bash
-npm test
+npm run verify
 ```
 
 ### 5. Production Build
@@ -377,20 +427,22 @@ Open `http://localhost:5173` to launch the Vanta cinematic interface.
 
 ## 🗺 Implementation Roadmap
 
-- [x] **Ticket 0.1 — Durable Project Memory & Scaffold** (Docs, architecture contracts, risk register)
-- [x] **Ticket 1.1 — Cinematic Public Interface** (Marketing landing page, brand narrative, feature stages)
-- [x] **Ticket 2.1 — Multi-Tenant Auth & Workspaces** (Supabase Auth, RLS isolation, automated signup trigger)
-- [x] **Ticket 2.2 — Brand Brain & Brand Codex** (Positioning, approved/prohibited claims, immutable snapshots)
-- [x] **Ticket 3.1 — Evidence Layer & Source Registry** (Provenanced sources, 5-class evidence, metric dictionary)
-- [x] **Ticket 3.2 — Creative Intake & Grounded Twins** (Text/file intake, video-byte rejection, grounded manifests)
-- [x] **Ticket 4.1 — Creative Twin Structured Expansion & Versioning** (Scene decomposition, WPM, regex claims, immutable version snapshots, hardened correction RPCs)
-- [x] **Ticket 4.2 — Creative Decision Matrix & Timeline Doctor** (Pure read-time derivation, multi-variant comparison, neutral policy rules, actionable edit briefs)
-- [ ] **Ticket 5.1 — Secure Model Gateway & Evidence Arbiter** (Edge Function / Node proxy, Groq structured outputs, gatekeeper validation)
-- [ ] **Ticket 5.2 — Specialist Council Rollout** (11 agent personas with typed fallback matrices)
-- [ ] **Ticket 6.1 — Counterfactual Simulation Lab** (Controlled variable mutation & hypothesis testing)
-- [ ] **Ticket 7.1 — Trend & Publishing Intelligence** (Compliant RSS feeds, distribution timing hierarchy)
-- [ ] **Ticket 8.1 — Outcome Calibration Loop** (Campaign CSV ingestion, prediction-to-actual accuracy scoring)
-- [ ] **Ticket QA-1 — Real-JWT Two-User E2E Isolation Suite** (Playwright multi-tenant security verification)
+- [x] **Ticket 0.1: Durable Project Memory & Scaffold** (Docs, architecture contracts, risk register)
+- [x] **Ticket 1.1: Cinematic Public Interface** (Marketing landing page, brand narrative, feature stages)
+- [x] **Ticket 2.1: Multi-Tenant Auth & Workspaces** (Supabase Auth, RLS isolation, automated signup trigger)
+- [x] **Ticket 2.2: Brand Brain & Brand Codex** (Positioning, approved/prohibited claims, immutable snapshots)
+- [x] **Ticket 3.1: Evidence Layer & Source Registry** (Provenanced sources, 5-class evidence, metric dictionary)
+- [x] **Ticket 3.2: Creative Intake & Grounded Twins** (Text/file intake, video-byte rejection, grounded manifests)
+- [x] **Ticket 4.1: Creative Twin Structured Expansion & Versioning** (Scene decomposition, WPM, regex claims, immutable version snapshots, hardened correction RPCs)
+- [x] **Ticket 4.2: Creative Decision Matrix & Timeline Doctor** (Pure read-time derivation, multi-variant comparison, neutral policy rules, actionable edit briefs)
+- [x] **Ticket 5.0 - Secure Model Gateway foundation** (health-check-only Edge Function authored and unit-tested locally; deployment awaits approval)
+- [x] **Phase 0 - Repository audit** (`docs/fable-audit.md`; P0 Brand Brain RLS migration authored, pending live apply)
+- [ ] **Ticket 5.1 - First evidence-gated model task** (design and fail-closed output contract done; wiring blocked on live migrations and 5.0 deployment)
+- [ ] **Ticket 5.2: Specialist Council Rollout** (11 agent personas with typed fallback matrices)
+- [ ] **Ticket 6.1: Counterfactual Simulation Lab** (Controlled variable mutation & hypothesis testing)
+- [ ] **Ticket 7.1: Trend & Publishing Intelligence** (Compliant RSS feeds, distribution timing hierarchy)
+- [ ] **Ticket 8.1: Outcome Calibration Loop** (Campaign CSV ingestion, prediction-to-actual accuracy scoring)
+- [ ] **Ticket QA-1: Real-JWT Two-User E2E Isolation Suite** (Playwright multi-tenant security verification)
 
 ---
 
@@ -400,12 +452,12 @@ Every contribution to Vanta must adhere to five non-negotiable laws:
 
 1. **The Anti-Hallucination Invariant:** Never substitute missing evidence with plausible prose or fabricated metrics. If a data point cannot be proven, render an honest `unknown` or `insufficient` state.
 2. **The Provenance Rule:** No recommendation, score, or mutation brief can be presented to a user without an explicit citation to a registered source and an assigned Evidence Class.
-3. **Tenant Fortress Model:** Cross-workspace data access is mathematically impossible at the database layer through RLS and composite foreign key enforcement.
+3. **Tenant Fortress Model:** Cross-workspace data access is denied at the database layer through RLS and composite foreign key enforcement. This is a design requirement, contract-tested against the committed schema, and must be proven live (QA-1) before external users.
 4. **Inspectable Autonomy:** AI agents may diagnose, challenge, simulate, and formulate briefs, but they **never execute external publishing actions without human confirmation**.
 5. **Calibrated Learning:** Directional predictions must be measured against real observed outcomes. An algorithm that cannot admit error cannot improve.
 
 ---
 
 <div align="center">
-  <sub>Built with precision by Antigravity IDE • Grounded in Evidence-First Engineering Principles</sub>
+  <sub>Grounded in evidence-first engineering principles</sub>
 </div>

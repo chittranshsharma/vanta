@@ -1,73 +1,183 @@
 # Vanta Build State
 
-## Current status
+## Current status (2026-08-23)
 
-Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer & Source Registry) + Ticket 3.2 (Creative Intake & Grounded Twins) + Ticket 4.1 (Creative Twin Structured Expansion & Versioning) + Ticket 4.2 (Creative Decision Matrix & Timeline Doctor) + Ticket 5.0 (Secure Server-Side Model Gateway Foundation — Local Authored) complete. 83 tests pass across 8 suites. Build clean.
+Tickets 2.1, 2.2, 3.1, 3.2, 4.1, 4.2 complete. Ticket 5.0 (model gateway foundation) authored locally, patched during audit, **not deployed**. Phase 0 repository audit complete (`docs/fable-audit.md`).
 
-## Migration state (exact — do not re-apply)
+Verified locally on 2026-08-23:
 
-| Migration name | Applied | Tables created / Constraints |
-|---|---|---|
-| `20260822000001_auth_workspaces` | ✅ | `profiles`, `workspaces`, `workspace_members`, `audit_events` |
-| `20260822000002_brand_brain` | ✅ | `brands`, `brand_codex_versions`, `brand_audiences`, `brand_claims`, `brand_proof_points`, `brand_competitors`, `brand_tone_guidelines`, `brand_compliance_boundaries` |
-| `20260822000003_evidence_layer` | ✅ | `source_registry`, `evidence_items`, `metric_definitions` + `block_manual_connected_status` trigger + composite FK |
-| `20260822000004_creative_intake` | ✅ | `creative_assets`, `ingestion_runs`, `creative_twins` + `workspace-assets` private storage bucket + defensive `storage_workspace_id` helper + partial unique SHA-256 index |
-| `20260822000005_creative_twin_expansion` | ✅ | `creative_scenes`, `creative_claims`, `creative_twin_versions` + `block_twin_version_mutation` immutability trigger + composite FKs to `creative_twins(id, workspace_id)` and `brand_claims(id, workspace_id)` |
-| `20260822000006_secure_twin_correction_rpcs` | ✅ | Hardened `save_scene_correction_atomic` & `save_claim_correction_atomic`: `SET search_path = public, pg_temp`, mandatory non-null `auth.uid()`, removed untrusted `p_user_id`, enforced asset-creator / admin-owner authority, per-twin transaction advisory locks, revoked `PUBLIC` / `anon` execution. |
+| Check | Result |
+|---|---|
+| `npm run lint` | 0 errors, 0 warnings |
+| `npm run typecheck` | clean |
+| `npm test` | 437 passed / 437, 34 suites |
+| `pytest` (services/analysis-worker) | 15 passed |
+| `npm run test:e2e` | 30 skipped with reason (no staging credentials); suite authored for QA-1 |
+| `npm run typecheck:worker` | clean |
+| `npm run build` | clean; largest chunk 240 kB (75 kB gzip), panels code-split |
+| Browser smoke (dev server) | landing renders; auth dialog exposes `role="dialog"`, labelled close, Escape closes; workspace shell walked in demo mode (Decision Room ladder, Setup and status, Experiments, Test windows) with no console errors |
 
-## Completed
+Access boundary this phase: **repository only**. No Supabase dashboard, MCP, SQL, deploy, or secret access. Every database statement below is static review of the committed SQL; live state is unverified.
 
-- **Ticket 0.1**: All 5 durable docs created (`blueprint-index.md`, `product-constitution.md`, `architecture.md`, `decisions.md`, `build-state.md`)
-- **Ticket 2.1**: Supabase Auth + workspace schema + RLS + anon key wired + auth UI + workspace switcher
-- **RLS isolation proof**: 8 SQL-level tests passed (schema, policies, SECURITY DEFINER functions, tenant isolation logic)
-- **RLS contract tests**: `src/lib/rls.test.ts` (8 tests) documents isolation invariants
-- **Ticket 2.2**: Brand Brain schema (8 tables), RLS (32 policies), typed queries (`src/lib/brandBrain.ts`), React component (`src/components/BrandBrain.tsx`) with versioned codex snapshots — no fake data
-- **Ticket 3.1**: Evidence Layer & Source Registry schema (3 tables), RLS (12 policies), DB trigger blocking manual `connected` status, composite FK on `evidence_items(source_id, workspace_id)`, typed queries and validation service (`src/lib/sourceRegistry.ts`), pure synchronous citability evaluation, 5-class evidence standard, `SourceRegistry.tsx` (Sources, Evidence Items, Metric Definitions), live evidence state in Decision Room
-- **Ticket 3.2**: Creative Intake & Grounded Twins schema (3 tables + private storage bucket `workspace-assets`), defensive `storage_workspace_id(name)` SQL helper, composite FK `(source_id, workspace_id)` on `creative_assets`, pure deterministic validators & guards (`src/lib/creativeIntake.ts`), 23 unit & invariant tests (`src/lib/creativeIntake.test.ts`), `CreativeIntake.tsx` component (Manual Text & File Import flows, privacy assurance banner, grounded twin inspector with deterministic features & explicit known gaps), intelligent Decision Room "Next safe action" routing.
-- **Ticket 4.1**: Creative Twin Expansion & Structured Representation (`20260822000005_creative_twin_expansion.sql`): composite tenant FKs, database-enforced immutable version snapshots via trigger, pure deterministic script parser (`src/lib/creativeTwin.ts`), reading burden WPM calculator, traceable regex claim extractor with character offsets and Brand Codex alignment matching, `CreativeTwinEditor.tsx` (Scene Timeline, Claims & Codex, Changelog, and Known Gaps tabs with inline correction modal).
-- **Ticket 4.1 Emergency Security Patch (`20260822000006_secure_twin_correction_rpcs.sql`)**: Remedied privilege escalation in atomic correction RPCs by removing `p_user_id` parameter, enforcing mandatory `auth.uid()` checks, restricting editing authority strictly to the asset creator or workspace owner/admin, adding per-twin transaction-scoped advisory locks, and revoking `EXECUTE` from `anon` and `PUBLIC`. Verified with 100% passing SQL security isolation tests.
-- **Ticket 4.2**: Creative Decision Matrix & Timeline Doctor: Pure in-memory derivation engine on read (`src/lib/creativeDoctor.ts`), strictly adhering to the canonical 5 evidence classes (`inference` for rule conclusions), neutral policy rules (`R-HOOK-001/002/GAP`, `R-PACE-001/GAP`, `R-CLAIM-001/002`, `R-CTA-001`, `R-VIS-GAP`), visible and configurable threshold parameters, separation of lexical Brand Codex alignment from verified evidence citations, explicit `unknown` audience evidence state, sequential/timed `TimelineDoctor.tsx` inspector with actionable edit recommendations, multi-variant comparative `DecisionMatrix.tsx` table with calculation provenance inspection, and full integration into workspace navigation.
-- **Ticket 5.0 (Local Scope)**: Secure Server-Side Model Gateway Foundation: Authored Deno/Edge Function `supabase/functions/model-gateway/index.ts` and `schemas.ts` enforcing strict request field validation (`workspace_id` + allowlisted `task_type` only; rejects extra fields), caller JWT authentication, admin/owner authorization check, best-effort audit rate limiting, cryptographic nonce verification, strict server schema validation (rejects extra keys), sanitized audit logging, and client adapter `src/lib/modelGateway.ts`. All 83 unit/contract tests passing. Deployment and live secret configuration pending explicit user confirmation.
+## Migration state
 
-## Test suite
+| Migration | Repository | Live (per prior agents; unverified here) | Notes |
+|---|---|---|---|
+| `20260822000001_auth_workspaces` | committed | reported applied | RLS + 13 policies, helper functions, onboarding trigger |
+| `20260822000002_brand_brain` | committed | reported applied | **No RLS in file.** 8 tables. |
+| `20260822000003_evidence_layer` | committed | reported applied | RLS + 12 policies, composite FK, connected-status trigger |
+| `20260822000004_creative_intake` | committed | reported applied | RLS + 12 policies, storage bucket + 4 object policies |
+| `20260822000005_creative_twin_expansion` | committed | reported applied | RLS + 12 policies, immutability trigger, composite FKs |
+| `20260822000006_secure_twin_correction_rpcs` | committed | reported applied | Hardened RPCs, search_path, revokes |
+| `20260822000007_brand_brain_rls` | **committed, PENDING LIVE APPLY** | not applied | RLS + 30 policies for the 8 Brand Brain tables. Idempotent. Apply per `docs/supabase-deferred-validation.md` D-1. |
+| `20260822000008_bind_created_by` | **committed, PENDING LIVE APPLY** | not applied | INSERT policies bind `created_by`/`started_by` to `auth.uid()` on 15 tables. Apply after 007 (D-2). |
+| `20260822000009_composite_tenant_fks` | **committed, PENDING LIVE APPLY** | not applied | Composite FKs for `creative_twins.asset_id`, `ingestion_runs.asset_id`, `metric_definitions.source_id`. Pre-check D-3 first. |
+| `20260822000010_model_task_runs` | **committed, PENDING LIVE APPLY** | not applied | Append-only model run records (Upgrade A / Ticket 5.1). D-4 step 8. |
+| `20260822000011_jobs` | **committed, PENDING LIVE APPLY** | not applied | Durable job records + worker/member RPCs (Upgrade C). D-11. |
+| `20260822000012_derived_artifacts` | **committed, PENDING LIVE APPLY** | not applied | Asset -> artifact lineage, retention sweeper (Upgrade D). D-12. |
+| `20260822000013_embeddings` | **committed, PENDING LIVE APPLY** | not applied | pgvector store, SECURITY INVOKER candidate search, coverage (Upgrade E). D-13. |
+| `20260822000014_connector_accounts` | **committed, PENDING LIVE APPLY** | not applied | Consent model, encrypted tokens, public view, request/revoke RPCs (Upgrade F). D-14. |
+| `20260822000015_workspace_quotas` | **committed, PENDING LIVE APPLY** | not applied | Atomic daily quotas, audit summary (Upgrade G). D-15. |
+| `20260822000016_experiments` | **committed, PENDING LIVE APPLY** | not applied | Experiments + append-only observed outcomes with source citability and ambiguity flag, transition guard trigger. D-16. |
+| `20260822000017_post_observations` | **committed, PENDING LIVE APPLY** | not applied | Observed posting history, partial unique index for re-imports, coverage function. D-17. |
 
-- `src/lib/evidence.test.ts` — 3 tests: numeric provenance guards
-- `src/lib/auth.test.ts` — 3 tests: auth fallback contract
-- `src/lib/rls.test.ts` — 8 tests: RLS isolation contract documentation
-- `src/lib/sourceRegistry.test.ts` — 12 tests: pure citability evaluation, stale/unverified/blocked source guards, freshness window derivation
-- `src/lib/creativeIntake.test.ts` — 23 tests: manual text bounds, client-declared file validation, video byte rejection, filename sanitization, CSV header inspection, deterministic feature manifest, known gap derivation, intake failure & rollback invariants
-- `src/lib/creativeTwin.test.ts` — 13 tests: scene delimiter parsing, reading burden / WPM calculations, candidate claim extraction, character offsets, exact vs partial Brand Codex matching, failure and unknown invariants
-- `src/lib/creativeDoctor.test.ts` — 12 tests: 5-class evidence semantics, rule derivation with neutral non-predictive wording, hook window bounds, reading burden WPM thresholds, missing timecode gaps, proof citation vs lexical match separation, unknown audience disclosure, multi-variant comparative matrix derivation
-- `src/lib/modelGateway.test.ts` — 9 tests: task allowlist scoping, client secret absence assertion, workspace UUID validation, strict request body formatting, and fail-closed handling for 401, 403, 429, 502, and 503 response codes.
+Do not re-apply 001-006. Apply 007 through 017 in order, only with user approval.
 
-Total: 83 unit & contract tests passing across 8 test suites.
+## Test suite (34 files, 437 tests; plus 15 pytest, 30 Playwright authored)
 
-## Supabase project state
+Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
+
+| File | Tests | Covers |
+|---|---:|---|
+| `src/lib/migrations.test.ts` | 121 | Static SQL contract: every table enables RLS, every policy tenant-scoped, INSERT policies bind the actor column, snapshot tables deny UPDATE/DELETE, SECURITY DEFINER functions set search_path, RPCs revoke PUBLIC/anon, storage policies use the defensive helper, composite FKs present (including 009 upgrades) |
+| `src/lib/creativeIntake.test.ts` | 23 | Intake validators, SHA-256, CSV headers, known gaps |
+| `supabase/functions/model-gateway/tasks/claimGroundingAudit.test.ts` | 19 | Ticket 5.1 output contract: allowed-ID citation checks, per-verdict rules, fail-closed whole-response rejection, task not yet allowlisted |
+| `supabase/functions/model-gateway/guards.test.ts` | 23 | Body size by bytes, field whitelist, UUID/task allowlist, fail-closed rate limit, audit row shape, CORS never wildcard, output schema |
+| `src/lib/creativeTwin.test.ts` | 13 | Scene parsing, WPM, claim extraction |
+| `src/lib/creativeDoctor.test.ts` | 12 | Diagnostic rules, matrix derivation |
+| `src/lib/sourceRegistry.test.ts` | 12 | Citability and freshness |
+| `src/lib/modelGateway.test.ts` | 9 | Client adapter fail-closed paths |
+| `src/lib/auth.test.ts` | 8 | Unconfigured fail-closed and configured pass-through, mocked client |
+| `src/lib/workspaceOverview.test.ts` | 6 | Read failures reported, not masked as empty; absent tables become null counts, not errors |
+| `src/lib/evidence.test.ts` | 3 | Numeric claim gate |
+
+Removed: `src/lib/rls.test.ts` (8 tautologies).
+
+## Changes in this phase
+
+- Audit: `docs/fable-audit.md`, `docs/supabase-deferred-validation.md`, `docs/model-gateway-deployment-readiness.md`.
+- P0-1: `20260822000007_brand_brain_rls.sql` authored.
+- Gateway: extracted `guards.ts`; audit rows now include `resource_type`/`resource_id` (previous inserts violated NOT NULL and silently failed, so no invocation was ever audited and the limiter never counted); rate limiter fails closed; body size checked on bytes read, not `Content-Length`; 500 path no longer echoes internal error text; `audit_write_failed` surfaced in responses.
+- Client: `Modal.tsx` (dialog semantics, focus trap, Escape, reduced motion) used by auth, new-workspace, intake, scene-edit, claim-edit dialogs; `workspaceOverview.ts` distinguishes read failure from empty workspace with retry; Source Registry forms surface insert/update errors; Intake and Source Registry error states have Retry; panels code-split with `React.lazy`; Tailwind v4 utilities layer installed so the Twin/Matrix/Doctor panels render styled (see ADR-011).
+- Tooling: ESLint flat config, `npm run verify`, GitHub Actions CI, `@types/node`, vitest include covers the Edge Function tests.
+- Hygiene: duplicate docs removed, agent scaffolding moved to `docs/archive/`, tracked zip removed, lockfile noise reverted.
+- Phase 2: migrations 008 (actor binding) and 009 (composite FKs) authored, PENDING LIVE APPLY, with 21 static assertions.
+- Ticket 5.1: design doc `docs/ticket-5.1-claim-grounding-audit.md` and pure validator `supabase/functions/model-gateway/tasks/claimGroundingAudit.ts` (19 tests). Not wired; allowlist unchanged.
+- P2-7: `App.tsx` (972 lines) split into `LandingPage.tsx`, `Workspace.tsx`, `AuthModal.tsx`; `App.tsx` is now the 121-line shell. Lint and typecheck clean on first pass; no behavior change.
+- Roadmap upgrades A through G built as repository-level code with contracts, tests, migrations 010-015, and per-upgrade reviews (`docs/upgrade-reviews.md`). Runtimes authored and typechecked, none deployed: Edge Function (`supabase/functions/model-gateway`), Node job worker (`services/job-worker`), Python analysis service (`services/analysis-worker`). Shared pure modules in `shared/`. QA-1 suite in `e2e/`. Runbook in `docs/operations-runbook.md`.
+
+## Product build slices (2026-08-23, master prompt Phase B/C)
+
+```
+Slice: Workspace shell + Setup and status panel
+Why now: navigation had no landmark or current-page semantics; the shell claimed "Supabase RLS active" to signed-out users; nothing showed what the build is wired for.
+In scope: <nav aria-label>, aria-current, labelled icon buttons, PANEL_TITLES registry, SetupStatus panel (static config rows + explicit gateway probe), honest Creative Council copy.
+Out of scope: gateway deployment.
+Data/security effect: none; probe sends workspace id + task name only.
+Acceptance checks: configStatus tests (4); typecheck; lint; browser smoke.
+Live verification deferred: gateway probe result against a deployed function.
+```
+
+```
+Slice: Source connectors + Test-window planning panels
+Why now: Upgrade F shipped contracts with no UI; publishing intelligence had no surface.
+In scope: shared/connectors/providers.ts catalog (matches 014 CHECK list), ConnectorsPanel (flag connectors_panel) with access states and consent-intent request/revoke, PublishingPlanner with the four-step unlock ladder and zero-observation unknown state.
+Out of scope: OAuth registration (F-1), observed history store.
+Data/security effect: request_connector/revoke_connector RPCs only; no tokens in browser.
+Acceptance checks: providers tests (3); typecheck; lint.
+Live verification deferred: D-14.
+```
+
+```
+Slice: Experiments and outcome calibration foundation
+Why now: spec Phase C item 3; B-3 open.
+In scope: shared/experiments/model.ts (readiness, outcome validation, calibration readiness, transitions; 8 tests), migration 016, src/lib/experiments.ts (typed errors; 2 tests), ExperimentsPanel with create modal, blockers list, status transitions, per-variant observation counts.
+Out of scope: outcome import UI (CSV/connector), any reading or winner.
+Data/security effect: two new tables, RLS + actor binding, append-only outcomes by policy and trigger, CHECK evidence_class = 'observed'.
+Acceptance checks: migration contract tests now 29 tables; typecheck; lint.
+Live verification deferred: D-16.
+```
+
+```
+Slice: Agent workflow foundation + Jobs panel + G-3
+Why now: spec Phase C item 4; jobs_panel flag existed with no panel; G-3 open.
+In scope: shared/agents/graph.ts (role contracts, DAG validation with arbiter/reviewer invariants, run transitions, retry policy, runtime gate; 7 tests), AgentWorkflowPanel (no run button; unavailable with reasons), JobsPanel (flag jobs_panel), consume_quota('job_enqueue') before enqueue, fail closed.
+Out of scope: agent task types on the gateway, worker deployment.
+Data/security effect: one extra RPC call per enqueue.
+Acceptance checks: tests; typecheck; lint.
+Live verification deferred: D-11, D-15.
+```
+
+```
+Slice: Form accessibility and copy
+In scope: Source Registry forms get aria-describedby to their error text and aria-busy; Brand Brain save errors render inline instead of replacing the panel (entries preserved); em dashes removed from UI copy.
+Acceptance checks: typecheck; lint; full suite.
+```
+
+```
+Slice: Outcome import
+Why now: experiments could be defined but never populated, so calibration readiness was permanently theoretical.
+In scope: shared/experiments/outcomeImport.ts (RFC4180 reader, strict number parse, ambiguous-date flagging, plan builder; 18 tests), migration 016 gains source_citability / date_ambiguous / import_note, importOutcomes client, OutcomeImportModal (source, mapping, reviewed plan, then write).
+Out of scope: connector sync, any reading of the result.
+Data/security effect: inserts into experiment_outcomes only, actor-bound, append-only; source deletion is RESTRICTed while outcomes cite it.
+Acceptance checks: 18 importer tests, 5 new migration contract assertions, typecheck, lint, full suite.
+Live verification deferred: D-16.
+```
+
+```
+Slice: Gateway probe result shared with capability gates
+In scope: SetupStatus reports its probe result upward; Workspace holds it; AgentWorkflowPanel consumes it instead of hardcoded "unknown".
+Data/security effect: none.
+```
+
+```
+Slice: Observed posting history
+Why now: the test-window planner had no input and could only ever say unknown.
+In scope: migration 017 (post_observations, partial unique index on external post id, admin-only delete, immutable rows, posting_history_coverage SECURITY INVOKER), shared/publishing/history.ts (import plan requiring a clock time, dedupe, window derivation excluding unverified-source rows; 5 tests), postHistory client, HistoryImportModal, PublishingPlanner rewritten to derive candidates from real rows.
+Out of scope: connector-sourced history, timezone-aware local windows (buckets are UTC and labelled UTC).
+Acceptance checks: 4 new migration contract assertions, typecheck, lint, full suite (430).
+Live verification deferred: D-17.
+```
+
+```
+Slice: Decision Room readiness ladder and panel truthfulness
+Why now: the guided card stopped at "connect sources" and ignored twins, metrics, experiments, and history; in a demo session the header named a panel while the body silently rendered the Decision Room.
+In scope: src/lib/decisionRoom.ts (pure 8-step ladder, one "next", blocked steps name the pending migration; 5 tests), workspaceOverview gains counts with null for absent tables (2 new tests), Decision Room renders the ladder and an honest hero, PanelUnavailable state for panels that need a signed-in workspace, a selected twin, or a flag.
+Out of scope: approved-claim count (needs a brand id round trip; the ladder shows 0 rather than guessing).
+Data/security effect: five extra head-count queries per overview load.
+Acceptance checks: 437 tests, typecheck, lint, build; browser walk-through of Decision Room, Setup and status, Experiments, Test windows with no console errors.
+Live verification deferred: counts against a real project (D-16, D-17).
+```
+
+## Supabase project (from prior state; unverified this phase)
 
 - Project ref: `ujxrapbhiedkwleccvqw`
-- URL: `https://ujxrapbhiedkwleccvqw.supabase.co`
-- Anon key in `.env` (publishable, safe with RLS active)
-- All 21 tenant tables have RLS enabled
-- `handle_new_user` trigger: auto-creates profile + workspace + owner membership + audit event on signup
-- `trg_block_connected_status` trigger on `source_registry`: restricts `connected` status to service-role
-- `trg_block_twin_version_mutation` trigger on `creative_twin_versions`: prohibits UPDATE/DELETE
-- Private Supabase Storage bucket `workspace-assets` protected by `storage_workspace_id` RLS policies
-
-## QA Requirements (Planned)
-
-- **Ticket QA-1 (future)**: Real-JWT two-user browser RLS integration test suite (Playwright). Two distinct authenticated users in independent workspaces to verify that User A cannot read, insert, update, or delete any record belonging to User B even with direct API requests.
+- Anon key in local `.env` (ignored by git)
+- Storage bucket `workspace-assets` (private)
 
 ## Active constraints
 
-- Never fabricate metrics, AI outputs, social data, or source connections
-- RLS tested and active on all tables; test cross-workspace isolation before shipping new tables
-- No `GROQ_API_KEY` or service-role key in browser code
-- Do not re-apply migrations listed above
-- Ask before: pushing, deploying, destructive migrations, paid resources
+- Never fabricate metrics, AI outputs, social data, or source connections.
+- No `GROQ_API_KEY` or service-role key in browser code.
+- Do not re-apply migrations 001-006. Apply 007-017 only with approval.
+- Ask before: pushing, deploying, destructive migrations, paid resources, secrets.
 
 ## Next
 
-**Ticket 4.2: Creative Decision Matrix & Timeline Doctor UI**
-1. Multi-variant comparative matrix UI (comparing 2-3 script/creative variants across objectives & audience segments)
-2. Timeline Doctor UI displaying likely failure moments with precise edit briefs
-3. Strict 5-class evidence badges with transparent provenance (no hallucinated virality or engagement scores)
+1. Operator applies 007 through 016 in order with the pre-checks in `docs/supabase-deferred-validation.md` (D-1 to D-17), then regenerates types and removes the `never` casts in `src/lib/jobs.ts`, `connectors.ts`, `retrieval.ts`, `experiments.ts`, `postHistory.ts`.
+2. Ticket 5.0 deployment on explicit approval (`docs/model-gateway-deployment-readiness.md`), then `ENABLED_TASKS=claim_grounding_audit` and `VITE_FLAGS=claim_grounding_panel` once D-4 step 8 passes.
+3. Worker and analysis service deployment (operator decision: host, service-role key handling, ffprobe availability).
+4. Open review items: G-2 (remove quota fallback after D-15), E-3 (embedding provider choice), F-1 (provider OAuth apps), D-2 (thumbnails/frames), B-3 (calibration tables).
+5. QA-1 run against a staging project before any external user.
+
+6. Git identity is unset in this clone (`git config user.name` and `user.email` empty). No commit can be made until the user configures it; all work above is uncommitted.

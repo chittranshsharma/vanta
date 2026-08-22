@@ -1,3 +1,5 @@
+> Status 2026-08-23: every upgrade below has been built as repository code and reviewed in `docs/upgrade-reviews.md`. Nothing is deployed; the triggers still decide when each runtime is switched on.
+
 # Vanta — Honest Technical Capability and Upgrade Roadmap
 
 ## Bottom line
