@@ -8,15 +8,15 @@
   <em>"Confidence is earned, not generated. Never replace missing evidence with plausible prose."</em>
 </p>
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%7C%20RLS-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![Groq](https://img.shields.io/badge/Groq-LPU%20Inference-F55036?style=for-the-badge)](https://groq.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(26%2F26)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(74%2F74)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Build](https://img.shields.io/badge/Production%20Build-Clean-emerald?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](#)
 
-[Overview](#-executive-summary) • [Architecture](#-system-architecture) • [Multi-Agent Council](#-the-creative-council-11-specialist-graph) • [Evidence Layer](#-five-class-evidence-standard) • [Database & Security](#-database-schema--tenant-isolation-rls) • [Getting Started](#-getting-started) • [Roadmap](#-implementation-roadmap)
+[Overview](#-executive-summary) • [Staged Architecture](#-staged-architecture--technical-roadmap) • [What Exists Today](#-what-exists-today) • [Permanent Core](#-the-permanent-core) • [Required Future Upgrades](#-required-future-upgrades) • [Evidence Standard](#-five-class-evidence-standard) • [Database & RLS](#-database-schema--tenant-isolation-rls) • [Implementation Roadmap](#-implementation-roadmap)
 
 ---
 
@@ -39,7 +39,7 @@ Vanta replaces opaque generation with **structured creative decomposition, deter
                                     ▼
                  ┌──────────────────────────────────────┐
                  │          THE CREATIVE TWIN           │
-                 │ Multi-modal decomposition into nodes │
+                 │ Deterministic parsing, scenes, WPM   │
                  └──────────────────┬───────────────────┘
                                     │
             ┌───────────────────────┴───────────────────────┐
@@ -54,8 +54,14 @@ Vanta replaces opaque generation with **structured creative decomposition, deter
                                     │
                                     ▼
                  ┌──────────────────────────────────────┐
-                 │     11-AGENT CREATIVE COUNCIL        │
-                 │   Dialectic debate & audit trials    │
+                 │     CREATIVE DECISION MATRIX         │
+                 │ Transparent side-by-side comparison  │
+                 └──────────────────┬───────────────────┘
+                                    │
+                                    ▼
+                 ┌──────────────────────────────────────┐
+                 │          TIMELINE DOCTOR             │
+                 │ Concrete failure points & edit briefs│
                  └──────────────────┬───────────────────┘
                                     │
                                     ▼
@@ -73,73 +79,114 @@ Vanta replaces opaque generation with **structured creative decomposition, deter
 
 ---
 
-## 🏛 System Architecture
+## 🏛 Staged Architecture & Technical Roadmap
 
-Vanta is engineered with a strict **provenance-first topology**. Intelligence is never computed in isolation; every finding is bound to a cryptographically traceable evidence citation and audited within tenant boundaries.
+### The Honest Reality
+The current React/Vite/Supabase foundation is **the correct first third of Vanta**, not the entire finished system. It provides the product shell, tenant-safe data, provenance, deterministic representation, and user workflows. It is deliberately not yet a media-processing, ML-calibration, live-data, or multi-agent runtime.
 
-```mermaid
-graph TD
-    subgraph Client ["Client Layer (React 19 / TypeScript)"]
-        UI[Cinematic Workspace Shell]
-        BB[Brand Brain & Codex Editor]
-        SR[Source Registry & Evidence Monitor]
-        DR[Decision Room & Timeline Doctor]
-    end
+Vanta grows by adding narrowly scoped services when a real feature requires them, avoiding premature service sprawl or unused dependencies.
 
-    subgraph AuthSecurity ["Tenant Boundary & Security"]
-        JWT[Supabase Auth JWT]
-        RLS[Row Level Security Engine]
-        TriggerBlock[DB Trigger: Connected Status Guard]
-    end
-
-    subgraph DataCore ["Database Core (PostgreSQL)"]
-        Workspaces[(Workspaces & Members)]
-        Brands[(Brand Brain & Versioned Codex)]
-        SourceReg[(Source Registry & Citability)]
-        EvidenceItems[(Evidence Items - Composite FK)]
-        MetricDefs[(Canonical Metric Definitions)]
-        AuditTrail[(Immutable Audit Log)]
-    end
-
-    subgraph IntelligenceEngine ["Inference & Agent Graph"]
-        Orchestrator[Multi-Agent Task Graph]
-        Council[11 Specialist Agent Roles]
-        Arbiter[Evidence Arbiter & Gatekeeper]
-        GroqProvider[Groq LPU Engine / Structured Outputs]
-    end
-
-    Client --> JWT
-    JWT --> RLS
-    RLS --> DataCore
-    TriggerBlock -.-> SourceReg
-    Client --> Orchestrator
-    Orchestrator --> Council
-    Council --> Arbiter
-    Council --> GroqProvider
-    Arbiter --> Client
+```
+React / TypeScript / Vite (Product Shell & Interaction State)
+        │
+        ├── Supabase Auth + PostgreSQL + RLS + Storage (Truth, Permissions, Assets)
+        │
+        └── Secure Server Boundary (Edge Functions first; Node.js service when required)
+                │
+                ├── Groq Structured Model Gateway + Evidence Validation
+                ├── Official OAuth/API Connectors + Webhooks
+                ├── Durable Queue / Workflow Engine (Retries & Background Jobs)
+                └── Python Analysis Workers (FastAPI for Media, ML, Calibration, ETL)
+                         │
+                         └── Derived features/results with lineage back to assets and evidence
 ```
 
 ---
 
-## 🤖 The Creative Council (11-Specialist Graph)
+## 🔍 What Exists Today
 
-Vanta orchestrates eleven specialized, deterministic agent personas. Rather than a single monolithic prompt, each agent evaluates creative material through a domain-specific lens, governed by strict JSON schemas and fallback routines:
+| Capability | Current Status | Technology Currently Responsible |
+|---|---|---|
+| Cinematic product shell and workspace UI | **Implemented** | React 19, TypeScript 5.9, Vite 7, Vanilla CSS, Framer Motion |
+| Login, workspaces, roles, tenant isolation | **Implemented** | Supabase Auth, PostgreSQL 15, Row Level Security (RLS) |
+| Brand context and claim rules | **Implemented** | Supabase/PostgreSQL + TypeScript client services (`brandBrain.ts`) |
+| Provenance, evidence classes, source freshness state | **Implemented** | PostgreSQL constraints, RLS triggers, deterministic TypeScript guards (`sourceRegistry.ts`, `evidence.ts`) |
+| Private text/file intake and grounded manifests | **Implemented** | Supabase Storage (`workspace-assets` bucket) + PostgreSQL + browser-side validators (`creativeIntake.ts`) |
+| Deterministic script parsing, scene representation, WPM pacing | **Implemented** | TypeScript pure functions + PostgreSQL immutable version snapshots (`creativeTwin.ts`) |
+| Creative Decision Matrix & Timeline Doctor | **Implemented** | Pure read-time derivation engine + interactive inspection UI (`creativeDoctor.ts`, `DecisionMatrix.tsx`, `TimelineDoctor.tsx`) |
+| AI analysis, creative predictions, agents, trend research, live social data, calibration | **Not implemented** | Requires future services and authorized data sources (see Roadmap below) |
 
-| Agent Role | Responsibility | Input Requirements | Safe Fallback Behavior |
-|---|---|---|---|
-| **01. Discovery Agent** | Formulates core decision briefs and objective constraints | Brand Brain + Raw Inputs | Questions missing context; marks fields unknown |
-| **02. Brand Guardian** | Validates claims against approved/prohibited boundaries | Brand Claims + Tone Guide | Flags unapproved claims as blocking violations |
-| **03. Creative Analyst** | Deconstructs creative structures, pacing, hooks, and CTAs | Creative Twin Nodes | Marks missing scene metadata as unanalyzable |
-| **04. Audience Strategist**| Evaluates segment alignment and emotional resonance | Brand Audience Profiles | Reverts to broad-spectrum category baseline |
-| **05. Journey Simulator** | Models multi-touch cognitive progression & drop-off | Funnel Step Definitions | Labels simulations as strictly directional |
-| **06. Trend Researcher** | Contextualizes creative patterns against verified RSS/news | Authorized Trend Feeds | Disables trend modifier if source is stale |
-| **07. Publishing Engineer**| Audits channel formatting, timing hierarchies & constraints | Channel Policy Specs | Enforces strict technical pass/fail criteria |
-| **08. Creative Director** | Synthesizes recommendations into a Decision Packet | Council Findings | Requires consensus before proposing tier-1 mutations |
-| **09. Mutation Engineer** | Generates precise, diff-traceable copy/hook alterations | Unsupported Claim Flags | Refuses mutation if proof points are missing |
-| **10. Experiment Manager**| Structures hypothesis testing protocols and control groups | Target Metrics | Rejects tests with ambiguous success criteria |
-| **11. Outcome Analyst** | Calibrates predictive models against imported campaign CSVs | Observed Platform Data | Rejects calibration if export is incomplete |
+---
 
-> **The Evidence Arbiter Gate:** Sits between Council outputs and the user. If an agent asserts a numeric performance claim without a verified citation, the Arbiter rejects the finding and down-levels the decision packet to `partial` or `insufficient`.
+## 🛡 The Permanent Core
+
+These components remain central throughout Vanta's evolution:
+
+| Layer | Long-term Role | Why It Remains |
+|---|---|---|
+| **React + TypeScript** | Product interface and interaction state | Best fit for the web workspace, rich timeline editor, evidence views, and component ecosystem |
+| **PostgreSQL + RLS** | System of record and tenant boundary | Vanta depends on relational integrity, auditability, transactions, constraints, provenance, and permissions |
+| **Supabase Auth / Storage** | Identity and private asset storage | Provides secure workspace access and keeps media files safely outside database rows |
+| **Deterministic TypeScript Guards** | Final claim / response gate | Model output must never bypass numeric-provenance, citability, source freshness, or approval checks |
+
+---
+
+## 🚀 Required Future Upgrades & Triggers
+
+### Upgrade A — Secure Application Backend for Groq & Connectors
+- **Trigger:** The first Groq feature, official OAuth connector, webhook, scheduled source refresh, or notification is approved.
+- **Architecture:** Browser never receives `GROQ_API_KEY`, service-role credentials, or OAuth secrets. Start with **Supabase Edge Functions** for authenticated calls; transition to a **Node.js TypeScript service** when orchestration, queues, retry policies, or SDKs outgrow edge functions.
+
+### Upgrade B — Python Analysis Service (FastAPI)
+- **Trigger:** Real video/audio processing, transcript alignment, offline evaluation, campaign-outcome calibration, large CSV normalization, embeddings/clustering, or statistical model training.
+- **Architecture:** Small **FastAPI service / worker** with explicit job contracts. Python processes media/data and returns typed records with provenance metadata back to Postgres; it never becomes a separate source of truth or returns ungrounded marketing prose directly to the browser.
+
+### Upgrade C — Durable Job Queue & Workflow Engine
+- **Trigger:** Multi-step jobs, retries, multi-agent coordination, scheduled refreshes, video rendering, webhook recovery, or background work.
+- **Architecture:** Database-backed job records for simple tasks → managed queue/workflow engine for reliable multi-step executions with idempotency keys, dead-letter queues, cancellation, and human approval gates.
+
+### Upgrade D — Media Pipeline & Scalable Object Storage
+- **Trigger:** Users upload real video bytes, frame sampling, audio transcription, or large media volume.
+- **Architecture:** Signed upload/download URLs, server-side MIME/magic-byte verification, dedicated media workers for thumbnail/frame extraction, retention lifecycle rules.
+
+### Upgrade E — Retrieval, Semantic Memory & Vector Search
+- **Trigger:** Brand Brain guidelines, past creative tests, and campaign outcomes outgrow deterministic relational lookups.
+- **Architecture:** Vector retrieval as candidate search only. Every retrieved item must still pass workspace scoping, source freshness, evidence class, and citation checks before use in prompts.
+
+### Upgrade F — Real External Data & Official Platform Integrations
+- **Trigger:** Owned-account analytics, live campaign metrics, audience activity, or publishing-time recommendations.
+- **Architecture:** User-authorized official APIs and account exports. Explicit `unknown` or `insufficient evidence` states whenever data is absent. Never promise private platform algorithm secrets or unverified audience scroll times.
+
+### Upgrade G — Observability, Feature Flags & Operational Safety
+- **Trigger:** External users, paid usage, connector jobs, model calls, or background processing.
+- **Architecture:** Error tracking, structured logs, latency/cost observability, incident alerts, data-access audits, and real-JWT two-user E2E tests.
+
+---
+
+## ⚖️ Technology Evaluation: What Python Does & Does Not Solve
+
+| Requirement | Python Helps? | What Else Is Still Required |
+|---|---|---|
+| Parse and render text/scripts | Not necessary | Current TypeScript is sufficient |
+| Video/audio feature extraction | **Yes** | Storage, queue, worker runtime, permissions, retention policy |
+| Campaign CSV normalization & calibration | **Yes** | Trusted imports, metric definitions, outcome provenance |
+| Multi-agent coordination | Sometimes | Durable workflows, model gateway, validation, approval gates |
+| Better LLM reasoning | No | Model selection, structured schemas, evidence retrieval, evaluator gates |
+| Real trend/social data | No | Authorized official APIs or permitted public sources |
+| Tenant security & RLS | No | PostgreSQL constraints, RLS, secure backend, E2E testing |
+
+> **Note on C/C++:** Vanta does not need C or C++ for UI, database, agents, or ordinary media workflows. C/C++ is used indirectly through mature codecs and native libraries. Writing custom C++ services would slow development without improving correctness.
+
+---
+
+## 🚫 Non-Negotiable Honesty Boundaries
+
+Vanta can become powerful, but it will **never claim**:
+- Exact future views, reach, revenue, or conversion.
+- The private algorithm/ranking logic of Instagram, TikTok, YouTube, or another platform.
+- Audience activity, scroll time, or trend evidence that the user has not authorized or that no permitted source supports.
+- Reliable predictions without outcome calibration against real observed data.
+- "Non-hallucinating AI." The realistic goal is **fail-closed behavior**: citations, typed schemas, validation, confidence/disagreement, unknown states, and human escalation.
 
 ---
 
@@ -158,15 +205,6 @@ To eliminate AI hallucinations, every data point, benchmark, and score in Vanta 
  │ ⚪ UNKNOWN      │ Unreviewed or uncorroborated assertion; triggers guided question state.  │
  └─────────────────┴──────────────────────────────────────────────────────────────────────────┘
 ```
-
-### Citability Resolution State Machine
-
-Sources registered in Vanta transition through strict citability states:
-
-- `verified`: Source is connected via authorized platform adapter with fresh timestamp. Allows numeric claims.
-- `citable_unverified`: User-registered manual source. Can provide qualitative grounding, but **forces partial evidence state and blocks verified numeric claims**.
-- `citable_stale`: Source has exceeded its configured `freshness_window_days`. Triggers re-verification warning.
-- `blocked`: Source is disconnected or missing. All dependent assertions are invalidated.
 
 ---
 
@@ -191,17 +229,27 @@ Vanta enforces multi-tenant row-level security across all PostgreSQL tables. Eve
 │   ├── brand_tone_guidelines           # Dimensions, approved directions, prohibited styles
 │   └── brand_compliance_boundaries    # Legal, regulatory, and channel enforcement rules
 │
-└── 20260822000003_evidence_layer.sql
-    ├── source_registry                 # Authorized connectors & manual URL sources
-    │   └── Trigger: trg_block_connected_status (Blocks manual 'connected' elevation)
-    ├── evidence_items                  # Assertions bound via Composite FK (source_id, workspace_id)
-    └── metric_definitions              # Canonical workspace metric dictionary (UNIQUE workspace_id, metric_key)
+├── 20260822000003_evidence_layer.sql
+│   ├── source_registry                 # Authorized connectors & manual URL sources
+│   │   └── Trigger: trg_block_connected_status (Blocks manual 'connected' elevation)
+│   ├── evidence_items                  # Assertions bound via Composite FK (source_id, workspace_id)
+│   └── metric_definitions              # Canonical workspace metric dictionary (UNIQUE workspace_id, metric_key)
+│
+├── 20260822000004_creative_intake.sql
+│   ├── creative_assets                 # Intake assets with SHA-256 deduplication
+│   ├── ingestion_runs                  # Audit runs for intake jobs
+│   ├── creative_twins                  # Grounded twins with deterministic manifests & known gaps
+│   └── storage: workspace-assets       # Private bucket protected by storage_workspace_id RLS
+│
+├── 20260822000005_creative_twin_expansion.sql
+│   ├── creative_scenes                 # Sequential scenes with composite FK (twin_id, workspace_id)
+│   ├── creative_claims                 # Extracted claims linked to brand_claims(id, workspace_id)
+│   └── creative_twin_versions          # Immutable snapshots protected by mutation-blocking trigger
+│
+└── 20260822000006_secure_twin_correction_rpcs.sql
+    ├── save_scene_correction_atomic    # Hardened SECURITY DEFINER procedure (auth.uid() enforced, non-anon)
+    └── save_claim_correction_atomic    # Hardened SECURITY DEFINER procedure with per-twin advisory locks
 ```
-
-### Security Invariants
-1. **Zero Cross-Workspace Leakage:** Composite Foreign Keys `(source_id, workspace_id)` prevent an item in Workspace A from referencing a source in Workspace B, even if the UUID is guessed.
-2. **Privilege Escalation Prevention:** Helper functions `is_workspace_member()` and `is_workspace_admin_or_owner()` are declared `SECURITY DEFINER` to avoid recursive RLS exploits.
-3. **Trigger-Enforced Connector Trust:** Authenticated users cannot promote a source to `connected`. Only backend service-role processes may verify live connectors.
 
 ---
 
@@ -209,13 +257,14 @@ Vanta enforces multi-tenant row-level security across all PostgreSQL tables. Eve
 
 | Layer | Technology | Rationale |
 |---|---|---|
-| **Core Framework** | React 19 + TypeScript 5.7 | Strict type safety, React Server Component compatibility, modern concurrency |
-| **Build Tooling** | Vite 6.2 | Instant HMR, ESM native bundling, optimized chunk splitting |
+| **Core Framework** | React 19.2 + TypeScript 5.9 | Strict type safety, React Server Component compatibility, modern concurrency |
+| **Build Tooling** | Vite 7.3 | Instant HMR, ESM native bundling, optimized chunk splitting |
 | **Styling & Motion** | Vanilla CSS + Framer Motion | Tokenized dark-mode aesthetic, zero Tailwind overhead, hardware-accelerated animations |
 | **Icons** | Lucide React | Consistent, lightweight vector iconography |
-| **Backend & DB** | Supabase (PostgreSQL 15) | Native Row Level Security, Realtime subscriptions, automated onboarding triggers |
-| **Inference** | Groq LPU API | Ultra-low latency structured JSON output generation for multi-agent loops |
-| **Test Runner** | Vitest 2.1 | Fast in-memory unit testing, RLS contract assertion suites |
+| **Database & Auth** | Supabase (PostgreSQL 15 + RLS) | Row Level Security, private file storage, automated onboarding triggers |
+| **Test Runner** | Vitest 2.1 | Fast in-memory unit testing, RLS contract assertion suites (74/74 tests passing) |
+| **Future Gateway** | Edge Functions / Node.js | Authenticated secret-holding server boundary for Groq / OAuth |
+| **Future ML/Media** | Python (FastAPI workers) | Video processing, transcript alignment, outcome calibration |
 
 ---
 
@@ -228,22 +277,36 @@ vanta/
 │   ├── blueprint-index.md              # Blueprint cross-reference sitemap
 │   ├── build-state.md                  # Migration states, test logs & active ticket
 │   ├── decisions.md                    # Architecture Decision Records (ADRs)
-│   └── product-constitution.md         # Non-negotiable anti-hallucination rules
+│   ├── product-constitution.md         # Non-negotiable anti-hallucination rules
+│   └── upgrade-roadmap.md              # Honest technical capability and upgrade roadmap
 │
 ├── supabase/migrations/                # Canonical Database Schema
 │   ├── 20260822000001_auth_workspaces.sql
 │   ├── 20260822000002_brand_brain.sql
-│   └── 20260822000003_evidence_layer.sql
+│   ├── 20260822000003_evidence_layer.sql
+│   ├── 20260822000004_creative_intake.sql
+│   ├── 20260822000005_creative_twin_expansion.sql
+│   └── 20260822000006_secure_twin_correction_rpcs.sql
 │
 ├── src/
 │   ├── components/
 │   │   ├── BrandBrain.tsx              # Brand Brain & Codex snapshot management UI
-│   │   └── SourceRegistry.tsx          # Sources, Evidence Items, and Metric Definitions UI
+│   │   ├── CreativeIntake.tsx          # Text & file intake with client-side guards
+│   │   ├── CreativeTwinEditor.tsx      # Structured Twin inspector, timeline, changelog, known gaps
+│   │   ├── DecisionMatrix.tsx          # Multi-variant comparative matrix table
+│   │   ├── SourceRegistry.tsx          # Sources, Evidence Items, and Metric Definitions UI
+│   │   └── TimelineDoctor.tsx          # Sequential scene diagnostics & actionable edit briefs
 │   │
 │   ├── lib/
 │   │   ├── auth.ts                     # Supabase auth & workspace switcher helpers
 │   │   ├── auth.test.ts                # Auth fallback unit tests
 │   │   ├── brandBrain.ts               # Typed Brand Brain read/write queries & snapshots
+│   │   ├── creativeDoctor.ts           # Pure diagnostic engine & decision matrix derivation
+│   │   ├── creativeDoctor.test.ts      # 12 diagnostic rule and matrix derivation tests
+│   │   ├── creativeIntake.ts           # Intake validators, manifest builders, storage uploaders
+│   │   ├── creativeIntake.test.ts      # 23 intake & boundary tests
+│   │   ├── creativeTwin.ts             # Deterministic script decomposition, WPM, regex claims
+│   │   ├── creativeTwin.test.ts        # 13 twin parsing & alignment tests
 │   │   ├── evidence.ts                 # Pure synchronous numeric claim guards & citability types
 │   │   ├── evidence.test.ts            # Numeric provenance validation tests
 │   │   ├── rls.test.ts                 # 8-point RLS isolation contract verification suite
@@ -252,13 +315,13 @@ vanta/
 │   │   └── supabase.ts                 # Client initialization with publishable key safety
 │   │
 │   ├── types/
-│   │   └── database.types.ts           # Auto-generated database typings (15 tables)
+│   │   └── database.types.ts           # Auto-generated database typings (21 tables + hardened RPCs)
 │   │
 │   ├── App.tsx                         # Main landing experience & tenant workspace shell
 │   ├── styles.css                      # Tokenized cinematic design system
 │   └── main.tsx                        # React application bootstrap
 │
-├── signalforge_final_blueprint.md      # Master product design blueprint (68 pages)
+├── signalforge_final_blueprint.md      # Master product design blueprint
 ├── package.json                        # Scripts & dependencies
 ├── todo.md                             # Live execution checklist
 └── vite.config.ts                      # Bundler configuration
@@ -290,21 +353,18 @@ cp .env.example .env
 # Client-safe Supabase credentials (RLS protected)
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-publishable-anon-key
-
-# Server-side inference key (never exposed in client bundle)
-GROQ_API_KEY=gsk_your_groq_api_key
 ```
 
-### 4. Database Migrations
-Migrations are managed in `supabase/migrations/`. Apply them sequentially using the Supabase MCP or CLI:
-```bash
-npx supabase db push
-```
-
-### 5. Run the Test Suite
-Verify all 26 unit and contract tests pass:
+### 4. Run the Test Suite
+Verify all 74 unit and contract tests pass across 7 test suites:
 ```bash
 npm test
+```
+
+### 5. Production Build
+Verify clean TypeScript compilation and bundling:
+```bash
+npm run build
 ```
 
 ### 6. Start the Development Server
@@ -322,10 +382,10 @@ Open `http://localhost:5173` to launch the Vanta cinematic interface.
 - [x] **Ticket 2.1 — Multi-Tenant Auth & Workspaces** (Supabase Auth, RLS isolation, automated signup trigger)
 - [x] **Ticket 2.2 — Brand Brain & Brand Codex** (Positioning, approved/prohibited claims, immutable snapshots)
 - [x] **Ticket 3.1 — Evidence Layer & Source Registry** (Provenanced sources, 5-class evidence, metric dictionary)
-- [ ] **Ticket 3.2 — Ingestion Workflows** (Structured script parser, import preview modal, CSV schema validation) `[ACTIVE]`
-- [ ] **Ticket 4.1 — Creative Twin Foundation** (Multi-modal asset decomposition, feature graph extraction)
-- [ ] **Ticket 4.2 — Creative Decision Matrix & Timeline Doctor** (Variant comparison, scene-level diagnosis)
-- [ ] **Ticket 5.1 — Agent Task Graph & Evidence Arbiter** (Groq structured orchestration, gatekeeper validation)
+- [x] **Ticket 3.2 — Creative Intake & Grounded Twins** (Text/file intake, video-byte rejection, grounded manifests)
+- [x] **Ticket 4.1 — Creative Twin Structured Expansion & Versioning** (Scene decomposition, WPM, regex claims, immutable version snapshots, hardened correction RPCs)
+- [x] **Ticket 4.2 — Creative Decision Matrix & Timeline Doctor** (Pure read-time derivation, multi-variant comparison, neutral policy rules, actionable edit briefs)
+- [ ] **Ticket 5.1 — Secure Model Gateway & Evidence Arbiter** (Edge Function / Node proxy, Groq structured outputs, gatekeeper validation)
 - [ ] **Ticket 5.2 — Specialist Council Rollout** (11 agent personas with typed fallback matrices)
 - [ ] **Ticket 6.1 — Counterfactual Simulation Lab** (Controlled variable mutation & hypothesis testing)
 - [ ] **Ticket 7.1 — Trend & Publishing Intelligence** (Compliant RSS feeds, distribution timing hierarchy)
@@ -347,5 +407,5 @@ Every contribution to Vanta must adhere to five non-negotiable laws:
 ---
 
 <div align="center">
-  <sub>Built with precision by Antigravity IDE • Powered by DeepMind & Groq Engineering Principles</sub>
+  <sub>Built with precision by Antigravity IDE • Grounded in Evidence-First Engineering Principles</sub>
 </div>
