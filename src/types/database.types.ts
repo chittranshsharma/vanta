@@ -569,6 +569,150 @@ export type Database = {
           }
         ];
       };
+      creative_assets: {
+        Row: {
+          asset_kind: string;
+          blocked_reason: string | null;
+          byte_size: number | null;
+          content_sha256: string | null;
+          created_at: string;
+          created_by: string | null;
+          declared_objective: string | null;
+          declared_platform: string | null;
+          id: string;
+          ingestion_status: string;
+          manual_text: string | null;
+          mime_type: string | null;
+          original_filename: string | null;
+          source_id: string;
+          storage_bucket: string | null;
+          storage_path: string | null;
+          title: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          asset_kind: string;
+          blocked_reason?: string | null;
+          byte_size?: number | null;
+          content_sha256?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          declared_objective?: string | null;
+          declared_platform?: string | null;
+          id?: string;
+          ingestion_status?: string;
+          manual_text?: string | null;
+          mime_type?: string | null;
+          original_filename?: string | null;
+          source_id: string;
+          storage_bucket?: string | null;
+          storage_path?: string | null;
+          title: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          asset_kind?: string;
+          blocked_reason?: string | null;
+          byte_size?: number | null;
+          content_sha256?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          declared_objective?: string | null;
+          declared_platform?: string | null;
+          id?: string;
+          ingestion_status?: string;
+          manual_text?: string | null;
+          mime_type?: string | null;
+          original_filename?: string | null;
+          source_id?: string;
+          storage_bucket?: string | null;
+          storage_path?: string | null;
+          title?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "creative_assets_source_id_workspace_id_fkey";
+            columns: ["source_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "source_registry";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "creative_assets_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      creative_twins: {
+        Row: {
+          asset_id: string;
+          asset_kind: string;
+          created_at: string;
+          declared_objective: string | null;
+          declared_platform: string | null;
+          deterministic_features: Json;
+          id: string;
+          known_gaps: Json;
+          source_evidence_ids: Json;
+          state: string;
+          title: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          asset_id: string;
+          asset_kind: string;
+          created_at?: string;
+          declared_objective?: string | null;
+          declared_platform?: string | null;
+          deterministic_features?: Json;
+          id?: string;
+          known_gaps?: Json;
+          source_evidence_ids?: Json;
+          state?: string;
+          title: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          asset_id?: string;
+          asset_kind?: string;
+          created_at?: string;
+          declared_objective?: string | null;
+          declared_platform?: string | null;
+          deterministic_features?: Json;
+          id?: string;
+          known_gaps?: Json;
+          source_evidence_ids?: Json;
+          state?: string;
+          title?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "creative_twins_asset_id_fkey";
+            columns: ["asset_id"];
+            isOneToOne: true;
+            referencedRelation: "creative_assets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "creative_twins_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       evidence_items: {
         Row: {
           citation_date: string | null;
@@ -640,6 +784,63 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "source_registry";
             referencedColumns: ["id", "workspace_id"];
+          }
+        ];
+      };
+      ingestion_runs: {
+        Row: {
+          asset_id: string;
+          completed_at: string | null;
+          created_at: string;
+          error_code: string | null;
+          error_message: string | null;
+          id: string;
+          ingestion_method: string;
+          started_by: string | null;
+          status: string;
+          validation_summary: Json;
+          workspace_id: string;
+        };
+        Insert: {
+          asset_id: string;
+          completed_at?: string | null;
+          created_at?: string;
+          error_code?: string | null;
+          error_message?: string | null;
+          id?: string;
+          ingestion_method: string;
+          started_by?: string | null;
+          status: string;
+          validation_summary?: Json;
+          workspace_id: string;
+        };
+        Update: {
+          asset_id?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          error_code?: string | null;
+          error_message?: string | null;
+          id?: string;
+          ingestion_method?: string;
+          started_by?: string | null;
+          status?: string;
+          validation_summary?: Json;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_runs_asset_id_fkey";
+            columns: ["asset_id"];
+            isOneToOne: false;
+            referencedRelation: "creative_assets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ingestion_runs_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
           }
         ];
       };
@@ -725,7 +926,7 @@ export type Database = {
           id?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: []
       };
       source_registry: {
         Row: {
@@ -846,7 +1047,7 @@ export type Database = {
           slug?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: []
       };
     };
     Views: {
@@ -855,6 +1056,7 @@ export type Database = {
     Functions: {
       is_workspace_admin_or_owner: { Args: { ws_id: string }; Returns: boolean };
       is_workspace_member: { Args: { ws_id: string }; Returns: boolean };
+      storage_workspace_id: { Args: { object_name: string }; Returns: string };
     };
     Enums: {
       [_ in never]: never;

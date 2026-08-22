@@ -20,7 +20,10 @@ import { deriveEvidenceState, type EvidenceClass } from "./lib/evidence";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { BrandBrain } from "./components/BrandBrain";
 import { SourceRegistry } from "./components/SourceRegistry";
+import { CreativeIntake } from "./components/CreativeIntake";
 import { fetchSourcesForWorkspace, type SourceRegistryRow } from "./lib/sourceRegistry";
+import { fetchWorkspaceAssets, type CreativeAssetRow } from "./lib/creativeIntake";
+import { fetchBrandForWorkspace, type Brand } from "./lib/brandBrain";
 import {
   signInWithEmail,
   signUpWithEmail,
@@ -361,7 +364,9 @@ function Workspace({
   onOpenAuth: () => void;
 }) {
   const [sources, setSources] = useState<SourceRegistryRow[]>([]);
-  const [activePanel, setActivePanel] = useState<"decision" | "brand" | "sources">("decision");
+  const [brand, setBrand] = useState<Brand | null>(null);
+  const [assets, setAssets] = useState<CreativeAssetRow[]>([]);
+  const [activePanel, setActivePanel] = useState<"decision" | "brand" | "sources" | "intake">("decision");
   const [newWsModalOpen, setNewWsModalOpen] = useState(false);
   const [newWsName, setNewWsName] = useState("");
   const [creatingWs, setCreatingWs] = useState(false);
@@ -369,17 +374,25 @@ function Workspace({
 
   useEffect(() => {
     let mounted = true;
-    async function loadSources() {
+    async function loadWorkspaceData() {
       if (!activeWorkspace) {
         setSources([]);
+        setBrand(null);
+        setAssets([]);
         return;
       }
-      const res = await fetchSourcesForWorkspace(activeWorkspace.id);
+      const [sRes, bRes, aRes] = await Promise.all([
+        fetchSourcesForWorkspace(activeWorkspace.id),
+        fetchBrandForWorkspace(activeWorkspace.id),
+        fetchWorkspaceAssets(activeWorkspace.id)
+      ]);
       if (mounted) {
-        setSources(res);
+        setSources(sRes);
+        setBrand(bRes);
+        setAssets(aRes);
       }
     }
-    loadSources();
+    loadWorkspaceData();
     return () => {
       mounted = false;
     };
@@ -472,6 +485,9 @@ function Workspace({
           <button className={`side-link ${activePanel === "brand" ? "active" : ""}`} onClick={() => setActivePanel("brand")}>
             <Sparkles size={17} /> Brand Brain
           </button>
+          <button className={`side-link ${activePanel === "intake" ? "active" : ""}`} onClick={() => setActivePanel("intake")}>
+            <WandSparkles size={17} /> Creative intake
+          </button>
           <button className={`side-link ${activePanel === "sources" ? "active" : ""}`} onClick={() => setActivePanel("sources")}>
             <Compass size={17} /> Source registry
           </button>
@@ -511,7 +527,15 @@ function Workspace({
             <p className="eyebrow">
               {activeWorkspace ? `${activeWorkspace.name} · ${activeWorkspace.role}` : "Decision Room"}
             </p>
-            <h1>{activePanel === "brand" ? "Brand Brain" : activePanel === "sources" ? "Source Registry" : "Start with what you can prove."}</h1>
+            <h1>
+              {activePanel === "brand"
+                ? "Brand Brain"
+                : activePanel === "intake"
+                ? "Creative Intake"
+                : activePanel === "sources"
+                ? "Source Registry"
+                : "Start with what you can prove."}
+            </h1>
           </div>
           <button className="ghost-button" onClick={onExit}>
             Back to site
@@ -521,6 +545,14 @@ function Workspace({
         {activePanel === "brand" && activeWorkspace && user ? (
           <div style={{ marginTop: 32 }}>
             <BrandBrain
+              workspaceId={activeWorkspace.id}
+              userId={user.id}
+              isAdmin={activeWorkspace.role === "owner" || activeWorkspace.role === "admin"}
+            />
+          </div>
+        ) : activePanel === "intake" && activeWorkspace && user ? (
+          <div style={{ marginTop: 32 }}>
+            <CreativeIntake
               workspaceId={activeWorkspace.id}
               userId={user.id}
               isAdmin={activeWorkspace.role === "owner" || activeWorkspace.role === "admin"}
@@ -550,8 +582,8 @@ function Workspace({
               Packet. Vanta will keep unavailable inputs visibly unavailable.
             </p>
           </div>
-          <button className="primary-button" onClick={() => setActivePanel("sources")}>
-            Register source <ChevronRight size={17} />
+          <button className="primary-button" onClick={() => setActivePanel("intake")}>
+            Intake asset <ChevronRight size={17} />
           </button>
         </section>
 
@@ -595,18 +627,35 @@ function Workspace({
             </ul>
           </article>
 
-          <article className="workspace-card span-two" style={{ cursor: "pointer" }} onClick={() => setActivePanel("brand")}>
+          <article
+            className="workspace-card span-two"
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              if (!brand || !brand.name) setActivePanel("brand");
+              else if (assets.length === 0) setActivePanel("intake");
+              else setActivePanel("sources");
+            }}
+          >
             <div className="card-heading">
               <span>Next safe action</span>
               <span className="pill">guided</span>
             </div>
             <div className="next-action">
-              <span>01</span>
+              <span>{!brand || !brand.name ? "01" : assets.length === 0 ? "02" : "03"}</span>
               <div>
-                <h3>Configure Brand Brain</h3>
+                <h3>
+                  {!brand || !brand.name
+                    ? "Configure Brand Brain"
+                    : assets.length === 0
+                    ? "Intake First Creative Asset"
+                    : "Ground Sources & Evidence"}
+                </h3>
                 <p>
-                  Define the product, target audience, approved claims, and objective before connecting
-                  sources or generating recommendations.
+                  {!brand || !brand.name
+                    ? "Define the product, target audience, approved claims, and objective before connecting sources or generating recommendations."
+                    : assets.length === 0
+                    ? "Submit an ad script, hook variation, or landing copy to construct a grounded Creative Twin manifest."
+                    : "Connect authorized platform sources and verify citations before running agent evaluations."}
                 </p>
               </div>
               <ChevronRight size={19} />

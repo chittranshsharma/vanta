@@ -15,7 +15,7 @@
 - [x] Add Supabase-backed authentication, tenant isolation, and persistent workspace data (Ticket 2.1 complete).
 - [x] Implement the Brand Brain (Ticket 2.2 complete).
 - [x] Ticket 3.1: Evidence Layer & Source Registry — sources, evidence items, metric definitions, citability validation, composite FKs (Ticket 3.1 complete).
-- [ ] Ticket 3.2: Ingestion Workflows — structured script/asset parsing, import preview, CSV/copy schema validation. ← ACTIVE
+- [x] Ticket 3.2: Ingestion Workflows — structured script/asset parsing, import preview, CSV/copy schema validation (Ticket 3.2 complete).
 - [ ] Ticket 4.1: Creative Twin — structured creative representation, feature extraction, manual correction.
 - [ ] Add compliant trend, publishing, and outcome-calibration workflows.
 - [ ] Verify functionality, security boundaries, visual quality, and documented limitations.
