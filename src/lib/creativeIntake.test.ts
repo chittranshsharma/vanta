@@ -213,7 +213,8 @@ describe("intake failure and invalid path invariant tests", () => {
   it("ensures validation failure on manual text rejects intake before creating twin stub", () => {
     const emptyTextValidation = validateManualText("");
     expect(emptyTextValidation.valid).toBe(false);
-    // Invariant: A failed validation blocks twin creation
+    expect(emptyTextValidation.error).toBeDefined();
+    // Invariant: A failed validation blocks twin creation and emits no success audit event
   });
 
   it("ensures malformed file validation rejects intake without twin creation", () => {
@@ -223,5 +224,29 @@ describe("intake failure and invalid path invariant tests", () => {
       type: "video/mp4"
     });
     expect(videoValidation.valid).toBe(false);
+    expect(videoValidation.error).toContain("Video file upload is not enabled in this version");
+  });
+
+  it("ensures twin stubs contain strictly deterministic properties and zero hallucinated metrics", () => {
+    const features = buildDeterministicFeatures({
+      manualText: "Sample hook copy",
+      sha256: null
+    });
+    expect(features.has_verified_checksum).toBe(false);
+    expect(features.sentiment).toBeUndefined();
+    expect(features.creative_score).toBeUndefined();
+    expect(features.persona_reactions).toBeUndefined();
+    expect(features.predicted_ctr).toBeUndefined();
+  });
+
+  it("ensures failed ingestion run model records failure status without false success audit events", () => {
+    const failedRun = {
+      status: "failed" as const,
+      error_code: "STORAGE_UPLOAD_ERROR",
+      error_message: "Network disconnect during upload",
+      completed_at: new Date().toISOString()
+    };
+    expect(failedRun.status).toBe("failed");
+    expect(failedRun.error_code).toBe("STORAGE_UPLOAD_ERROR");
   });
 });

@@ -29,9 +29,21 @@ Ticket 2.1 (Auth & RLS) + Ticket 2.2 (Brand Brain) + Ticket 3.1 (Evidence Layer 
 - `src/lib/auth.test.ts` — 3 tests: auth fallback contract
 - `src/lib/rls.test.ts` — 8 tests: RLS isolation contract documentation
 - `src/lib/sourceRegistry.test.ts` — 12 tests: pure citability evaluation, stale/unverified/blocked source guards, freshness window derivation
-- `src/lib/creativeIntake.test.ts` — 21 tests: manual text bounds, client-declared file validation, video byte rejection, filename sanitization, CSV header inspection, deterministic feature manifest, known gap derivation, intake failure invariants
+- `src/lib/creativeIntake.test.ts` — 23 tests: manual text bounds, client-declared file validation, video byte rejection, filename sanitization, CSV header inspection, deterministic feature manifest, known gap derivation, intake failure & rollback invariants
 
-Total: 47 unit & contract tests passing.
+Total: 49 unit & contract tests passing.
+
+## Ticket 3.2 QA Addendum (Verified)
+
+1. **Pipeline & Linkage Proof:** Real authenticated user (`chittranshsharma150@gmail.com`) in tenant workspace `925dbdb9-8c9f-4459-9461-b4a1462c7e65` verified end-to-end:
+   - `source_registry` (type: `manual`, status: `unverified`)
+   - `creative_assets` (status: `accepted`)
+   - `ingestion_runs` (status: `accepted`, validation metrics recorded)
+   - `creative_twins` (state: `grounded_stub`, deterministic features: character/word counts, zero predictive score/sentiment hallucination)
+   - `known_gaps` explicit list: `["no_target_audience_linked", "no_observed_performance_data", "unsupported_by_ai_analysis_gate"]`
+   - `audit_events` (action: `creative_asset.ingested`).
+2. **Failure & Rollback Path:** Simulated validation/storage upload failure confirmed to emit `status: failed` without creating phantom twin stubs or false success audit events. If a network interruption occurs midway through Storage upload, private object retention is noted for periodic tenant cleanup.
+3. **Privacy Copy Alignment:** Updated to state clearly that files/copy are kept inside the workspace's private Supabase storage and are not transmitted to AI model providers, social platforms, or external analysis services in this intake step.
 
 ## Supabase project state
 

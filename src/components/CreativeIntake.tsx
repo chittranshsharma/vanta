@@ -268,7 +268,7 @@ export function CreativeIntake({ workspaceId, userId, isAdmin }: CreativeIntakeP
       >
         <Lock size={14} />
         <span>
-          <strong>Private Workspace Storage:</strong> Ingested files are stored in your tenant-isolated Supabase Storage bucket. No model training, remote scraping, or telemetry is performed.
+          <strong>Private Workspace Storage:</strong> Ingested files and text are stored securely in your tenant-isolated Supabase bucket and are not sent to AI model providers, social platforms, or external analysis services in this intake step.
         </span>
       </div>
 
