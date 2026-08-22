@@ -94,3 +94,7 @@ Browser → Cloudflare Worker → Supabase (service-role, server-side only)
 - Append-only `audit_events` — never update or delete rows.
 - Model and prompt version stored with every AI finding.
 - No `GROQ_API_KEY` or service-role keys in browser code, logs, fixtures, or committed files.
+
+## Staged Evolution & Upgrade Roadmap
+
+For full trigger-based upgrade policies (Node/Edge gateway, Python FastAPI workers, durable job queues, media pipelines, and non-negotiable honesty limits), see [`docs/upgrade-roadmap.md`](file:///c:/Users/CHITTRANSH/OneDrive/Desktop/vanta/docs/upgrade-roadmap.md).

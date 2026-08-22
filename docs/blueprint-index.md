@@ -21,5 +21,6 @@ Maps `signalforge_final_blueprint.md` headings to implementation concerns. Read 
 | Multi-agent orchestration | Creative Council, task graph, Evidence Arbiter, fallback matrix | `05_AGENT_ORCHESTRATION.md` |
 | Technology stack | Free-first stack, layer boundaries, security, observability | `docs/architecture.md` |
 | Build order / tickets | Ordered implementation phases and acceptance criteria | `06_BUILD_TICKETS.md` |
+| Technical roadmap & future runtimes | Honest capabilities, triggers for Node/Python/queues, non-negotiable limits | `docs/upgrade-roadmap.md` |
 | Security and trust | RLS, secret safety, signed URLs, consent, audit events | `docs/architecture.md` |
 | Model routing and handoffs | Model roles, context discipline, continuation prompts | `08_MODEL_HANDOFFS.md` |
