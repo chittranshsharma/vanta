@@ -1,0 +1,21 @@
+# Vanta Implementation TODO
+
+- [x] Inventory the local blueprint and implementation materials, then identify the highest-value Manus capabilities, external applications, and optional MCP/API integrations.
+- [x] Clone and inspect the user’s `chittranshsharma/vanta` GitHub repository before making any code changes.
+- [x] Complete a Chrome-based research pass for Vanta’s highest-value skills, applications, APIs, and MCPs, grounded in official documentation.
+- [x] Create a prioritized enablement plan that distinguishes required, recommended, and deferred integrations before implementation.
+- [x] Verify the enabled Chrome/browser workflow, Groq-first model provider, and development integration access for the Vanta project.
+- [x] Configure the Vanta architecture around Groq structured outputs, evidence validation, and safe provider fallback states.
+- [x] Establish the Vanta implementation environment, architecture, evidence policy, and source-access plan.
+- [x] Build the cinematic Vanta public site and evidence-safe local workspace foundation.
+- [x] Create all required durable project docs: blueprint-index, product-constitution, architecture, decisions, build-state (Ticket 0.1 complete).
+- [x] Create a concise, token-efficient Antigravity operating prompt for continuing the Vanta implementation.
+- [x] Audit the repository to determine whether Ticket 3.1 has begun and reconcile its completed evidence-layer implementation state.
+- [ ] Create a detailed Gemini Flash execution packet for Ticket 3.2: evidence-safe ingestion and the deterministic Creative Twin foundation.
+- [x] Add Supabase-backed authentication, tenant isolation, and persistent workspace data (Ticket 2.1 complete).
+- [x] Implement the Brand Brain (Ticket 2.2 complete).
+- [x] Ticket 3.1: Evidence Layer & Source Registry — sources, evidence items, metric definitions, citability validation, composite FKs (Ticket 3.1 complete).
+- [ ] Ticket 3.2: Ingestion Workflows — structured script/asset parsing, import preview, CSV/copy schema validation. ← ACTIVE
+- [ ] Ticket 4.1: Creative Twin — structured creative representation, feature extraction, manual correction.
+- [ ] Add compliant trend, publishing, and outcome-calibration workflows.
+- [ ] Verify functionality, security boundaries, visual quality, and documented limitations.
