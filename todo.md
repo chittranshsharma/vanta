@@ -45,7 +45,8 @@
 - [x] G-3: `enqueueJob` consumes `job_enqueue` quota first, fails closed.
 - [ ] G-2: remove gateway quota fallback after D-15.
 - [x] B-3: experiments + observed outcomes (migration 016, `shared/experiments`, Experiments panel).
-- [ ] D-2: thumbnail and frame-sample artifacts.
+- [x] D-2: thumbnail and frame-sample artifacts — contract, reader, and readiness UI. `shared/media/artifacts.ts` states the per-kind `features` contract (image bytes plus pixel dimensions; frames additionally require `at_seconds`), `src/lib/artifacts.ts` reads `derived_artifacts` at the boundary, and `MediaReadiness` in Creative Intake reports not-applicable, no-producer-in-build, none-produced-yet, unreadable, and ready as five distinct states. No placeholder image is ever rendered.
+- [ ] Write a real thumbnail producer. `thumbnail` and `frame_sample` are legal `artifact_kind` values and nothing in this build writes either, so the UI honestly reports a missing capability. Needs an image encoder in the job worker, a `workspace-assets` write path, and a new job type in `shared/jobs/policy.ts`; frame sampling additionally waits on video byte intake (`VIDEO_INTAKE_ENABLED`).
 - [x] Outcome import UI (CSV against a registered source) feeding `experiment_outcomes` with per-row provenance.
 - [ ] Connector-sourced outcome sync (waits on F-1).
 - [x] Observed posting-history store (migration 017) plus import UI; planner derives candidates from real rows.

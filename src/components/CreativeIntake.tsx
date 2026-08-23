@@ -29,6 +29,7 @@ import {
   type AssetKind
 } from "../lib/creativeIntake";
 import { initializeStructuredTwin } from "../lib/creativeTwin";
+import { MediaReadiness } from "./MediaReadiness";
 import { Modal } from "./Modal";
 
 interface CreativeIntakeProps {
@@ -410,6 +411,8 @@ export function CreativeIntake({ workspaceId, userId, onOpenTwin }: CreativeInta
                   </div>
                 </div>
               ) : null}
+
+              <MediaReadiness workspaceId={workspaceId} asset={activeAsset} />
 
               {/* Grounded Twin Manifest Box */}
               <div>

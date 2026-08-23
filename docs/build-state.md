@@ -10,7 +10,7 @@ Verified locally on 2026-08-23:
 |---|---|
 | `npm run lint` | 0 errors, 0 warnings |
 | `npm run typecheck` | clean |
-| `npm test` | 485 passed / 485, 36 suites |
+| `npm test` | 503 passed / 503, 37 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run test:e2e` | 30 skipped with reason (no staging credentials); suite authored for QA-1 |
 | `npm run typecheck:worker` | clean |
@@ -43,7 +43,7 @@ Access boundary this phase: **Read-only live inspection completed on 2026-08-23*
 
 All migrations 001–017 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
-## Test suite (36 files, 485 tests; plus 15 pytest, 30 Playwright authored)
+## Test suite (37 files, 503 tests; plus 15 pytest, 30 Playwright authored)
 
 Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 
@@ -62,6 +62,7 @@ Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 | `src/lib/postHistory.test.ts` | 9 | Fail-closed reads; batch delete scoped by workspace and batch, zero rows treated as possible permission denial, audit row shape, audit-write failure reported |
 | `shared/publishing/batches.test.ts` | 9 | Batch grouping counts only stored rows, orders by instant across offsets, keeps unbatched rows separate |
 | `shared/publishing/history.test.ts` | 11 | Import plan requires a clock time and dedupes; window buckets use wall-clock time in a named IANA zone, honour the offset in force on each date, and report the zone actually used |
+| `shared/media/artifacts.test.ts` | 18 | Thumbnail and frame-sample `features` contracts (frames require `at_seconds`); probe facts distinguish recorded absence of audio from silence; readiness separates not-applicable, no producer in build, none produced yet, unreadable rows, and ready |
 | `src/lib/auth.test.ts` | 8 | Unconfigured fail-closed and configured pass-through, mocked client |
 | `src/lib/evidence.test.ts` | 3 | Numeric claim gate |
 
@@ -214,6 +215,21 @@ Out of scope: a per-workspace stored timezone (there is no column for one, so th
 Data/security effect: none. Read-side derivation only; no query, policy, or column changed.
 Acceptance checks: 485 tests (6 new in `shared/publishing/history.test.ts`), lint, typecheck, worker typecheck, production build.
 Live verification deferred: none required; the derivation is pure and covered by fixed-instant tests across UTC, Asia/Kolkata, and America/New_York in both DST phases.
+```
+
+```
+Slice: Thumbnail and frame-sample contract with honest media readiness
+Why now: `thumbnail` and `frame_sample` are legal `artifact_kind` values in migration 012, but nothing in this repository produces or reads either, and Creative Intake said nothing about it. An asset detail screen that silently omits a preview reads as "this asset has no thumbnail" when the truth is "this build cannot make one".
+In scope: `shared/media/artifacts.ts` states the per-kind `features` contract and resolves per-capability readiness; `src/lib/artifacts.ts` reads `derived_artifacts` rows at the boundary; `src/components/MediaReadiness.tsx` renders the result inside the Creative Intake asset detail column.
+Contract, so a future producer has something to satisfy: a thumbnail is stored image bytes (`storage_bucket`, `storage_path`, a displayable `mime_type`) plus `features.width` and `features.height` in pixels — a producer that does not record what it rendered has not recorded enough to cite. A frame sample is all of that plus `features.at_seconds`, because an image with no timestamp cannot be attributed to a moment in the source; `features.frame_index` is optional. `media_metadata` matches what the worker's ffprobe parser already writes.
+Five distinct absence states, not one "no data": `not_applicable` (a text-only asset holds no bytes to probe, so nothing is missing), `no_producer` (nothing in this build writes the kind, so no queue will ever fill it — a missing capability), `none_produced` (a producer exists and has not run for this asset — pending), `unreadable` (rows exist and none satisfies the contract, listing every reason), and `ready`. `PRODUCERS_IN_BUILD` is what separates the first two: `media_metadata` maps to `media_worker`, every other kind maps to an empty list.
+No producer exists and none was invented. There is no `media_thumbnail` or `frame_sample` job type in `shared/jobs/policy.ts`, and adding a real producer needs an image encoder in the worker plus a bucket write path; that is a separate slice, recorded in `todo.md` rather than faked.
+Never a placeholder image: an `<img>` renders only where a stored row proved bytes and pixel dimensions, its link is signed for `workspace-assets` and expires, and a row recorded in any other bucket is reported instead of fetched. Frame samples are listed by the second they were taken from rather than each fetching bytes, since signing N URLs for a capability with no producer is speculative work.
+Client posture: read-only. Migration 012 restricts member INSERT to `producer = 'deterministic'`, forbids UPDATE, and limits DELETE to owners and admins, so there is nothing here for the browser to write and no writer was added. A missing `derived_artifacts` relation is reported as migration 012 not being applied, separately from a read failure.
+Out of scope: a thumbnail or frame producer, video byte intake (`VIDEO_INTAKE_ENABLED` is false, which is why frames report `not_applicable` today), and transcripts.
+Data/security effect: one new read query scoped by both `workspace_id` and `asset_id`. No policy, function, column, or migration changed.
+Acceptance checks: 503 tests (18 new in `shared/media/artifacts.test.ts`), lint, typecheck, worker typecheck, production build.
+Live verification deferred: rendering a real signed thumbnail end to end, which needs a producer that does not exist yet and an authenticated browser session (Antigravity).
 ```
 
 ## Supabase project (from prior state; unverified this phase)
