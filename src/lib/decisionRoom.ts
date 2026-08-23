@@ -7,9 +7,40 @@
 
 export type WorkspacePanel = "brand" | "intake" | "twin" | "sources" | "experiments" | "publishing";
 
+/**
+ * How many Brand Codex claims are approved for use, or why that number is not
+ * available. The count is a governance fact about what the brand has ratified.
+ * It is not evidence that any claim performs, and the copy never implies it is.
+ *
+ * The four non-numeric cases are kept apart on purpose: "no brand yet",
+ * "nothing approved yet" and "the read failed" are three different situations
+ * and collapsing them into 0 would state something the client cannot back.
+ */
+export type ApprovedClaimCount =
+  | { state: "loading" }
+  | { state: "no_brand" }
+  | { state: "unreadable"; reason: string }
+  | { state: "counted"; count: number };
+
+/** One sentence naming what the number is and, when there is no number, why. */
+export function describeApprovedClaims(claims: ApprovedClaimCount): string {
+  switch (claims.state) {
+    case "loading":
+      return "Counting approved Brand Codex claims…";
+    case "no_brand":
+      return "No Brand Codex exists yet, so there is nothing approved to count.";
+    case "unreadable":
+      return `Approved Brand Codex claims could not be read: ${claims.reason}`;
+    case "counted":
+      return claims.count === 0
+        ? "No Brand Codex claim is approved for use yet."
+        : `${claims.count} Brand Codex claim(s) approved for use. Approval is a governance decision, not proof of performance.`;
+  }
+}
+
 export interface WorkspaceFacts {
   hasBrandName: boolean;
-  approvedClaimCount: number;
+  approvedClaims: ApprovedClaimCount;
   assetCount: number;
   twinCount: number;
   sourceCount: number;
@@ -43,7 +74,7 @@ export function deriveGuidance(f: WorkspaceFacts): DecisionRoomGuidance {
       id: "brand",
       title: "Define the Brand Brain",
       detail: f.hasBrandName
-        ? `Saved. ${f.approvedClaimCount} approved claim(s) recorded.`
+        ? `Saved. ${describeApprovedClaims(f.approvedClaims)}`
         : "Product, audience, approved claims, and prohibited claims. Blank fields stay blank; nothing is inferred.",
       panel: "brand",
       done: f.hasBrandName

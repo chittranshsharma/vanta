@@ -8,7 +8,7 @@ import { Modal } from "./Modal";
 import { fetchBrandClaims, type BrandClaim } from "../lib/brandBrain";
 import { EMPTY_OVERVIEW, fetchWorkspaceOverview, type LoadStatus, type WorkspaceOverview } from "../lib/workspaceOverview";
 import { evaluateSourceCitability } from "../lib/sourceRegistry";
-import { deriveGuidance, type WorkspacePanel } from "../lib/decisionRoom";
+import { deriveGuidance, type ApprovedClaimCount, type WorkspacePanel } from "../lib/decisionRoom";
 import {
   fetchStructuredTwin,
   type CreativeTwinRow,
@@ -208,9 +208,14 @@ export function Workspace({
     isFresh: isFreshConnected
   });
 
+  // While the overview is in flight the placeholder overview carries no count, so
+  // the ladder says it is counting rather than reporting a stale or invented zero.
+  const approvedClaims: ApprovedClaimCount =
+    overviewStatus === "loading" ? { state: "loading" } : overview.approvedClaims;
+
   const guidance = deriveGuidance({
     hasBrandName: Boolean(brand?.name),
-    approvedClaimCount: 0,
+    approvedClaims,
     assetCount: assets.length,
     twinCount: overview.counts.twins,
     sourceCount: sources.length,
@@ -457,7 +462,12 @@ export function Workspace({
         ) : activePanel === "experiments" && activeWorkspace && user ? (
           <ExperimentsPanel key={activeWorkspace.id} workspaceId={activeWorkspace.id} userId={user.id} />
         ) : activePanel === "publishing" && activeWorkspace && user ? (
-          <PublishingPlanner key={activeWorkspace.id} workspaceId={activeWorkspace.id} userId={user.id} />
+          <PublishingPlanner
+            key={activeWorkspace.id}
+            workspaceId={activeWorkspace.id}
+            userId={user.id}
+            isAdmin={activeWorkspace.role === "owner" || activeWorkspace.role === "admin"}
+          />
         ) : activePanel === "agents" && activeWorkspace && user ? (
           <AgentWorkflowPanel key={activeWorkspace.id} workspaceId={activeWorkspace.id} gatewayState={gatewayState} />
         ) : activePanel === "jobs" && activeWorkspace && user && isFlagOn("jobs_panel") ? (

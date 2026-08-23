@@ -10,11 +10,11 @@ Verified locally on 2026-08-23:
 |---|---|
 | `npm run lint` | 0 errors, 0 warnings |
 | `npm run typecheck` | clean |
-| `npm test` | 437 passed / 437, 34 suites |
+| `npm test` | 479 passed / 479, 36 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run test:e2e` | 30 skipped with reason (no staging credentials); suite authored for QA-1 |
 | `npm run typecheck:worker` | clean |
-| `npm run build` | clean; largest chunk 240 kB (75 kB gzip), panels code-split |
+| `npm run build` | clean; largest chunk 249 kB (78 kB gzip), panels code-split |
 | Browser smoke (dev server) | landing renders; auth dialog exposes `role="dialog"`, labelled close, Escape closes; workspace shell walked in demo mode (Decision Room ladder, Setup and status, Experiments, Test windows) with no console errors |
 
 Access boundary this phase: **Read-only live inspection completed on 2026-08-23**. Verified: PostgreSQL 17.6, Plan: Free (no PITR / automated backups), 21 public tables with RLS enabled, 0 actor binding violations, 0 cross-tenant FK violations.
@@ -43,7 +43,7 @@ Access boundary this phase: **Read-only live inspection completed on 2026-08-23*
 
 All migrations 001–017 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
-## Test suite (34 files, 437 tests; plus 15 pytest, 30 Playwright authored)
+## Test suite (36 files, 479 tests; plus 15 pytest, 30 Playwright authored)
 
 Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 
@@ -56,9 +56,12 @@ Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 | `src/lib/creativeTwin.test.ts` | 13 | Scene parsing, WPM, claim extraction |
 | `src/lib/creativeDoctor.test.ts` | 12 | Diagnostic rules, matrix derivation |
 | `src/lib/sourceRegistry.test.ts` | 12 | Citability and freshness |
+| `src/lib/workspaceOverview.test.ts` | 12 | Read failures reported, not masked as empty; absent tables become null counts, not errors; approved-claim count distinguishes no brand, observed zero, and unreadable |
+| `src/lib/decisionRoom.test.ts` | 11 | Ladder ordering and blocked steps; approved-claim copy never states a count it does not have and never implies performance |
 | `src/lib/modelGateway.test.ts` | 9 | Client adapter fail-closed paths |
+| `src/lib/postHistory.test.ts` | 9 | Fail-closed reads; batch delete scoped by workspace and batch, zero rows treated as possible permission denial, audit row shape, audit-write failure reported |
+| `shared/publishing/batches.test.ts` | 9 | Batch grouping counts only stored rows, orders by instant across offsets, keeps unbatched rows separate |
 | `src/lib/auth.test.ts` | 8 | Unconfigured fail-closed and configured pass-through, mocked client |
-| `src/lib/workspaceOverview.test.ts` | 6 | Read failures reported, not masked as empty; absent tables become null counts, not errors |
 | `src/lib/evidence.test.ts` | 3 | Numeric claim gate |
 
 Removed: `src/lib/rls.test.ts` (8 tautologies).
@@ -153,7 +156,7 @@ Live verification deferred: D-17.
 Slice: Decision Room readiness ladder and panel truthfulness
 Why now: the guided card stopped at "connect sources" and ignored twins, metrics, experiments, and history; in a demo session the header named a panel while the body silently rendered the Decision Room.
 In scope: src/lib/decisionRoom.ts (pure 8-step ladder, one "next", blocked steps name the pending migration; 5 tests), workspaceOverview gains counts with null for absent tables (2 new tests), Decision Room renders the ladder and an honest hero, PanelUnavailable state for panels that need a signed-in workspace, a selected twin, or a flag.
-Out of scope: approved-claim count (needs a brand id round trip; the ladder shows 0 rather than guessing).
+Out of scope: approved-claim count (needs a brand id round trip; the ladder shows 0 rather than guessing). Superseded by the approved-claim slice below.
 Data/security effect: five extra head-count queries per overview load.
 Acceptance checks: 437 tests, typecheck, lint, build; browser walk-through of Decision Room, Setup and status, Experiments, Test windows with no console errors.
 Live verification deferred: counts against a real project (D-16, D-17).
@@ -170,6 +173,33 @@ One documented widening remains: `sceneTimingArgs`, because migration 2026082200
 Data/security effect: none. No query, policy or payload changed.
 Acceptance checks: 450 tests, lint, typecheck, worker typecheck, production build.
 Live verification deferred: authenticated browser walk-through of the affected panels (Antigravity).
+```
+
+```
+Slice: Approved Brand Codex claim count in the Decision Room ladder
+Why now: the ladder printed 0 approved claims regardless of the codex, which is a statement about the data rather than a placeholder a reader can tell apart from a real zero.
+In scope: `ApprovedClaimCount` union and `describeApprovedClaims` in src/lib/decisionRoom.ts (loading / no_brand / unreadable / counted; 6 new tests), a brand-scoped head count in workspaceOverview.ts (6 new tests), Workspace.tsx passes `loading` while the overview is in flight instead of a stale number.
+What counts as approved: both approval axes must agree. `claim_type = 'approved'` says the brand permits the claim and `review_status = 'approved'` says the review finished; a claim that is one but not the other is still in progress and is not counted. Both columns collapse to `string` in the generated types, so the filter is the contract.
+Out of scope: per-claim drill-down, and any statement about how an approved claim performs. The copy names approval as a governance decision and says it is not proof of performance.
+Data/security effect: one extra head-count query on `brand_claims` per overview load, filtered by `workspace_id` and `brand_id` together so a relaxed policy alone could not widen it. No writes. A missing relation stays out of the error banner (pending migration); a permission denial is reported once, as unreadable, never as zero.
+Acceptance checks: 462 tests, lint, typecheck, worker typecheck, production build.
+Live verification deferred: the count against a real codex with mixed review states (Antigravity).
+```
+
+```
+Slice: Posting-history import-batch management
+Why now: imported observations were only visible as an aggregate count, so an operator who imported the wrong file had no way to see what landed and no way to remove it, while migration 017 already anticipated batch deletion in its immutability trigger message.
+In scope: shared/publishing/batches.ts (`groupImportBatches`, pure, newest import first; 9 tests), `import_batch_id` and `created_at` on `PostObservationRow`, `deleteImportBatch` in src/lib/postHistory.ts (8 tests), a batch list plus a confirmation dialog in PublishingPlanner.tsx, which now takes `isAdmin`, and a `.destructive` button style.
+Why deletion is safe to offer: nothing in the schema references `post_observations` — no migration declares a foreign key to it and the generated types list no inbound relationship — so removing a batch cascades to no other evidence. Authority is the database's: migration 017 grants DELETE only through `public.is_workspace_admin_or_owner(workspace_id)`, and the client scopes the statement by `workspace_id` and `import_batch_id` together.
+Zero rows is not success: when an RLS policy's USING clause is false Postgres removes zero rows and returns no error, so an empty result is reported as "already gone, or restricted to owners and admins" rather than as a completed deletion. The removal is written to the append-only `audit_events` log with the batch id and the count the database confirmed; when that insert fails the UI says the rows were removed and the audit entry was not written, instead of reporting a clean success.
+Missing contracts, documented rather than invented:
+- There is no batch registry table. A batch exists only as the id stamped on rows that were inserted, so an import that stored nothing leaves no trace and a failed or fully-rejected import cannot be listed. The UI states this instead of showing a "failed" batch it cannot substantiate.
+- The client-side validation summary (rejected line numbers and reasons), the file name, and the row count the file was believed to contain are never persisted. Only rows still present can be counted, so no batch shows an expected-versus-stored comparison.
+- There is no atomic `delete_post_observation_batch(p_workspace_id, p_batch_id)` RPC, so the delete and its audit row are two statements and cannot share a transaction. Closing any of these three gaps needs a new migration and is out of scope for a repository-only slice.
+Out of scope: restoring a deleted batch, per-row deletion, and connector-sourced history.
+Data/security effect: one scoped DELETE on `post_observations` behind the existing admin-only policy, plus one append-only audit insert. No policy, function, or migration changed.
+Acceptance checks: 479 tests, lint, typecheck, worker typecheck, production build.
+Live verification deferred: a real admin-versus-member delete attempt and the resulting audit row (Antigravity, alongside D-17).
 ```
 
 ## Supabase project (from prior state; unverified this phase)

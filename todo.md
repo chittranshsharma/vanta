@@ -36,9 +36,12 @@
 
 ## Next repository-only work
 
+- [ ] Deliver the first live usable beta before the final cinematic UI/UX pass: finish functional contracts, live QA, and one bounded evidence-gated intelligence task first.
 - [ ] Use Claude for repository implementation, tests, refactors, and documentation; reserve Antigravity for live Supabase operations and browser-only authenticated validation.
-- [ ] Approved-claim count in the Decision Room ladder (needs a brand-scoped read; currently shown as 0, never guessed).
-- [ ] Batch view and admin delete for posting-history import batches.
+- [x] Approved-claim count in the Decision Room ladder: brand-scoped head count on `brand_claims` requiring both `claim_type = 'approved'` and `review_status = 'approved'`; loading, no-brand, unreadable, and observed-count states are distinct, and the copy names approval as governance, not performance.
+- [x] Batch view and admin delete for posting-history import batches: `groupImportBatches` summarises stored rows only, and `deleteImportBatch` scopes the DELETE by workspace and batch, treats zero removed rows as a possible permission denial, and audits the removal.
+- [ ] Add a batch registry table so an import that stores no rows is still recorded. Today a failed or fully-rejected import leaves no trace, and its rejected-row reasons and file name are never persisted, so the batch list cannot show a failed batch or an expected-versus-stored comparison. Needs a migration.
+- [ ] Add an atomic `delete_post_observation_batch(p_workspace_id, p_batch_id)` RPC so a batch delete and its audit row share one transaction. Today they are two statements and the UI has to report an unwritten audit entry after a completed delete. Needs a migration.
 - [x] G-3: `enqueueJob` consumes `job_enqueue` quota first, fails closed.
 - [ ] G-2: remove gateway quota fallback after D-15.
 - [x] B-3: experiments + observed outcomes (migration 016, `shared/experiments`, Experiments panel).

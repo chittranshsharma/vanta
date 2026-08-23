@@ -31,6 +31,7 @@ beforeEach(() => {
   mockState.responses = {
     source_registry: { data: [{ id: "s1" }], error: null },
     brands: { data: { id: "b1", name: "Acme" }, error: null },
+    brand_claims: { data: null, count: 2, error: null },
     creative_assets: { data: [], error: null },
     creative_twins: { data: null, count: 2, error: null },
     metric_definitions: { data: null, count: 1, error: null },
@@ -88,5 +89,47 @@ describe("fetchWorkspaceOverview", () => {
     const res = await fetchWorkspaceOverview("ws");
     expect(res.data).toEqual(EMPTY_OVERVIEW);
     expect(res.errors).toEqual(["Supabase is not configured."]);
+  });
+});
+
+describe("fetchWorkspaceOverview approved claims", () => {
+  it("counts the claims the brand has approved", async () => {
+    const res = await fetchWorkspaceOverview("ws");
+    expect(res.data.approvedClaims).toEqual({ state: "counted", count: 2 });
+    expect(res.errors).toEqual([]);
+  });
+
+  it("reports zero approved claims as an observed zero, not as unknown", async () => {
+    mockState.responses.brand_claims = { data: null, count: 0, error: null };
+    const res = await fetchWorkspaceOverview("ws");
+    expect(res.data.approvedClaims).toEqual({ state: "counted", count: 0 });
+  });
+
+  it("does not count when there is no brand to count in", async () => {
+    mockState.responses.brands = { data: null, error: null };
+    const res = await fetchWorkspaceOverview("ws");
+    expect(res.data.approvedClaims).toEqual({ state: "no_brand" });
+    expect(res.errors).toEqual([]);
+  });
+
+  it("reports a permission denial as unreadable and surfaces it once", async () => {
+    mockState.responses.brand_claims = { data: null, count: null, error: { message: "permission denied for table brand_claims", code: "42501" } };
+    const res = await fetchWorkspaceOverview("ws");
+    expect(res.data.approvedClaims).toEqual({ state: "unreadable", reason: "permission denied for table brand_claims" });
+    expect(res.errors).toEqual(["Approved Brand Codex claims: permission denied for table brand_claims"]);
+  });
+
+  it("treats an absent claims table as unreadable without calling it a failure", async () => {
+    mockState.responses.brand_claims = { data: null, count: null, error: { message: 'relation "public.brand_claims" does not exist' } };
+    const res = await fetchWorkspaceOverview("ws");
+    expect(res.data.approvedClaims.state).toBe("unreadable");
+    expect(res.errors).toEqual([]);
+  });
+
+  it("does not report the brand failure a second time as a claim failure", async () => {
+    mockState.responses.brands = { data: null, error: { message: "permission denied for table brands" } };
+    const res = await fetchWorkspaceOverview("ws");
+    expect(res.data.approvedClaims).toEqual({ state: "unreadable", reason: "permission denied for table brands" });
+    expect(res.errors).toEqual(["Brand Brain: permission denied for table brands"]);
   });
 });

@@ -289,6 +289,12 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .vp-steps li em { font-style: normal; font-size: 0.78rem; color: rgba(226, 232, 240, 0.55); }
 .vp-note { border-left: 3px solid #85c7e9; padding: 10px 14px; background: rgba(133, 199, 233, 0.08); border-radius: 0 12px 12px 0; font-size: 0.88rem; color: rgba(226, 232, 240, 0.8); margin: 0; }
 .vp-note.warn { border-left-color: #fcd34d; background: rgba(252, 211, 77, 0.08); }
+
+/* Destructive actions read as destructive before they are pressed, not after. */
+.vp-subhead { margin: 22px 0 8px; font-size: 0.95rem; color: rgba(226, 232, 240, 0.92); }
+.destructive { border-color: rgba(248, 113, 113, 0.45); color: #fca5a5; }
+.destructive:hover:not(:disabled) { background: rgba(248, 113, 113, 0.16); border-color: rgba(248, 113, 113, 0.7); }
+.primary-button.destructive { background: rgba(248, 113, 113, 0.16); }
 .side-link[aria-current="page"] { background: rgba(133, 199, 233, 0.14); color: #e2e8f0; }
 @media (max-width: 720px) { .vp-row { grid-template-columns: 1fr; } .vp-steps li { grid-template-columns: 28px 1fr; } }
 
