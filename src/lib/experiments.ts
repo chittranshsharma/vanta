@@ -43,8 +43,8 @@ type Result<T> = { data: T; error: null } | { data: null; error: string };
 const NOT_CONFIGURED = "Supabase is not configured.";
 
 // Generated types predate migration 016; loose client until types are regenerated (D-16).
-function table(name: string) {
-  return (supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }).from(name);
+function table<T extends "experiments" | "experiment_outcomes">(name: T) {
+  return supabase.from(name);
 }
 
 /** True when the error means the tables are not applied yet (static schema, pending live apply). */

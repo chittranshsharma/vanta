@@ -571,6 +571,86 @@ export type Database = {
           },
         ]
       }
+      connector_accounts: {
+        Row: {
+          access_token_ciphertext: string | null
+          consent_granted_at: string | null
+          consent_granted_by: string | null
+          created_at: string
+          created_by: string | null
+          display_name: string | null
+          external_account_id: string | null
+          granted_scopes: string[]
+          id: string
+          last_error: Json | null
+          last_sync_at: string | null
+          provider: string
+          refresh_token_ciphertext: string | null
+          requested_scopes: string[]
+          revoked_at: string | null
+          revoked_by: string | null
+          status: string
+          token_expires_at: string | null
+          token_key_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          access_token_ciphertext?: string | null
+          consent_granted_at?: string | null
+          consent_granted_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          external_account_id?: string | null
+          granted_scopes?: string[]
+          id?: string
+          last_error?: Json | null
+          last_sync_at?: string | null
+          provider: string
+          refresh_token_ciphertext?: string | null
+          requested_scopes?: string[]
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          token_expires_at?: string | null
+          token_key_id?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          access_token_ciphertext?: string | null
+          consent_granted_at?: string | null
+          consent_granted_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          external_account_id?: string | null
+          granted_scopes?: string[]
+          id?: string
+          last_error?: Json | null
+          last_sync_at?: string | null
+          provider?: string
+          refresh_token_ciphertext?: string | null
+          requested_scopes?: string[]
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          token_expires_at?: string | null
+          token_key_id?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connector_accounts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creative_assets: {
         Row: {
           asset_kind: string
@@ -872,14 +952,109 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "creative_twins_asset_id_fkey"
-            columns: ["asset_id"]
-            isOneToOne: true
+            foreignKeyName: "creative_twins_asset_id_workspace_id_fkey"
+            columns: ["asset_id", "workspace_id"]
+            isOneToOne: false
             referencedRelation: "creative_assets"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "workspace_id"]
           },
           {
             foreignKeyName: "creative_twins_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      derived_artifacts: {
+        Row: {
+          artifact_kind: string
+          asset_id: string
+          byte_size: number | null
+          content_sha256: string | null
+          coverage: string
+          created_at: string
+          created_by: string | null
+          evidence_class: string
+          features: Json
+          id: string
+          job_id: string | null
+          mime_type: string | null
+          parent_artifact_id: string | null
+          producer: string
+          producer_version: string
+          retention_until: string | null
+          storage_bucket: string | null
+          storage_path: string | null
+          workspace_id: string
+        }
+        Insert: {
+          artifact_kind: string
+          asset_id: string
+          byte_size?: number | null
+          content_sha256?: string | null
+          coverage?: string
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          features?: Json
+          id?: string
+          job_id?: string | null
+          mime_type?: string | null
+          parent_artifact_id?: string | null
+          producer: string
+          producer_version: string
+          retention_until?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          workspace_id: string
+        }
+        Update: {
+          artifact_kind?: string
+          asset_id?: string
+          byte_size?: number | null
+          content_sha256?: string | null
+          coverage?: string
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          features?: Json
+          id?: string
+          job_id?: string | null
+          mime_type?: string | null
+          parent_artifact_id?: string | null
+          producer?: string
+          producer_version?: string
+          retention_until?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "derived_artifacts_asset_id_workspace_id_fkey"
+            columns: ["asset_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_assets"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "derived_artifacts_job_id_workspace_id_fkey"
+            columns: ["job_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "derived_artifacts_parent_artifact_id_workspace_id_fkey"
+            columns: ["parent_artifact_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "derived_artifacts"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "derived_artifacts_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -961,6 +1136,148 @@ export type Database = {
           },
         ]
       }
+      experiment_outcomes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date_ambiguous: boolean
+          evidence_class: string
+          experiment_id: string
+          id: string
+          import_batch_id: string | null
+          import_note: string | null
+          metric_key: string
+          observed_at: string
+          source_citability: string
+          source_id: string
+          value: number
+          variant_twin_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date_ambiguous?: boolean
+          evidence_class?: string
+          experiment_id: string
+          id?: string
+          import_batch_id?: string | null
+          import_note?: string | null
+          metric_key: string
+          observed_at: string
+          source_citability: string
+          source_id: string
+          value: number
+          variant_twin_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date_ambiguous?: boolean
+          evidence_class?: string
+          experiment_id?: string
+          id?: string
+          import_batch_id?: string | null
+          import_note?: string | null
+          metric_key?: string
+          observed_at?: string
+          source_citability?: string
+          source_id?: string
+          value?: number
+          variant_twin_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_outcomes_experiment_id_workspace_id_fkey"
+            columns: ["experiment_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "experiment_outcomes_source_id_workspace_id_fkey"
+            columns: ["source_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "source_registry"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "experiment_outcomes_variant_twin_id_workspace_id_fkey"
+            columns: ["variant_twin_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twins"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "experiment_outcomes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experiments: {
+        Row: {
+          concluded_at: string | null
+          created_at: string
+          created_by: string | null
+          hypothesis: string
+          id: string
+          min_observations_per_variant: number
+          outcome_source: string
+          primary_metric_key: string
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          variant_twin_ids: string[]
+          workspace_id: string
+        }
+        Insert: {
+          concluded_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          hypothesis: string
+          id?: string
+          min_observations_per_variant?: number
+          outcome_source?: string
+          primary_metric_key: string
+          started_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          variant_twin_ids?: string[]
+          workspace_id: string
+        }
+        Update: {
+          concluded_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          hypothesis?: string
+          id?: string
+          min_observations_per_variant?: number
+          outcome_source?: string
+          primary_metric_key?: string
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          variant_twin_ids?: string[]
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiments_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingestion_runs: {
         Row: {
           asset_id: string
@@ -1003,14 +1320,97 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "ingestion_runs_asset_id_fkey"
-            columns: ["asset_id"]
+            foreignKeyName: "ingestion_runs_asset_id_workspace_id_fkey"
+            columns: ["asset_id", "workspace_id"]
             isOneToOne: false
             referencedRelation: "creative_assets"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "workspace_id"]
           },
           {
             foreignKeyName: "ingestion_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          attempts: number
+          correlation_id: string
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          job_type: string
+          last_error: Json | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          payload: Json
+          requires_approval: boolean
+          result: Json | null
+          run_after: string
+          status: string
+          step_log: Json
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attempts?: number
+          correlation_id?: string
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          idempotency_key: string
+          job_type: string
+          last_error?: Json | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          payload?: Json
+          requires_approval?: boolean
+          result?: Json | null
+          run_after?: string
+          status?: string
+          step_log?: Json
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attempts?: number
+          correlation_id?: string
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          idempotency_key?: string
+          job_type?: string
+          last_error?: Json | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          payload?: Json
+          requires_approval?: boolean
+          result?: Json | null
+          run_after?: string
+          status?: string
+          step_log?: Json
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1060,14 +1460,171 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "metric_definitions_source_id_fkey"
-            columns: ["source_id"]
+            foreignKeyName: "metric_definitions_source_id_workspace_id_fkey"
+            columns: ["source_id", "workspace_id"]
             isOneToOne: false
             referencedRelation: "source_registry"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "workspace_id"]
           },
           {
             foreignKeyName: "metric_definitions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      model_task_runs: {
+        Row: {
+          attempts: number
+          completion_tokens: number | null
+          correlation_id: string
+          created_at: string
+          created_by: string | null
+          evidence_class: string
+          id: string
+          input_claim_ids: Json
+          latency_ms: number | null
+          model: string
+          output: Json | null
+          prompt_tokens: number | null
+          prompt_version: string
+          repaired: boolean
+          schema_version: string
+          status: string
+          task_type: string
+          twin_id: string | null
+          validation_errors: Json
+          workspace_id: string
+        }
+        Insert: {
+          attempts?: number
+          completion_tokens?: number | null
+          correlation_id: string
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          id?: string
+          input_claim_ids?: Json
+          latency_ms?: number | null
+          model: string
+          output?: Json | null
+          prompt_tokens?: number | null
+          prompt_version: string
+          repaired?: boolean
+          schema_version: string
+          status: string
+          task_type: string
+          twin_id?: string | null
+          validation_errors?: Json
+          workspace_id: string
+        }
+        Update: {
+          attempts?: number
+          completion_tokens?: number | null
+          correlation_id?: string
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          id?: string
+          input_claim_ids?: Json
+          latency_ms?: number | null
+          model?: string
+          output?: Json | null
+          prompt_tokens?: number | null
+          prompt_version?: string
+          repaired?: boolean
+          schema_version?: string
+          status?: string
+          task_type?: string
+          twin_id?: string | null
+          validation_errors?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_task_runs_twin_id_workspace_id_fkey"
+            columns: ["twin_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twins"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "model_task_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_observations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date_ambiguous: boolean
+          evidence_class: string
+          external_post_id: string | null
+          id: string
+          import_batch_id: string | null
+          metric_key: string
+          published_at: string
+          source_citability: string
+          source_id: string
+          twin_id: string | null
+          value: number
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date_ambiguous?: boolean
+          evidence_class?: string
+          external_post_id?: string | null
+          id?: string
+          import_batch_id?: string | null
+          metric_key: string
+          published_at: string
+          source_citability: string
+          source_id: string
+          twin_id?: string | null
+          value: number
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date_ambiguous?: boolean
+          evidence_class?: string
+          external_post_id?: string | null
+          id?: string
+          import_batch_id?: string | null
+          metric_key?: string
+          published_at?: string
+          source_citability?: string
+          source_id?: string
+          twin_id?: string | null
+          value?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_observations_source_id_workspace_id_fkey"
+            columns: ["source_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "source_registry"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_observations_twin_id_workspace_id_fkey"
+            columns: ["twin_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twins"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_observations_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1101,6 +1658,63 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      retrieval_embeddings: {
+        Row: {
+          chunk_index: number
+          content_sha256: string
+          created_at: string
+          embedding: string
+          embedding_model: string
+          embedding_model_version: string
+          id: string
+          job_id: string | null
+          source_id: string
+          source_table: string
+          workspace_id: string
+        }
+        Insert: {
+          chunk_index?: number
+          content_sha256: string
+          created_at?: string
+          embedding: string
+          embedding_model: string
+          embedding_model_version: string
+          id?: string
+          job_id?: string | null
+          source_id: string
+          source_table: string
+          workspace_id: string
+        }
+        Update: {
+          chunk_index?: number
+          content_sha256?: string
+          created_at?: string
+          embedding?: string
+          embedding_model?: string
+          embedding_model_version?: string
+          id?: string
+          job_id?: string | null
+          source_id?: string
+          source_table?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retrieval_embeddings_job_id_workspace_id_fkey"
+            columns: ["job_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "retrieval_embeddings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       source_registry: {
         Row: {
@@ -1196,6 +1810,41 @@ export type Database = {
           },
         ]
       }
+      workspace_quotas: {
+        Row: {
+          daily_limit: number
+          kind: string
+          updated_at: string
+          used_today: number
+          window_date: string
+          workspace_id: string
+        }
+        Insert: {
+          daily_limit: number
+          kind: string
+          updated_at?: string
+          used_today?: number
+          window_date?: string
+          workspace_id: string
+        }
+        Update: {
+          daily_limit?: number
+          kind?: string
+          updated_at?: string
+          used_today?: number
+          window_date?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_quotas_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspaces: {
         Row: {
           created_at: string
@@ -1225,11 +1874,323 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      connector_accounts_public: {
+        Row: {
+          consent_granted_at: string | null
+          consent_granted_by: string | null
+          created_at: string | null
+          created_by: string | null
+          display_name: string | null
+          external_account_id: string | null
+          granted_scopes: string[] | null
+          id: string | null
+          last_error: Json | null
+          last_sync_at: string | null
+          provider: string | null
+          requested_scopes: string[] | null
+          revoked_at: string | null
+          revoked_by: string | null
+          status: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          consent_granted_at?: string | null
+          consent_granted_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          display_name?: string | null
+          external_account_id?: string | null
+          granted_scopes?: string[] | null
+          id?: string | null
+          last_error?: Json | null
+          last_sync_at?: string | null
+          provider?: string | null
+          requested_scopes?: string[] | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          consent_granted_at?: string | null
+          consent_granted_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          display_name?: string | null
+          external_account_id?: string | null
+          granted_scopes?: string[] | null
+          id?: string | null
+          last_error?: Json | null
+          last_sync_at?: string | null
+          provider?: string | null
+          requested_scopes?: string[] | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connector_accounts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      approve_job: {
+        Args: { p_job_id: string; p_workspace_id: string }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          attempts: number
+          correlation_id: string
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          job_type: string
+          last_error: Json | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          payload: Json
+          requires_approval: boolean
+          result: Json | null
+          run_after: string
+          status: string
+          step_log: Json
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "jobs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      audit_summary: {
+        Args: { p_days: number; p_workspace_id: string }
+        Returns: {
+          action: string
+          actor: string
+          day: string
+          events: number
+        }[]
+      }
+      cancel_job: {
+        Args: { p_job_id: string; p_workspace_id: string }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          attempts: number
+          correlation_id: string
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          job_type: string
+          last_error: Json | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          payload: Json
+          requires_approval: boolean
+          result: Json | null
+          run_after: string
+          status: string
+          step_log: Json
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "jobs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      claim_next_job: {
+        Args: { p_job_types: string[]; p_worker_id: string }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          attempts: number
+          correlation_id: string
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          job_type: string
+          last_error: Json | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          payload: Json
+          requires_approval: boolean
+          result: Json | null
+          run_after: string
+          status: string
+          step_log: Json
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "jobs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      complete_job: {
+        Args: { p_job_id: string; p_result: Json; p_worker_id: string }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          attempts: number
+          correlation_id: string
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          job_type: string
+          last_error: Json | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          payload: Json
+          requires_approval: boolean
+          result: Json | null
+          run_after: string
+          status: string
+          step_log: Json
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "jobs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      consume_quota: {
+        Args: { p_kind: string; p_workspace_id: string }
+        Returns: {
+          allowed: boolean
+          daily_limit: number
+          used: number
+        }[]
+      }
+      default_quota: { Args: { p_kind: string }; Returns: number }
+      fail_job: {
+        Args: {
+          p_error: Json
+          p_job_id: string
+          p_retriable: boolean
+          p_retry_delay_seconds: number
+          p_worker_id: string
+        }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          attempts: number
+          correlation_id: string
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          job_type: string
+          last_error: Json | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          payload: Json
+          requires_approval: boolean
+          result: Json | null
+          run_after: string
+          status: string
+          step_log: Json
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "jobs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_workspace_admin_or_owner: { Args: { ws_id: string }; Returns: boolean }
       is_workspace_member: { Args: { ws_id: string }; Returns: boolean }
+      match_retrieval_candidates: {
+        Args: {
+          p_limit: number
+          p_query: string
+          p_source_tables: string[]
+          p_workspace_id: string
+        }
+        Returns: {
+          chunk_index: number
+          embedding_model: string
+          similarity: number
+          source_id: string
+          source_table: string
+        }[]
+      }
+      posting_history_coverage: {
+        Args: { p_workspace_id: string }
+        Returns: {
+          first_observed: string
+          last_observed: string
+          metric_key: string
+          observations: number
+          unverified_rows: number
+        }[]
+      }
+      purge_expired_artifacts: {
+        Args: { p_limit: number }
+        Returns: {
+          storage_bucket: string
+          storage_path: string
+          workspace_id: string
+        }[]
+      }
+      release_stale_jobs: {
+        Args: { p_older_than_seconds: number }
+        Returns: number
+      }
+      request_connector: {
+        Args: { p_provider: string; p_scopes: string[]; p_workspace_id: string }
+        Returns: string
+      }
+      retrieval_coverage: {
+        Args: { p_workspace_id: string }
+        Returns: {
+          indexed_rows: number
+          source_table: string
+          total_rows: number
+        }[]
+      }
+      revoke_connector: {
+        Args: { p_connector_id: string; p_workspace_id: string }
+        Returns: boolean
+      }
       save_claim_correction_atomic: {
         Args: {
           p_brand_alignment_status: string

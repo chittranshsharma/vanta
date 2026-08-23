@@ -19,8 +19,8 @@ export interface PostObservationRow extends StoredObservation {
 type Result<T> = { data: T; error: null } | { data: null; error: string };
 const NOT_CONFIGURED = "Supabase is not configured.";
 
-function table(name: string) {
-  return (supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }).from(name);
+function table(name: "post_observations") {
+  return supabase.from(name);
 }
 
 export async function listPostObservations(workspaceId: string, metricKey?: string): Promise<Result<PostObservationRow[]>> {
