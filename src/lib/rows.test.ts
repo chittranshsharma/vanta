@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isMissingRelationError, jsonObject, jsonObjectArray, narrow } from "./rows";
+import { classifyReadError, isMissingRelationError, isPermissionDeniedError, jsonObject, jsonObjectArray, narrow } from "./rows";
 
 const STATUSES = ["queued", "running", "succeeded"] as const;
 
@@ -74,5 +74,54 @@ describe("isMissingRelationError", () => {
 
   it("is false for no error", () => {
     expect(isMissingRelationError(null)).toBe(false);
+  });
+});
+
+describe("isPermissionDeniedError", () => {
+  it("matches the Postgres insufficient_privilege code", () => {
+    expect(isPermissionDeniedError({ message: "boom", code: "42501" })).toBe(true);
+  });
+
+  it("matches the PostgREST JWT-rejected code", () => {
+    expect(isPermissionDeniedError({ message: "JWT expired", code: "PGRST301" })).toBe(true);
+  });
+
+  it("matches the membership check raised by SECURITY DEFINER functions", () => {
+    // consume_quota, cancel_job and approve_job all raise this text rather than
+    // relying on a policy, so the message is the only signal.
+    expect(isPermissionDeniedError({ message: "Access denied: not a workspace member" })).toBe(true);
+  });
+
+  it("does not match a pending migration", () => {
+    expect(isPermissionDeniedError({ message: 'relation "public.jobs" does not exist', code: "42P01" })).toBe(false);
+  });
+
+  it("is false for no error", () => {
+    expect(isPermissionDeniedError(null)).toBe(false);
+  });
+});
+
+describe("classifyReadError", () => {
+  it("classifies an absent relation as absent", () => {
+    expect(classifyReadError({ message: "Could not find the table in the schema cache" })).toBe("absent");
+  });
+
+  it("classifies a missing function as absent, because PostgREST reports it the same way", () => {
+    expect(classifyReadError({ message: "Could not find the function public.retrieval_coverage in the schema cache" })).toBe("absent");
+  });
+
+  it("classifies an authorization refusal as denied", () => {
+    expect(classifyReadError({ message: "permission denied for table workspace_quotas", code: "42501" })).toBe("denied");
+  });
+
+  it("prefers denied when an error looks like both", () => {
+    // A revoked grant on a table the caller cannot see can produce a message
+    // naming both. Reporting "not applied" would send an operator to apply a
+    // migration that is already there.
+    expect(classifyReadError({ message: "permission denied for relation that does not exist", code: "42501" })).toBe("denied");
+  });
+
+  it("classifies anything else as failed, so the message survives", () => {
+    expect(classifyReadError({ message: "TypeError: Failed to fetch" })).toBe("failed");
   });
 });

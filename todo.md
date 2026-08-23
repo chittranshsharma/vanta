@@ -36,6 +36,10 @@
 
 ## Next repository-only work
 
+- [x] Plan a restrained ReactBits enhancement pass for the Vanta landing page without compromising its Apple-inspired visual direction.
+- [ ] Generate an Apple-inspired Vanta landing-page visual concept from the supplied design system for presentation/reference use.
+- [ ] Regenerate the landing-page visual in 16:9 with Vanta-relevant workspace components and no physical-product advertising hero.
+- [ ] Generate a final 16:9 visual concept that expresses restrained ReactBits-style landing-page motion without adding AI-slap visual effects.
 - [ ] Deliver the first live usable beta before the final cinematic UI/UX pass: finish functional contracts, live QA, and one bounded evidence-gated intelligence task first.
 - [ ] Use Claude for repository implementation, tests, refactors, and documentation; reserve Antigravity for live Supabase operations and browser-only authenticated validation.
 - [x] Approved-claim count in the Decision Room ladder: brand-scoped head count on `brand_claims` requiring both `claim_type = 'approved'` and `review_status = 'approved'`; loading, no-brand, unreadable, and observed-count states are distinct, and the copy names approval as governance, not performance.
@@ -53,7 +57,11 @@
 - [ ] Add a table linking an external post id to the variant twin that produced it. `experiment_outcomes.variant_twin_id` is NOT NULL and nothing records which post carried which variant, so even an authorized connector could not attribute a fetched metric to a variant without inventing the link. This is the decisive blocker for connector sync, ahead of OAuth. Needs a migration.
 - [x] Observed posting-history store (migration 017) plus import UI; planner derives candidates from real rows.
 - [x] Local-timezone window buckets: `toWindowObservations` buckets by wall-clock hour and weekday in a named IANA zone via `Intl.DateTimeFormat`, honours the offset in force on each date, reports the zone actually used (UTC when a zone name is not recognized), and the planner labels the hours with that zone.
+- [x] Operational-state audit of the model-run, jobs, retrieval, and quota clients: `classifyReadError` in `src/lib/rows.ts` separates an absent relation, an authorization refusal, and a read failure; `src/lib/quotas.ts` reports a daily budget without spending it (including a stale `window_date` as `reset_pending`, compared against the UTC date Postgres uses); `src/lib/modelRuns.ts` replaces the agent panel's unread "no run has ever happened" assertion with a head count that reports a withheld count as unknown rather than zero; `src/lib/retrieval.ts` names three independent reasons nothing is indexed instead of showing a bare coverage figure; and `Codex retrieval` is a static readiness row. Copy that claimed migrations 010–017 were pending was corrected against the live ledger.
+- [x] Job status drift contract in `shared/jobs/policy.test.ts`: a frozen second copy of the permitted edge set fails if a status gains no transition behaviour, if an illegal transition is accepted by the table or by `canTransition`, or if a terminal status becomes transitionable. Verified by injecting all three drift cases into `policy.ts`.
 - [ ] Store a per-workspace timezone so windows survive being opened from another device. Today the bucket zone is whatever device the operator is on, which is truthful but not stable. Needs a migration.
 - [x] Gateway probe result lifted into the workspace and consumed by the agent runtime gate.
 - [x] Accessibility pass on Brand Brain and Source Registry forms (aria-describedby, aria-busy, inline save errors).
 - [ ] Give `save_scene_correction_atomic` explicit `DEFAULT NULL` on `p_start_seconds`, `p_end_seconds`, and `p_reading_burden_wpm` so the nullable contract survives type generation; until then `sceneTimingArgs` in `src/lib/creativeTwin.ts` widens once, in one documented place.
+- [ ] Surface the per-kind quota budgets that have a UI consumer beyond `job_enqueue` (`model_call` on the gateway probe path, `media_probe` in Creative Intake). `fetchQuotas` already returns every kind; only the jobs panel reads one today.
+- [ ] Decide whether retrieval coverage deserves a live read. `fetchRetrievalCoverage` now resolves six states and nothing calls it, because no feature is grounded by a vector search — the honest static readiness row covers the current truth. Wire it when E-3 picks a provider and something indexes.

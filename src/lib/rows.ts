@@ -58,3 +58,34 @@ export function isMissingRelationError(error: { message: string; code?: string }
   if (!error) return false;
   return error.code === "42P01" || /does not exist|42P01|schema cache/i.test(error.message);
 }
+
+/**
+ * True when a Postgres or PostgREST error means the caller is not allowed to see
+ * the rows, as opposed to the rows being absent. Row-level security makes those
+ * two look alike from the browser — a denied SELECT usually returns an empty set
+ * rather than an error — so the cases that *do* raise are worth naming: a
+ * revoked grant, a `SECURITY DEFINER` function that checks membership itself, or
+ * an expired token. "No rows" and "not allowed to see rows" must never be shown
+ * as the same thing.
+ */
+export function isPermissionDeniedError(error: { message: string; code?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === "42501" || error.code === "PGRST301") return true;
+  return /permission denied|access denied|not a workspace member|row-level security|jwt (expired|expired signature)/i.test(error.message);
+}
+
+/**
+ * Why a workspace-scoped read produced no rows.
+ *
+ * `absent` is a repository state (a migration this build expects has not been
+ * applied), `denied` is an authorization state, `failed` is everything else and
+ * keeps its message. Callers report the distinction instead of collapsing all
+ * three into an empty list.
+ */
+export type ReadFailure = "absent" | "denied" | "failed";
+
+export function classifyReadError(error: { message: string; code?: string }): ReadFailure {
+  if (isPermissionDeniedError(error)) return "denied";
+  if (isMissingRelationError(error)) return "absent";
+  return "failed";
+}

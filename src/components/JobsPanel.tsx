@@ -2,6 +2,8 @@ import { ListChecks, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { approveJob, cancelJob, listJobs, type JobRow } from "../lib/jobs";
 import { isMissingTableError } from "../lib/experiments";
+import { isPermissionDeniedError } from "../lib/rows";
+import { describeQuota, fetchQuotas, quotaSummary, type QuotaRead } from "../lib/quotas";
 
 const TERMINAL = new Set(["succeeded", "failed", "dead", "cancelled"]);
 
@@ -13,15 +15,15 @@ const TERMINAL = new Set(["succeeded", "failed", "dead", "cancelled"]);
 export function JobsPanel({ workspaceId, isAdmin }: { workspaceId: string; isAdmin: boolean }) {
   const [reloadToken, setReloadToken] = useState(0);
   const key = `${workspaceId}:${reloadToken}`;
-  const [load, setLoad] = useState<{ key: string; rows: JobRow[]; error: string | null } | null>(null);
+  const [load, setLoad] = useState<{ key: string; rows: JobRow[]; error: string | null; quotas: QuotaRead } | null>(null);
   const current = load?.key === key ? load : null;
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    listJobs(workspaceId).then((r) => {
-      if (mounted) setLoad({ key, rows: r.data ?? [], error: r.error });
+    Promise.all([listJobs(workspaceId), fetchQuotas(workspaceId)]).then(([r, quotas]) => {
+      if (mounted) setLoad({ key, rows: r.data ?? [], error: r.error, quotas });
     });
     return () => {
       mounted = false;
@@ -33,9 +35,22 @@ export function JobsPanel({ workspaceId, isAdmin }: { workspaceId: string; isAdm
     setActionError(null);
     const r = await fn();
     setBusy(null);
-    if (r.error) setActionError(r.error);
-    else setReloadToken((t) => t + 1);
+    if (!r.error) {
+      setReloadToken((t) => t + 1);
+      return;
+    }
+    // A refused transition is an authorization outcome, not a broken read. The
+    // buttons are already role-gated, so reaching this means the server
+    // disagreed with what the browser believed about the caller.
+    setActionError(
+      isPermissionDeniedError({ message: r.error })
+        ? `${r.error} Approving and cancelling are checked again on the server; only an owner or admin may approve.`
+        : r.error
+    );
   };
+
+  // The budget an enqueue would spend, read without spending any of it.
+  const enqueueQuota = current ? describeQuota("job_enqueue", current.quotas, new Date()) : null;
 
   return (
     <section className="vp-panel" aria-labelledby="jobs-heading">
@@ -50,11 +65,16 @@ export function JobsPanel({ workspaceId, isAdmin }: { workspaceId: string; isAdm
         </button>
       </header>
       {!current && <div className="brand-brain-loading" role="status" aria-live="polite">Loading jobs…</div>}
+      {enqueueQuota && (
+        <p className={`vp-hint vp-state-${enqueueQuota.state === "exhausted" || enqueueQuota.state === "denied" ? "missing" : enqueueQuota.state === "available" ? "configured" : "unknown"}`}>
+          Job enqueue quota: {quotaSummary(enqueueQuota)}
+        </p>
+      )}
       {current?.error && (
         <section className="load-error" role="alert">
           <div>
-            <p className="state-overline">{isMissingTableError(current.error) ? "Jobs table is not applied yet" : "Could not load jobs"}</p>
-            <p>{isMissingTableError(current.error) ? "Migration 011 is authored but pending live apply. No job can be queued until an operator applies it and a worker is deployed." : current.error}</p>
+            <p className="state-overline">{isMissingTableError(current.error) ? "Jobs table is not reachable" : "Could not load jobs"}</p>
+            <p>{isMissingTableError(current.error) ? "Migration 011 is applied on the reference project, so this environment is not the one it was applied to. No job can be queued until the table is present and a worker is deployed." : current.error}</p>
           </div>
           <button className="ghost-button" onClick={() => setReloadToken((t) => t + 1)}>Retry</button>
         </section>

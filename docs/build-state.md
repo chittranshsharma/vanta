@@ -10,7 +10,7 @@ Verified locally on 2026-08-23:
 |---|---|
 | `npm run lint` | 0 errors, 0 warnings |
 | `npm run typecheck` | clean |
-| `npm test` | 519 passed / 519, 38 suites |
+| `npm test` | 567 passed / 567, 41 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run test:e2e` | 30 skipped with reason (no staging credentials); suite authored for QA-1 |
 | `npm run typecheck:worker` | clean |
@@ -43,7 +43,7 @@ Access boundary this phase: **Read-only live inspection completed on 2026-08-23*
 
 All migrations 001–017 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
-## Test suite (38 files, 519 tests; plus 15 pytest, 30 Playwright authored)
+## Test suite (41 files, 567 tests; plus 15 pytest, 30 Playwright authored)
 
 Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 
@@ -246,6 +246,24 @@ Out of scope: registering OAuth apps, a sync job type or handler, and the extern
 Data/security effect: none. No new query, policy, function, column, or migration; the panel already read `connector_accounts_public`, and tokens still never reach the browser.
 Acceptance checks: 519 tests (16 new in `shared/connectors/outcomeSync.test.ts`), lint, typecheck, worker typecheck, production build.
 Live verification deferred: none required; the module is pure and the connector branches are covered by passing an explicit implemented-provider set. Anything beyond that waits on F-1 and a migration.
+```
+
+```
+Slice: Operational-state audit of the model-run, jobs, retrieval, and quota clients
+Why now: four reads could not express the states an operator needs to act on. `fetchRetrievalCoverage` was dead code, so the product never said whether retrieval exists. No quota reader existed at all, so the only way to learn a daily limit was to hit it: an enqueue failed and named a budget nobody had been shown. `AgentWorkflowPanel` asserted "No run has ever happened in this workspace" without reading anything — an assertion about stored data presented as an observation. And permission-denied was absent from the vocabulary: `isMissingRelationError` existed, and nothing classified `42501`, `PGRST301`, or the `Access denied: not a workspace member` text the SECURITY DEFINER RPCs raise.
+In scope: `src/lib/rows.ts` (`isPermissionDeniedError`, `classifyReadError`), new `src/lib/quotas.ts` and `src/lib/modelRuns.ts`, a rewritten `src/lib/retrieval.ts`, one static readiness row in `src/lib/configStatus.ts`, and the two panels that consume them (`JobsPanel`, `AgentWorkflowPanel`).
+One shared classifier rather than four ad-hoc branches: `classifyReadError` returns `absent | denied | failed`, and it lives in the module that already owns boundary reads. "No rows" and "not allowed to see rows" must never render as the same thing, and a pending migration must never render as either. `denied` is checked before `absent` so an error naming both is not reported as a migration an operator should go and apply.
+Quotas are read without being spent. `workspace_quotas` grants members SELECT, so the budget an enqueue would consume is now shown before the action. The default limits are not copied into TypeScript: a missing row reports `never_consumed` ("the limit is set on first use") because the numbers live in migration 015 and a copy would drift the moment an operator changed one. Seven states: `not_applied`, `denied`, `unreadable`, `never_consumed`, `reset_pending`, `available`, `exhausted`.
+`reset_pending` is a real staleness boundary. A row whose `window_date` is an earlier day holds a counter that is not today's, and an exhausted yesterday must not read as an exhausted today. The comparison uses the UTC date because `consume_quota` compares against Postgres `CURRENT_DATE`; using the operator's local date would report a reset that has not happened.
+A withheld count is not zero. `countModelRuns` uses a head count, so no model output reaches the browser, and a response with no error and no number reports `unreadable` rather than inventing the absence the panel exists to report. The panel now shows what was read, or says run history is unknown and why.
+Retrieval states its absence instead of implying progress. "0 of 40 indexed" reads as an import under way, so `MISSING_RETRIEVAL_PIECES` names three independent gaps — no embedding provider is chosen (E-3), no job type or worker indexes anything, and nothing in the product reads a vector search — and `nothing_indexed` is distinct from nothing being indexable. The `Codex retrieval` readiness row is static, keeping `SetupStatus`'s promise that a row never turns green because a page loaded.
+Copy corrected against the live ledger: migrations 010–017 are applied, so an absent relation means this environment is not the one they were applied to, and the affected strings now say that instead of "pending live apply". An unreachable quota table is not an unlimited one — `enqueueJob` consumes the budget first and fails closed — and the summary says so.
+A refused job transition is reported as authorization, not as a broken read: the approve and cancel buttons are already role-gated, so a server refusal means the browser was wrong about the caller, and the message says only an owner or admin may approve.
+Job status drift contract (`shared/jobs/policy.test.ts`): a frozen second copy of the permitted edge set, deliberately not derived from `TRANSITIONS`, since a test that reads the table it checks proves only that the table equals itself. It fails if a status gains no transition behaviour, if an illegal transition is accepted by either the table or `canTransition`, or if a terminal status becomes transitionable. Verified by mutation: all three drift cases were injected into `policy.ts` and each failed the suite.
+Out of scope: a retrieval coverage widget (nothing consumes retrieval, so a live number would be speculative), a model-run history list (zero rows by construction, no consumer), any quota write, and any queue redesign.
+Data/security effect: two new read queries (`workspace_quotas` and a `model_task_runs` head count, both scoped by `workspace_id`) and one existing SECURITY INVOKER RPC now actually called. No policy, function, column, or migration changed, and no write path was added.
+Acceptance checks: 567 tests (48 new across `rows`, `quotas`, `modelRuns`, `retrieval`, `configStatus`, and the job policy contract), lint, typecheck, worker typecheck, production build.
+Live verification deferred: the `denied` and `reset_pending` branches against a real non-member session and a counter left overnight, plus a real `retrieval_coverage` response — all need an authenticated browser session (Antigravity).
 ```
 
 ## Supabase project (from prior state; unverified this phase)

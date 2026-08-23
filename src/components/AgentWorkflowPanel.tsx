@@ -1,6 +1,7 @@
 import { Bot, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { listJobs } from "../lib/jobs";
+import { countModelRuns, modelRunSummary, type ModelRunCount } from "../lib/modelRuns";
 import { isMissingTableError } from "../lib/experiments";
 import { CREATIVE_COUNCIL_GRAPH, DEFAULT_RETRY_POLICY, ROLE_CONTRACTS, gateRuntime, validateGraph, type RuntimeCapabilities } from "../../shared/agents/graph";
 
@@ -9,16 +10,20 @@ import { CREATIVE_COUNCIL_GRAPH, DEFAULT_RETRY_POLICY, ROLE_CONTRACTS, gateRunti
  * retry and review policy, and the runtime gate. There is no "run" button
  * because no agent task type is allowlisted on the gateway; the panel
  * reports `unavailable` with the exact reasons rather than simulating a run.
+ *
+ * Run history is counted rather than assumed. The subtitle used to state that
+ * no run had ever happened here without reading anything, which is an assertion
+ * about stored data wearing an observation's clothes.
  */
 export function AgentWorkflowPanel({ workspaceId, gatewayState }: { workspaceId: string; gatewayState: RuntimeCapabilities["gateway"] }) {
-  const [jobsProbe, setJobsProbe] = useState<{ workspaceId: string; state: RuntimeCapabilities["jobsTable"] } | null>(null);
+  const [jobsProbe, setJobsProbe] = useState<{ workspaceId: string; state: RuntimeCapabilities["jobsTable"]; runs: ModelRunCount } | null>(null);
   const current = jobsProbe?.workspaceId === workspaceId ? jobsProbe : null;
 
   useEffect(() => {
     let mounted = true;
-    listJobs(workspaceId, 1).then((r) => {
+    Promise.all([listJobs(workspaceId, 1), countModelRuns(workspaceId)]).then(([r, runs]) => {
       if (!mounted) return;
-      setJobsProbe({ workspaceId, state: r.error ? (isMissingTableError(r.error) ? "missing" : "unknown") : "applied" });
+      setJobsProbe({ workspaceId, state: r.error ? (isMissingTableError(r.error) ? "missing" : "unknown") : "applied", runs });
     });
     return () => {
       mounted = false;
@@ -35,7 +40,10 @@ export function AgentWorkflowPanel({ workspaceId, gatewayState }: { workspaceId:
           <p className="eyebrow">Creative Council</p>
           <h2 id="agents-heading" className="vp-title">Agent workflow</h2>
           <p className="vp-subtitle">
-            A transparent task graph with fixed role contracts. Output reaches you only after the Evidence Arbiter, the evaluator, and your own approval. No run has ever happened in this workspace.
+            A transparent task graph with fixed role contracts. Output reaches you only after the Evidence Arbiter, the evaluator, and your own approval.
+          </p>
+          <p className="vp-hint" role="status" aria-live="polite">
+            {current ? modelRunSummary(current.runs) : "Reading run history…"}
           </p>
         </div>
       </header>

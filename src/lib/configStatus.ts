@@ -52,6 +52,14 @@ export function deriveConfigStatus(input: ConfigInput): ReadinessItem[] {
       basis: "static"
     },
     {
+      id: "retrieval",
+      label: "Codex retrieval",
+      state: "missing",
+      detail:
+        "Not available in this build. The embedding store exists, and nothing fills or reads it: no embedding provider is chosen, no worker indexes anything, and no brief or answer is grounded by a vector search. Retrieval therefore covers nothing.",
+      basis: "static"
+    },
+    {
       id: "telemetry",
       label: "Client error telemetry",
       state: input.telemetryEndpoint ? "configured" : "disabled",

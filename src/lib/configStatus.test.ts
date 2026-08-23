@@ -17,6 +17,18 @@ describe("deriveConfigStatus", () => {
     expect(items.find((i) => i.id === "flag:video_intake")?.state).toBe("disabled");
     expect(items.find((i) => i.id === "supabase")?.detail).toMatch(/not verified/);
   });
+
+  it("reports retrieval as missing regardless of configuration, because nothing in this build indexes", () => {
+    // A configured Supabase project does not make retrieval work: the embedding
+    // store exists and stays empty, no provider is chosen, and no worker indexes.
+    for (const supabaseConfigured of [false, true]) {
+      const items = deriveConfigStatus({ supabaseConfigured, flagsOn: new Set(), telemetryEndpoint: undefined, appVersion: undefined });
+      const retrieval = items.find((i) => i.id === "retrieval");
+      expect(retrieval?.state).toBe("missing");
+      expect(retrieval?.basis).toBe("static");
+      expect(retrieval?.detail).toMatch(/covers nothing/);
+    }
+  });
 });
 
 describe("gatewayItemFromProbe", () => {
