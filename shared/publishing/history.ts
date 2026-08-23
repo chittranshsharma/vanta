@@ -89,17 +89,78 @@ export interface StoredObservation {
 }
 
 export interface WindowObservation {
-  hour_utc: number;
+  /** Wall-clock hour, 0-23, in the timezone the bucketing was done in. */
+  hour: number;
+  /** Day of week, 0 = Sunday, in the same timezone as `hour`. */
   weekday: number;
   value: number;
 }
 
 /**
- * Turns stored history into the shape the window suggester consumes.
- * Rows from a source that is no longer citable are excluded and counted,
- * so the UI can say why the usable count is lower than the stored count.
+ * The timezone the runtime is in, which for the browser is the operator's own.
+ * A window is a wall-clock claim about an audience, so it has to be stated in
+ * a real zone rather than in UTC, which nobody posts in.
  */
-export function toWindowObservations(rows: StoredObservation[]): { observations: WindowObservation[]; excludedUnverified: number } {
+export function runtimeTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+/**
+ * Formatter for one zone, or `null` when the runtime rejects the zone name.
+ * A rejected zone must be reported rather than silently swapped, because every
+ * hour label downstream would otherwise name a zone the numbers are not in.
+ */
+function wallClockFormatter(timeZone: string): Intl.DateTimeFormat | null {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hourCycle: "h23"
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Wall-clock hour and weekday of an instant in one zone.
+ *
+ * The parts are read numerically and the weekday is derived from the local
+ * calendar date rather than from a formatted day name, so no locale's spelling
+ * or ordering can change the bucket. Offsets are the platform's, so a zone that
+ * observes DST buckets by what the clock on the wall actually read.
+ */
+function wallClock(fmt: Intl.DateTimeFormat, at: Date): { hour: number; weekday: number } | null {
+  const parts = new Map(fmt.formatToParts(at).map((p) => [p.type, p.value]));
+  const year = Number(parts.get("year"));
+  const month = Number(parts.get("month"));
+  const day = Number(parts.get("day"));
+  const raw = Number(parts.get("hour"));
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day) || !Number.isFinite(raw)) return null;
+  // Older ICU builds render midnight as hour 24 even under h23.
+  const hour = raw === 24 ? 0 : raw;
+  return { hour, weekday: new Date(Date.UTC(year, month - 1, day)).getUTCDay() };
+}
+
+/**
+ * Turns stored history into the shape the window suggester consumes, bucketed
+ * by wall-clock time in `timeZone`.
+ *
+ * Rows from a source that is no longer citable are excluded and counted, so the
+ * UI can say why the usable count is lower than the stored count. The zone the
+ * buckets are actually in is returned, which is not always the zone asked for:
+ * an unrecognized zone name falls back to UTC and says so through this value.
+ */
+export function toWindowObservations(
+  rows: StoredObservation[],
+  timeZone: string = runtimeTimeZone()
+): { observations: WindowObservation[]; excludedUnverified: number; timeZone: string } {
+  const requested = wallClockFormatter(timeZone);
+  const fmt = requested ?? wallClockFormatter("UTC");
+  const used = requested ? timeZone : "UTC";
   const observations: WindowObservation[] = [];
   let excludedUnverified = 0;
   for (const r of rows) {
@@ -109,14 +170,21 @@ export function toWindowObservations(rows: StoredObservation[]): { observations:
     }
     const d = new Date(r.published_at);
     if (Number.isNaN(d.getTime())) continue;
-    observations.push({ hour_utc: d.getUTCHours(), weekday: d.getUTCDay(), value: r.value });
+    const local = fmt ? wallClock(fmt, d) : null;
+    if (!local) continue;
+    observations.push({ hour: local.hour, weekday: local.weekday, value: r.value });
   }
-  return { observations, excludedUnverified };
+  return { observations, excludedUnverified, timeZone: used };
 }
 
 export const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 
-export function describeWindow(w: { weekday: number; hour_utc: number; observations: number }): string {
-  const hour = String(w.hour_utc).padStart(2, "0");
-  return `${WEEKDAY_NAMES[w.weekday] ?? "Unknown day"} ${hour}:00 UTC, from ${w.observations} of your own posts`;
+/**
+ * Names a window in the zone its buckets were built in. The zone is part of the
+ * claim, not decoration: the same numbers mean a different instant in any other
+ * zone.
+ */
+export function describeWindow(w: { weekday: number; hour: number; observations: number }, timeZone: string): string {
+  const hour = String(w.hour).padStart(2, "0");
+  return `${WEEKDAY_NAMES[w.weekday] ?? "Unknown day"} ${hour}:00 ${timeZone}, from ${w.observations} of your own posts`;
 }

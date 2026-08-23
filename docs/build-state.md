@@ -10,7 +10,7 @@ Verified locally on 2026-08-23:
 |---|---|
 | `npm run lint` | 0 errors, 0 warnings |
 | `npm run typecheck` | clean |
-| `npm test` | 479 passed / 479, 36 suites |
+| `npm test` | 485 passed / 485, 36 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run test:e2e` | 30 skipped with reason (no staging credentials); suite authored for QA-1 |
 | `npm run typecheck:worker` | clean |
@@ -43,7 +43,7 @@ Access boundary this phase: **Read-only live inspection completed on 2026-08-23*
 
 All migrations 001–017 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
-## Test suite (36 files, 479 tests; plus 15 pytest, 30 Playwright authored)
+## Test suite (36 files, 485 tests; plus 15 pytest, 30 Playwright authored)
 
 Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 
@@ -61,6 +61,7 @@ Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 | `src/lib/modelGateway.test.ts` | 9 | Client adapter fail-closed paths |
 | `src/lib/postHistory.test.ts` | 9 | Fail-closed reads; batch delete scoped by workspace and batch, zero rows treated as possible permission denial, audit row shape, audit-write failure reported |
 | `shared/publishing/batches.test.ts` | 9 | Batch grouping counts only stored rows, orders by instant across offsets, keeps unbatched rows separate |
+| `shared/publishing/history.test.ts` | 11 | Import plan requires a clock time and dedupes; window buckets use wall-clock time in a named IANA zone, honour the offset in force on each date, and report the zone actually used |
 | `src/lib/auth.test.ts` | 8 | Unconfigured fail-closed and configured pass-through, mocked client |
 | `src/lib/evidence.test.ts` | 3 | Numeric claim gate |
 
@@ -147,7 +148,7 @@ Data/security effect: none.
 Slice: Observed posting history
 Why now: the test-window planner had no input and could only ever say unknown.
 In scope: migration 017 (post_observations, partial unique index on external post id, admin-only delete, immutable rows, posting_history_coverage SECURITY INVOKER), shared/publishing/history.ts (import plan requiring a clock time, dedupe, window derivation excluding unverified-source rows; 5 tests), postHistory client, HistoryImportModal, PublishingPlanner rewritten to derive candidates from real rows.
-Out of scope: connector-sourced history, timezone-aware local windows (buckets are UTC and labelled UTC).
+Out of scope: connector-sourced history, timezone-aware local windows (buckets are UTC and labelled UTC). Superseded by the local-timezone bucket slice below.
 Acceptance checks: 4 new migration contract assertions, typecheck, lint, full suite (430).
 Live verification deferred: D-17.
 ```
@@ -200,6 +201,19 @@ Out of scope: restoring a deleted batch, per-row deletion, and connector-sourced
 Data/security effect: one scoped DELETE on `post_observations` behind the existing admin-only policy, plus one append-only audit insert. No policy, function, or migration changed.
 Acceptance checks: 479 tests, lint, typecheck, worker typecheck, production build.
 Live verification deferred: a real admin-versus-member delete attempt and the resulting audit row (Antigravity, alongside D-17).
+```
+
+```
+Slice: Local-timezone test-window buckets
+Why now: the planner bucketed posts by UTC hour and labelled the result "09:00 UTC". Nobody publishes on a UTC clock, so the one number an operator would act on named a time they never posted at, and any bucket straddling a UTC day boundary was also filed under the wrong weekday.
+In scope: `WindowObservation` carries `hour` (wall-clock) instead of `hour_utc`; `toWindowObservations(rows, timeZone?)` buckets in a named IANA zone and returns the zone it actually used; `runtimeTimeZone()` reads the device zone; `describeWindow(w, timeZone)` names the zone as part of the claim; `suggestTestWindows` keeps the same ranking but is now explicitly zone-agnostic, since the zone is resolved before it is called.
+How the wall clock is derived: `Intl.DateTimeFormat` with an explicit `timeZone` and `hourCycle: "h23"`, read through `formatToParts` numerically. The weekday comes from the local calendar date rather than a formatted day name, so no locale's spelling or ordering can move a bucket, and a zone that observes daylight saving buckets by the offset in force on each individual date rather than by one offset applied to the whole history.
+Unrecognized zone names fail loudly rather than silently: `Intl` throws on a bad zone, so the formatter is built once inside a try, falls back to UTC, and the fallback is reported through the returned `timeZone`, which is what the UI labels the hours with. A label can therefore never name a zone the numbers are not in.
+UI honesty: the panel states which zone the hours are in, that each post was placed in the hour its own clock read, that a DST-observing zone makes the same bucket a different absolute time across the year, and that viewing from another zone regroups the buckets — so a window is a claim about the operator's posting clock, not about an audience's local time.
+Out of scope: a per-workspace stored timezone (there is no column for one, so the device zone is the only zone the repository can truthfully use), audience-local windows (no audience-location evidence exists), and connector-sourced history.
+Data/security effect: none. Read-side derivation only; no query, policy, or column changed.
+Acceptance checks: 485 tests (6 new in `shared/publishing/history.test.ts`), lint, typecheck, worker typecheck, production build.
+Live verification deferred: none required; the derivation is pure and covered by fixed-instant tests across UTC, Asia/Kolkata, and America/New_York in both DST phases.
 ```
 
 ## Supabase project (from prior state; unverified this phase)

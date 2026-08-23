@@ -49,7 +49,8 @@
 - [x] Outcome import UI (CSV against a registered source) feeding `experiment_outcomes` with per-row provenance.
 - [ ] Connector-sourced outcome sync (waits on F-1).
 - [x] Observed posting-history store (migration 017) plus import UI; planner derives candidates from real rows.
-- [ ] Local-timezone window buckets (current buckets are UTC and labelled UTC).
+- [x] Local-timezone window buckets: `toWindowObservations` buckets by wall-clock hour and weekday in a named IANA zone via `Intl.DateTimeFormat`, honours the offset in force on each date, reports the zone actually used (UTC when a zone name is not recognized), and the planner labels the hours with that zone.
+- [ ] Store a per-workspace timezone so windows survive being opened from another device. Today the bucket zone is whatever device the operator is on, which is truthful but not stable. Needs a migration.
 - [x] Gateway probe result lifted into the workspace and consumed by the agent runtime gate.
 - [x] Accessibility pass on Brand Brain and Source Registry forms (aria-describedby, aria-busy, inline save errors).
 - [ ] Give `save_scene_correction_atomic` explicit `DEFAULT NULL` on `p_start_seconds`, `p_end_seconds`, and `p_reading_burden_wpm` so the nullable contract survives type generation; until then `sceneTimingArgs` in `src/lib/creativeTwin.ts` widens once, in one documented place.

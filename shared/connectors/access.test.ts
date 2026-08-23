@@ -32,19 +32,19 @@ describe("describeAccess", () => {
 
 describe("suggestTestWindows", () => {
   it("returns unknown with too little history", () => {
-    const r = suggestTestWindows([{ hour_utc: 9, weekday: 1, value: 10 }]);
+    const r = suggestTestWindows([{ hour: 9, weekday: 1, value: 10 }]);
     expect(r.state).toBe("unknown");
     expect(r.windows).toEqual([]);
   });
 
   it("ranks buckets by mean and never calls them predictions", () => {
     const obs = [];
-    for (let i = 0; i < 10; i += 1) obs.push({ hour_utc: 9, weekday: 1, value: 5 });
-    for (let i = 0; i < 10; i += 1) obs.push({ hour_utc: 18, weekday: 3, value: 9 });
-    for (let i = 0; i < 10; i += 1) obs.push({ hour_utc: 12, weekday: 5, value: 7 });
+    for (let i = 0; i < 10; i += 1) obs.push({ hour: 9, weekday: 1, value: 5 });
+    for (let i = 0; i < 10; i += 1) obs.push({ hour: 18, weekday: 3, value: 9 });
+    for (let i = 0; i < 10; i += 1) obs.push({ hour: 12, weekday: 5, value: 7 });
     const r = suggestTestWindows(obs);
     expect(r.state).toBe("inference");
-    expect(r.windows[0]).toEqual({ weekday: 3, hour_utc: 18, observations: 10 });
+    expect(r.windows[0]).toEqual({ weekday: 3, hour: 18, observations: 10 });
     expect(r.note).toMatch(/Not a prediction/);
   });
 });

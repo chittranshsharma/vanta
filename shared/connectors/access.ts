@@ -50,18 +50,22 @@ export function describeAccess(input: AccessInput): AccessState {
 /**
  * Test windows derived from owned history only. Returns null (unknown) when
  * there is not enough observed data. Never a "best time to post" claim.
+ *
+ * Zone-agnostic on purpose: it ranks whatever wall-clock buckets it is handed.
+ * The timezone the hours mean is decided where the observations are built, and
+ * naming it is the caller's job.
  */
 export function suggestTestWindows(
-  observations: Array<{ hour_utc: number; weekday: number; value: number }>,
+  observations: Array<{ hour: number; weekday: number; value: number }>,
   minObservations = 30
-): { windows: Array<{ weekday: number; hour_utc: number; observations: number }>; state: "inference" | "unknown"; note: string } {
+): { windows: Array<{ weekday: number; hour: number; observations: number }>; state: "inference" | "unknown"; note: string } {
   if (observations.length < minObservations) {
     return { windows: [], state: "unknown", note: `Insufficient observed history (${observations.length} of ${minObservations} needed).` };
   }
-  const buckets = new Map<string, { weekday: number; hour_utc: number; n: number; sum: number }>();
+  const buckets = new Map<string, { weekday: number; hour: number; n: number; sum: number }>();
   for (const o of observations) {
-    const k = `${o.weekday}:${o.hour_utc}`;
-    const b = buckets.get(k) ?? { weekday: o.weekday, hour_utc: o.hour_utc, n: 0, sum: 0 };
+    const k = `${o.weekday}:${o.hour}`;
+    const b = buckets.get(k) ?? { weekday: o.weekday, hour: o.hour, n: 0, sum: 0 };
     b.n += 1;
     b.sum += o.value;
     buckets.set(k, b);
@@ -70,7 +74,7 @@ export function suggestTestWindows(
     .filter((b) => b.n >= 3)
     .sort((a, b) => b.sum / b.n - a.sum / a.n)
     .slice(0, 3)
-    .map((b) => ({ weekday: b.weekday, hour_utc: b.hour_utc, observations: b.n }));
+    .map((b) => ({ weekday: b.weekday, hour: b.hour, observations: b.n }));
   if (ranked.length === 0) {
     return { windows: [], state: "unknown", note: "No hour bucket has at least 3 observations." };
   }

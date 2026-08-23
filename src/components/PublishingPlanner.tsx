@@ -64,7 +64,7 @@ export function PublishingPlanner({ workspaceId, userId, isAdmin }: { workspaceI
 
   const providers = current ? analyticsProviders().map((p) => ({ spec: p, access: accessStateFor(current.connectors, p.id, p.analyticsScopes) })) : [];
   const connectorAvailable = providers.some((p) => p.access.state === "available");
-  const { observations, excludedUnverified } = toWindowObservations(current?.history ?? []);
+  const { observations, excludedUnverified, timeZone } = toWindowObservations(current?.history ?? []);
   const suggestion = suggestTestWindows(observations, MIN_OBSERVATIONS);
   const historyReady = Boolean(current && !current.historyError);
   const batches = groupImportBatches(current?.history ?? []);
@@ -136,8 +136,8 @@ export function PublishingPlanner({ workspaceId, userId, isAdmin }: { workspaceI
             {suggestion.windows.length > 0 && (
               <ul className="vp-steps" aria-label="Candidate windows">
                 {suggestion.windows.map((w) => (
-                  <li key={`${w.weekday}-${w.hour_utc}`}>
-                    <span>{w.observations}</span> {describeWindow(w)} <em>candidate, not a forecast</em>
+                  <li key={`${w.weekday}-${w.hour}`}>
+                    <span>{w.observations}</span> {describeWindow(w, timeZone)} <em>candidate, not a forecast</em>
                   </li>
                 ))}
               </ul>
@@ -176,6 +176,12 @@ export function PublishingPlanner({ workspaceId, userId, isAdmin }: { workspaceI
 
           <p className="vp-note">
             Evidence class of any candidate above: <strong>inference</strong> from observed data, shown with the observation count behind each bucket. It is never a forecast of reach, and it says nothing about audiences you have not posted to.
+          </p>
+          <p className="vp-hint">
+            Hours are wall-clock in <strong>{timeZone}</strong>, this device&apos;s timezone, and each post was placed in the
+            hour its own clock read at publication. Where that zone observes daylight saving, the same bucket is a
+            different absolute time in summer than in winter. Viewing from another zone regroups the buckets, so a window
+            is a claim about your posting clock, not about your audience&apos;s.
           </p>
 
           <section aria-labelledby="history-batches-heading">
