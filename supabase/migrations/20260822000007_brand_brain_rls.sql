@@ -27,6 +27,10 @@ DROP POLICY IF EXISTS "brands_select" ON public.brands;
 DROP POLICY IF EXISTS "brands_insert" ON public.brands;
 DROP POLICY IF EXISTS "brands_update" ON public.brands;
 DROP POLICY IF EXISTS "brands_delete" ON public.brands;
+DROP POLICY IF EXISTS "brand_select" ON public.brands;
+DROP POLICY IF EXISTS "brand_insert" ON public.brands;
+DROP POLICY IF EXISTS "brand_update" ON public.brands;
+DROP POLICY IF EXISTS "brand_delete" ON public.brands;
 
 CREATE POLICY "brands_select" ON public.brands FOR SELECT
   USING (public.is_workspace_member(workspace_id));
@@ -45,6 +49,8 @@ DROP POLICY IF EXISTS "brand_codex_versions_select" ON public.brand_codex_versio
 DROP POLICY IF EXISTS "brand_codex_versions_insert" ON public.brand_codex_versions;
 DROP POLICY IF EXISTS "brand_codex_versions_no_update" ON public.brand_codex_versions;
 DROP POLICY IF EXISTS "brand_codex_versions_no_delete" ON public.brand_codex_versions;
+DROP POLICY IF EXISTS "brand_codex_select" ON public.brand_codex_versions;
+DROP POLICY IF EXISTS "brand_codex_insert" ON public.brand_codex_versions;
 
 CREATE POLICY "brand_codex_versions_select" ON public.brand_codex_versions FOR SELECT
   USING (public.is_workspace_member(workspace_id));
@@ -98,6 +104,10 @@ DROP POLICY IF EXISTS "brand_proof_points_select" ON public.brand_proof_points;
 DROP POLICY IF EXISTS "brand_proof_points_insert" ON public.brand_proof_points;
 DROP POLICY IF EXISTS "brand_proof_points_update" ON public.brand_proof_points;
 DROP POLICY IF EXISTS "brand_proof_points_delete" ON public.brand_proof_points;
+DROP POLICY IF EXISTS "brand_proof_select" ON public.brand_proof_points;
+DROP POLICY IF EXISTS "brand_proof_insert" ON public.brand_proof_points;
+DROP POLICY IF EXISTS "brand_proof_update" ON public.brand_proof_points;
+DROP POLICY IF EXISTS "brand_proof_delete" ON public.brand_proof_points;
 
 CREATE POLICY "brand_proof_points_select" ON public.brand_proof_points FOR SELECT
   USING (public.is_workspace_member(workspace_id));
@@ -134,6 +144,10 @@ DROP POLICY IF EXISTS "brand_tone_guidelines_select" ON public.brand_tone_guidel
 DROP POLICY IF EXISTS "brand_tone_guidelines_insert" ON public.brand_tone_guidelines;
 DROP POLICY IF EXISTS "brand_tone_guidelines_update" ON public.brand_tone_guidelines;
 DROP POLICY IF EXISTS "brand_tone_guidelines_delete" ON public.brand_tone_guidelines;
+DROP POLICY IF EXISTS "brand_tone_select" ON public.brand_tone_guidelines;
+DROP POLICY IF EXISTS "brand_tone_insert" ON public.brand_tone_guidelines;
+DROP POLICY IF EXISTS "brand_tone_update" ON public.brand_tone_guidelines;
+DROP POLICY IF EXISTS "brand_tone_delete" ON public.brand_tone_guidelines;
 
 CREATE POLICY "brand_tone_guidelines_select" ON public.brand_tone_guidelines FOR SELECT
   USING (public.is_workspace_member(workspace_id));
@@ -152,6 +166,10 @@ DROP POLICY IF EXISTS "brand_compliance_boundaries_select" ON public.brand_compl
 DROP POLICY IF EXISTS "brand_compliance_boundaries_insert" ON public.brand_compliance_boundaries;
 DROP POLICY IF EXISTS "brand_compliance_boundaries_update" ON public.brand_compliance_boundaries;
 DROP POLICY IF EXISTS "brand_compliance_boundaries_delete" ON public.brand_compliance_boundaries;
+DROP POLICY IF EXISTS "brand_compliance_select" ON public.brand_compliance_boundaries;
+DROP POLICY IF EXISTS "brand_compliance_insert" ON public.brand_compliance_boundaries;
+DROP POLICY IF EXISTS "brand_compliance_update" ON public.brand_compliance_boundaries;
+DROP POLICY IF EXISTS "brand_compliance_delete" ON public.brand_compliance_boundaries;
 
 CREATE POLICY "brand_compliance_boundaries_select" ON public.brand_compliance_boundaries FOR SELECT
   USING (public.is_workspace_member(workspace_id));

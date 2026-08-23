@@ -6,3 +6,8 @@ dist/
 playwright-report/
 test-results/
 *.log
+*.backup.json
+*backup*.json
+docs/backup_*.json
+*.dump
+*.sql.bak

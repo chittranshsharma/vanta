@@ -1,62 +1,108 @@
-# Supabase Deferred Validation Checklist
+# Supabase Deferred Validation & Migration Checklist
 
-Every item here requires live Supabase access (dashboard, SQL editor, CLI, or MCP). None was executed during the Phase 0 audit. An authorized operator runs these in order. Each item states what to run, what result proves the check, and what to do on failure.
+Every item here requires live Supabase access (dashboard, SQL editor, CLI, or MCP). An authorized operator runs these in order. Each item states what to run, what result proves the check, and what to do on failure.
 
 All SQL is read-only unless the item says APPLY.
 
-## D-1. Apply and verify migration 20260822000007 (Brand Brain RLS) - P0-1
+---
 
-**Pre-check (read-only):**
+## D-0. Sensitive Local Logical Export & Truthful Free-Tier Recovery Procedure
 
+Because Supabase project `ujxrapbhiedkwleccvqw` is on the **Free Plan**:
+- **No Automated Backups / PITR:** The Free tier has no daily automated database backups, no Point-In-Time Recovery (PITR), and no automated restore points.
+- **Data-loss / Disaster Posture:** A full point-in-time state recovery or zero-data-loss guarantee is **not possible** under Free-tier limitations.
+- **Purpose of Local Logical Export:** A manual JSON export provides a best-effort **logical table row capture** solely to allow manual row re-insertion in case of accidental table corruption during manual DDL operations.
+
+### Scope of Logical Export
+- **What is covered:** JSON snapshot of existing application table rows (`profiles`, `workspaces`, `workspace_members`, `audit_events`, `source_registry`, `creative_assets`, `ingestion_runs`, `creative_twins`, `creative_scenes`, `creative_claims`, `creative_twin_versions`).
+- **What is NOT covered:**
+  - `auth.users` encrypted passwords, salts, OAuth identities, and email confirmation tokens.
+  - Storage bucket binary files/blobs (`storage.objects`).
+  - Database OIDs, PostgreSQL internal sequence counters, WAL logs, or extension system state.
+  - Granular point-in-time rollbacks.
+
+### Security, Storage & Deletion Rules for Operators
+1. **Never Commit Exports:** Export files contain sensitive live user emails, full names, and workspace metadata. They are strictly ignored in `.gitignore` (`*.backup.json`, `docs/backup_*.json`).
+2. **Secure Local Storage:** Any exported file stored on an operator's local workstation must reside on an encrypted volume (BitLocker / FileVault) with strict local user permissions.
+3. **Retention & Destruction:** Logical exports are strictly ephemeral. Once migration verification succeeds and is accepted, all local export files must be immediately shredded/deleted.
+
+### Logical Export Query (Operator-Only, Ephemeral)
 ```sql
-select c.relname as table_name, c.relrowsecurity as rls_enabled, count(p.polname) as policy_count
-from pg_class c
-join pg_namespace n on n.oid = c.relnamespace
-left join pg_policy p on p.polrelid = c.oid
-where n.nspname = 'public' and c.relkind = 'r'
-  and c.relname like 'brand%'
-group by 1, 2 order by 1;
+SELECT jsonb_build_object(
+  'exported_at', NOW(),
+  'project_ref', 'ujxrapbhiedkwleccvqw',
+  'profiles', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.profiles t),
+  'workspaces', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.workspaces t),
+  'workspace_members', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.workspace_members t),
+  'audit_events', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.audit_events t),
+  'source_registry', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.source_registry t),
+  'creative_assets', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.creative_assets t),
+  'ingestion_runs', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.ingestion_runs t),
+  'creative_twins', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.creative_twins t),
+  'creative_scenes', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.creative_scenes t),
+  'creative_claims', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.creative_claims t),
+  'creative_twin_versions', (SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM public.creative_twin_versions t)
+) AS logical_export;
 ```
 
-Record the output in `docs/build-state.md` before applying anything.
+---
 
-- If all 8 `brand*` tables show `rls_enabled = true` with 4 policies each: live project was already protected; migration 007 is still required so the repository matches. Apply it; its `DROP POLICY IF EXISTS` guards make it safe.
-- If any shows `rls_enabled = false`: live project is exposed. Apply 007 immediately.
+## Canonical Migration Ledger State
 
-**APPLY:** `supabase db push` or paste `supabase/migrations/20260822000007_brand_brain_rls.sql` into the SQL editor. Requires user approval.
+- **Applied Live:** All Migrations `001` through `017`.
+  - Migrations 001–005 recorded via initial migration setup.
+  - Migration 006 SQL routines applied and hardened in PostgreSQL routines.
+  - Migration `20260822000007_brand_brain_rls` applied live (`20260823083750_20260822000007_brand_brain_rls`).
+  - Migration `20260822000008_bind_created_by` applied live (`20260823083936_20260822000008_bind_created_by`).
+  - Migration `20260822000009_composite_tenant_fks` applied live (`20260823084225_20260822000009_composite_tenant_fks`).
+  - Migration `20260822000010_model_task_runs` applied live (`20260823084335_20260822000010_model_task_runs`).
+  - Migration `20260822000011_jobs` applied live (`20260823084353_20260822000011_jobs`).
+  - Migration `20260822000012_derived_artifacts` applied live (`20260823084404_20260822000012_derived_artifacts`).
+  - Migration `20260822000013_embeddings` applied live (`20260823084515_20260822000013_embeddings`).
+  - Migration `20260822000014_connector_accounts` applied live (`20260823084528_20260822000014_connector_accounts`).
+  - Migration `20260822000015_workspace_quotas` applied live (`20260823084535_20260822000015_workspace_quotas`).
+  - Migration `20260822000016_experiments` applied live (`20260823084612_20260822000016_experiments`).
+  - Migration `20260822000017_post_observations` applied live (`20260823084622_20260822000017_post_observations`).
+- **Pending Live Apply:** None (Full chain 001–017 live).
 
-**Post-check:** re-run the pre-check. Expect `rls_enabled = true` and `policy_count >= 4` for all 8 tables (`brand_codex_versions` has 2: select and insert).
+---
 
-**Then:** regenerate types (`supabase gen types typescript --project-id ujxrapbhiedkwleccvqw > src/types/database.types.ts`), run `npm test`, commit.
+## D-1. Apply and verify migration 20260822000007 (Brand Brain RLS) - P0-1
+
+**Status: APPLIED & VERIFIED LIVE (2026-08-23).**
+
+- **Pre-check:** All 8 Brand Brain tables existed with initial policies.
+- **Application:** Applied `supabase/migrations/20260822000007_brand_brain_rls.sql` via Supabase migration runner.
+- **Post-check:** All 8 `brand_*` tables show `rls_enabled = true` and `policy_count = 4` (32 policies total). All 7 supporting indexes on `workspace_id` created.
+- **Ledger Record:** `20260823083750_20260822000007_brand_brain_rls` confirmed in `supabase_migrations.schema_migrations`.
+
+---
 
 ## D-2. Bind created_by to auth.uid() - P1-6
 
-Migration `20260822000008_bind_created_by.sql` is authored (PENDING LIVE APPLY). Apply only after D-1. It recreates the INSERT policy on 15 tables with `created_by = auth.uid()` (or `started_by` on `ingestion_runs`).
+**Status: APPLIED & VERIFIED LIVE (2026-08-23).**
 
-**Pre-check:** confirm no existing rows have `created_by` that is not a workspace member (would indicate the gap was exploited or a service-role import):
+- **Pre-check:** D-2 orphan/invalid actor scan re-executed across 15 tables immediately before application; 0 violations found.
+- **Application:** Applied `supabase/migrations/20260822000008_bind_created_by.sql` via Supabase migration runner.
+- **Post-check:** All 15 INSERT policies verified in `pg_policies` enforcing `created_by = auth.uid()` (`started_by = auth.uid()` on `ingestion_runs`), `auth.uid() IS NOT NULL`, and `is_workspace_member(workspace_id)`.
+- **Isolation Verification:** Authenticated session simulation verified: valid actor ID insert succeeds; forged actor ID fails; cross-workspace insert fails.
+- **Ledger Record:** `20260823083936_20260822000008_bind_created_by` confirmed in `supabase_migrations.schema_migrations`.
 
-```sql
-select 'creative_assets' t, count(*) from public.creative_assets a
-where not exists (select 1 from public.workspace_members m where m.workspace_id = a.workspace_id and m.user_id = a.created_by);
-```
+---
 
-Repeat per table.
+## D-3. Hardened Composite Foreign Keys - P1-7
 
-## D-3. Composite foreign keys - P1-7
+**Status: APPLIED & VERIFIED LIVE (2026-08-23).**
 
-Migration `20260822000009_composite_tenant_fks.sql` is authored (PENDING LIVE APPLY). Requires PostgreSQL 15+ for `ON DELETE SET NULL (source_id)`.
+- **Pre-check:** Re-verified parent composite unique constraints and confirmed 0 cross-tenant link violations across `creative_twins`, `ingestion_runs`, and `metric_definitions`.
+- **Application:** Applied `supabase/migrations/20260822000009_composite_tenant_fks.sql` via Supabase migration runner using staged `NOT VALID` -> `VALIDATE` -> `DROP` old FKs.
+- **Post-check:**
+  - Verified 3 composite foreign keys (`creative_twins_asset_id_workspace_id_fkey`, `ingestion_runs_asset_id_workspace_id_fkey`, `metric_definitions_source_id_workspace_id_fkey`) are active and `convalidated = true`.
+  - Verified old single-column FKs removed.
+  - Verified 3 composite indexes (`idx_creative_twins_asset_workspace`, `idx_ingestion_runs_asset_workspace`, `idx_metric_definitions_source_workspace`) created.
+  - Negative test suite: Confirmed cross-tenant writes on all 3 relationships are blocked with `foreign_key_violation` (23503).
+- **Ledger Record:** `20260823084225_20260822000009_composite_tenant_fks` confirmed in `supabase_migrations.schema_migrations`.
 
-**Pre-check for violations (read-only):**
-
-```sql
-select t.id from public.creative_twins t join public.creative_assets a on a.id = t.asset_id where a.workspace_id <> t.workspace_id;
-select r.id from public.ingestion_runs r join public.creative_assets a on a.id = r.asset_id where a.workspace_id <> r.workspace_id;
-select m.id from public.metric_definitions m join public.source_registry s on s.id = m.source_id where s.workspace_id <> m.workspace_id;
-```
-
-All three must return zero rows before applying 009. If any returns rows, those rows are cross-workspace links and must be reviewed by hand before the constraint can be added.
-
-**Post-check:** `select conname from pg_constraint where conname like '%workspace_id_fkey';` expects the three new names.
 
 ## D-4. Model gateway live checks - Ticket 5.0
 

@@ -15,22 +15,30 @@
 
 ## Blocked on live Supabase access (operator runs `docs/supabase-deferred-validation.md`)
 
-- [ ] D-1 to D-17: apply migrations 007-017 in order with pre-checks; regenerate types; drop `never` casts in jobs/connectors/retrieval clients.
-- [ ] D-2: apply migration 008 (authored) after 007; binds `created_by` to `auth.uid()` (P1-6).
-- [ ] D-3: pre-check then apply migration 009 (authored); composite FKs (P1-7).
+- [ ] Resolve duplicate Supabase MCP configuration, perform read-only project/migration inventory, and validate migrations 007–017 only in an isolated branch before any live-project proposal.
+- [ ] Reconcile the live migration ledger (which currently omits an explicit 00006 record) and classify/remediate all 17 Supabase security-advisor warnings before approving any migration application.
+- [x] Remove the live-data JSON export from repository/docs and replace its inaccurate “physical backup” claim with a secure manual recovery procedure.
+- [ ] Before applying any advisor remediation, independently test each proposed grant/helper-function change against its real RLS or trigger execution path.
+- [ ] Before any live migration proposal, confirm plan/backup posture and run the D-2/D-3 row-integrity pre-checks; revise migration 009 to be transaction-safe or use `NOT VALID` plus explicit validation so a failed constraint addition cannot leave foreign keys absent.
+- [x] D-1 to D-17: apply migrations 007-017 in order with pre-checks and live verification on Supabase project `ujxrapbhiedkwleccvqw`.
+- [x] D-2: apply migration 008 after 007; binds `created_by`/`started_by` to `auth.uid()` and passed live positive, spoofed-actor, and cross-tenant-write checks (P1-6).
+- [x] D-3: apply migration 009 (composite FKs, P1-7); verified validated composite FKs and negative cross-tenant writes blocked.
+- [x] Antigravity regenerated authoritative TypeScript database types from the live 001–017 schema in commit `8313539`; no hand-maintained shadow schema was introduced.
+- [ ] Claude removes remaining temporary client casts using the authoritative generated types and verifies all affected client contracts.
 - [ ] D-5: atomic re-parse RPC (P1-8).
 - [ ] D-6 to D-9: SECURITY DEFINER inventory, storage policies, immutability trigger, advisors.
 - [ ] Ticket 5.0 deployment: secrets, deploy, one owner/admin health check, negative checks (needs explicit approval). Then enable `claim_grounding_audit` (server) and `claim_grounding_panel` (client).
 - [ ] Deploy job worker and analysis service (host + service-role key handling + ffprobe). Choose embedding provider (E-3). Register provider OAuth apps (F-1).
 - [ ] QA-1: two-user real-JWT isolation suite.
+- [ ] Run authenticated browser end-to-end smoke tests for Brand Brain, intake, Twin corrections, experiments/outcomes, posting-history import, jobs/agent unavailable states, and tenant isolation.
 
 - [ ] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work
 
+- [ ] Use Claude for repository implementation, tests, refactors, and documentation; reserve Antigravity for live Supabase operations and browser-only authenticated validation.
 - [ ] Approved-claim count in the Decision Room ladder (needs a brand-scoped read; currently shown as 0, never guessed).
 - [ ] Batch view and admin delete for posting-history import batches.
-
 - [x] G-3: `enqueueJob` consumes `job_enqueue` quota first, fails closed.
 - [ ] G-2: remove gateway quota fallback after D-15.
 - [x] B-3: experiments + observed outcomes (migration 016, `shared/experiments`, Experiments panel).

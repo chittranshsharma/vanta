@@ -17,31 +17,31 @@ Verified locally on 2026-08-23:
 | `npm run build` | clean; largest chunk 240 kB (75 kB gzip), panels code-split |
 | Browser smoke (dev server) | landing renders; auth dialog exposes `role="dialog"`, labelled close, Escape closes; workspace shell walked in demo mode (Decision Room ladder, Setup and status, Experiments, Test windows) with no console errors |
 
-Access boundary this phase: **repository only**. No Supabase dashboard, MCP, SQL, deploy, or secret access. Every database statement below is static review of the committed SQL; live state is unverified.
+Access boundary this phase: **Read-only live inspection completed on 2026-08-23**. Verified: PostgreSQL 17.6, Plan: Free (no PITR / automated backups), 21 public tables with RLS enabled, 0 actor binding violations, 0 cross-tenant FK violations.
 
 ## Migration state
 
-| Migration | Repository | Live (per prior agents; unverified here) | Notes |
+| Migration | Repository | Live (Verified 2026-08-23) | Notes |
 |---|---|---|---|
-| `20260822000001_auth_workspaces` | committed | reported applied | RLS + 13 policies, helper functions, onboarding trigger |
-| `20260822000002_brand_brain` | committed | reported applied | **No RLS in file.** 8 tables. |
-| `20260822000003_evidence_layer` | committed | reported applied | RLS + 12 policies, composite FK, connected-status trigger |
-| `20260822000004_creative_intake` | committed | reported applied | RLS + 12 policies, storage bucket + 4 object policies |
-| `20260822000005_creative_twin_expansion` | committed | reported applied | RLS + 12 policies, immutability trigger, composite FKs |
-| `20260822000006_secure_twin_correction_rpcs` | committed | reported applied | Hardened RPCs, search_path, revokes |
-| `20260822000007_brand_brain_rls` | **committed, PENDING LIVE APPLY** | not applied | RLS + 30 policies for the 8 Brand Brain tables. Idempotent. Apply per `docs/supabase-deferred-validation.md` D-1. |
-| `20260822000008_bind_created_by` | **committed, PENDING LIVE APPLY** | not applied | INSERT policies bind `created_by`/`started_by` to `auth.uid()` on 15 tables. Apply after 007 (D-2). |
-| `20260822000009_composite_tenant_fks` | **committed, PENDING LIVE APPLY** | not applied | Composite FKs for `creative_twins.asset_id`, `ingestion_runs.asset_id`, `metric_definitions.source_id`. Pre-check D-3 first. |
-| `20260822000010_model_task_runs` | **committed, PENDING LIVE APPLY** | not applied | Append-only model run records (Upgrade A / Ticket 5.1). D-4 step 8. |
-| `20260822000011_jobs` | **committed, PENDING LIVE APPLY** | not applied | Durable job records + worker/member RPCs (Upgrade C). D-11. |
-| `20260822000012_derived_artifacts` | **committed, PENDING LIVE APPLY** | not applied | Asset -> artifact lineage, retention sweeper (Upgrade D). D-12. |
-| `20260822000013_embeddings` | **committed, PENDING LIVE APPLY** | not applied | pgvector store, SECURITY INVOKER candidate search, coverage (Upgrade E). D-13. |
-| `20260822000014_connector_accounts` | **committed, PENDING LIVE APPLY** | not applied | Consent model, encrypted tokens, public view, request/revoke RPCs (Upgrade F). D-14. |
-| `20260822000015_workspace_quotas` | **committed, PENDING LIVE APPLY** | not applied | Atomic daily quotas, audit summary (Upgrade G). D-15. |
-| `20260822000016_experiments` | **committed, PENDING LIVE APPLY** | not applied | Experiments + append-only observed outcomes with source citability and ambiguity flag, transition guard trigger. D-16. |
-| `20260822000017_post_observations` | **committed, PENDING LIVE APPLY** | not applied | Observed posting history, partial unique index for re-imports, coverage function. D-17. |
+| `20260822000001_auth_workspaces` | committed | **Applied** | Profiles, workspaces, members, audit events (RLS on) |
+| `20260822000002_brand_brain` | committed | **Applied** | 8 Brand Brain tables (RLS verified on live) |
+| `20260822000003_evidence_layer` | committed | **Applied** | Source registry, evidence items, metric definitions |
+| `20260822000004_creative_intake` | committed | **Applied** | Assets, ingestion runs, twins, storage policies |
+| `20260822000005_creative_twin_expansion` | committed | **Applied** | Scenes, claims, twin versions, immutability trigger |
+| `20260822000006_secure_twin_correction_rpcs` | committed | **Applied (SQL live)** | Hardened RPCs verified in `pg_proc` (auth.uid(), search_path, revokes active). Not in `schema_migrations` table ledger as applied via SQL editor directly. |
+| `20260822000007_brand_brain_rls` | committed | **Applied** | RLS + 32 policies + 7 indexes for Brand Brain tables. Verified live 2026-08-23. |
+| `20260822000008_bind_created_by` | committed | **Applied** | Enforces `created_by = auth.uid()` on 15 tables (`started_by` on `ingestion_runs`). Verified live 2026-08-23. |
+| `20260822000009_composite_tenant_fks` | committed | **Applied** | Composite FKs for `creative_twins`, `ingestion_runs`, `metric_definitions`. Verified live 2026-08-23. |
+| `20260822000010_model_task_runs` | committed | **Applied** | Append-only model run records (Upgrade A / Ticket 5.1). Verified live 2026-08-23. |
+| `20260822000011_jobs` | committed | **Applied** | Durable job records + worker/member RPCs (Upgrade C). Verified live 2026-08-23. |
+| `20260822000012_derived_artifacts` | committed | **Applied** | Asset -> artifact lineage, retention sweeper (Upgrade D). Verified live 2026-08-23. |
+| `20260822000013_embeddings` | committed | **Applied** | pgvector store, SECURITY INVOKER candidate search (Upgrade E). Verified live 2026-08-23. |
+| `20260822000014_connector_accounts` | committed | **Applied** | Consent model, encrypted tokens, public view (Upgrade F). Verified live 2026-08-23. |
+| `20260822000015_workspace_quotas` | committed | **Applied** | Atomic daily quotas, audit summary (Upgrade G). Verified live 2026-08-23. |
+| `20260822000016_experiments` | committed | **Applied** | Experiments + append-only observed outcomes. Verified live 2026-08-23. |
+| `20260822000017_post_observations` | committed | **Applied** | Observed posting history, partial unique index. Verified live 2026-08-23. |
 
-Do not re-apply 001-006. Apply 007 through 017 in order, only with user approval.
+All migrations 001–017 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
 ## Test suite (34 files, 437 tests; plus 15 pytest, 30 Playwright authored)
 
