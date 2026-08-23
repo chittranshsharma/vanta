@@ -159,6 +159,19 @@ Acceptance checks: 437 tests, typecheck, lint, build; browser walk-through of De
 Live verification deferred: counts against a real project (D-16, D-17).
 ```
 
+```
+Slice: Typed client cleanup against the generated schema
+Why now: the clients reached the live schema through `as unknown as` casts written while the types were stale, so every read asserted a shape nothing had checked.
+In scope: src/lib/rows.ts (narrow / jsonObject / jsonObjectArray / isMissingRelationError, JsonObject for jsonb writes; 13 tests), runtime value lists beside the domain unions in shared/jobs/policy.ts, shared/experiments/{model,outcomeImport}.ts and shared/connectors/access.ts, and per-client boundary readers in jobs.ts, experiments.ts, postHistory.ts, connectors.ts, retrieval.ts, auth.ts, creativeTwin.ts, workspaceOverview.ts.
+Out of scope: test doubles in modelGateway.test.ts and telemetry.test.ts (fetch and Error fakes, not schema escapes).
+Why runtime checks and not types: generated types cannot express CHECK constraints, so every constrained column arrives as `string` and `Enums` is empty. Each client now narrows against the shared runtime list and returns the reason a row could not be read, which surfaces as "the database schema is ahead of this build" instead of a nearby value the client happens to understand.
+Correctness fixed, not just tidied: `connector_accounts_public` is a view, so Postgres reports every column nullable. The old cast claimed id, status and granted_scopes were present; a row missing identity is now rejected and absent scope arrays default to empty, which makes `describeAccess` report missing consent rather than render a working connection.
+One documented widening remains: `sceneTimingArgs`, because migration 20260822000006 declares the three scene timings NUMERIC/NUMERIC/INT and SQL parameters accept NULL while codegen reports them non-null.
+Data/security effect: none. No query, policy or payload changed.
+Acceptance checks: 450 tests, lint, typecheck, worker typecheck, production build.
+Live verification deferred: authenticated browser walk-through of the affected panels (Antigravity).
+```
+
 ## Supabase project (from prior state; unverified this phase)
 
 - Project ref: `ujxrapbhiedkwleccvqw`
@@ -174,10 +187,10 @@ Live verification deferred: counts against a real project (D-16, D-17).
 
 ## Next
 
-1. Operator applies 007 through 016 in order with the pre-checks in `docs/supabase-deferred-validation.md` (D-1 to D-17), then regenerates types and removes the `never` casts in `src/lib/jobs.ts`, `connectors.ts`, `retrieval.ts`, `experiments.ts`, `postHistory.ts`.
+1. Migrations 007 through 017 are applied and the types are regenerated from the live schema (commit `8313539`); the temporary `never` casts in `src/lib/jobs.ts`, `connectors.ts`, `retrieval.ts`, `experiments.ts` and `postHistory.ts` are gone. Remaining pre-checks live in `docs/supabase-deferred-validation.md` (D-5 to D-9).
 2. Ticket 5.0 deployment on explicit approval (`docs/model-gateway-deployment-readiness.md`), then `ENABLED_TASKS=claim_grounding_audit` and `VITE_FLAGS=claim_grounding_panel` once D-4 step 8 passes.
 3. Worker and analysis service deployment (operator decision: host, service-role key handling, ffprobe availability).
 4. Open review items: G-2 (remove quota fallback after D-15), E-3 (embedding provider choice), F-1 (provider OAuth apps), D-2 (thumbnails/frames), B-3 (calibration tables).
 5. QA-1 run against a staging project before any external user.
 
-6. Git identity is unset in this clone (`git config user.name` and `user.email` empty). No commit can be made until the user configures it; all work above is uncommitted.
+6. Git identity is configured in this clone and slices are committed locally. Nothing is pushed.

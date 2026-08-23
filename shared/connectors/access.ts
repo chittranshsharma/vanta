@@ -6,6 +6,9 @@
 
 export type ConnectorStatus = "pending_consent" | "connected" | "revoked" | "error";
 
+/** Runtime values, for narrowing the `string` that generated DB types produce. */
+export const CONNECTOR_STATUSES: readonly ConnectorStatus[] = ["pending_consent", "connected", "revoked", "error"] as const;
+
 export interface AccessInput {
   /** Connector for the platform in question, or null when none was ever requested. */
   connector: { status: ConnectorStatus; granted_scopes: string[]; last_sync_at: string | null; token_expires_at: string | null } | null;

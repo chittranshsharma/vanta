@@ -1,5 +1,7 @@
 import { isSupabaseConfigured, supabase } from "./supabase";
-import { describeAccess, type AccessState, type ConnectorStatus } from "../../shared/connectors/access";
+import { jsonObject, narrow } from "./rows";
+import type { Tables } from "../types/database.types";
+import { CONNECTOR_STATUSES, describeAccess, type AccessState, type ConnectorStatus } from "../../shared/connectors/access";
 
 /**
  * Connector client (Upgrade F). Reads the public view (no token columns
@@ -24,31 +26,71 @@ export interface ConnectorAccountPublic {
 }
 
 type Result<T> = { data: T; error: null } | { data: null; error: string };
+const NOT_CONFIGURED = "Supabase is not configured.";
 
-function loose() {
-  return supabase as unknown as {
-    from: (t: string) => ReturnType<typeof supabase.from>;
-    rpc: (n: string, a: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+/**
+ * Reads one view row, or returns why it could not be read.
+ *
+ * Postgres reports every column of a view as nullable, so the generated type
+ * cannot promise an id, a provider or a status. A row missing any of those is
+ * not a connector this client can describe or revoke, and saying so beats
+ * substituting a default that would render as a working connection.
+ *
+ * Scope arrays default to empty on null, which fails closed: `describeAccess`
+ * then reports the required scopes as missing instead of assuming consent.
+ */
+export function toConnectorAccount(row: Tables<"connector_accounts_public">): ConnectorAccountPublic | string {
+  if (!row.id) return "a connector row has no id, so it cannot be revoked or referenced";
+  if (!row.workspace_id) return `connector ${row.id} has no workspace`;
+  if (!row.provider) return `connector ${row.id} has no provider`;
+  if (!row.created_at) return `connector ${row.id} has no creation time`;
+  const status = narrow(CONNECTOR_STATUSES, row.status);
+  if (!status) return `connector ${row.id} has status "${row.status ?? "null"}", which this build does not recognize`;
+  return {
+    id: row.id,
+    workspace_id: row.workspace_id,
+    provider: row.provider,
+    external_account_id: row.external_account_id,
+    display_name: row.display_name,
+    requested_scopes: row.requested_scopes ?? [],
+    granted_scopes: row.granted_scopes ?? [],
+    status,
+    consent_granted_at: row.consent_granted_at,
+    token_expires_at: row.token_expires_at,
+    last_sync_at: row.last_sync_at,
+    last_error: jsonObject(row.last_error),
+    created_at: row.created_at,
   };
 }
 
 export async function listConnectors(workspaceId: string): Promise<Result<ConnectorAccountPublic[]>> {
-  if (!isSupabaseConfigured) return { data: null, error: "Supabase is not configured." };
-  const { data, error } = await loose().from("connector_accounts_public").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: false });
+  if (!isSupabaseConfigured) return { data: null, error: NOT_CONFIGURED };
+  const { data, error } = await supabase
+    .from("connector_accounts_public")
+    .select("*")
+    .eq("workspace_id", workspaceId)
+    .order("created_at", { ascending: false });
   if (error) return { data: null, error: error.message };
-  return { data: (data ?? []) as unknown as ConnectorAccountPublic[], error: null };
+  const rows: ConnectorAccountPublic[] = [];
+  for (const row of data ?? []) {
+    const mapped = toConnectorAccount(row);
+    if (typeof mapped === "string") return { data: null, error: `Cannot read connectors: ${mapped}.` };
+    rows.push(mapped);
+  }
+  return { data: rows, error: null };
 }
 
 export async function requestConnector(workspaceId: string, provider: string, scopes: string[]): Promise<Result<string>> {
-  if (!isSupabaseConfigured) return { data: null, error: "Supabase is not configured." };
-  const { data, error } = await loose().rpc("request_connector", { p_workspace_id: workspaceId, p_provider: provider, p_scopes: scopes });
+  if (!isSupabaseConfigured) return { data: null, error: NOT_CONFIGURED };
+  const { data, error } = await supabase.rpc("request_connector", { p_workspace_id: workspaceId, p_provider: provider, p_scopes: scopes });
   if (error) return { data: null, error: error.message };
-  return { data: data as string, error: null };
+  if (!data) return { data: null, error: "request_connector returned no connector id." };
+  return { data, error: null };
 }
 
 export async function revokeConnector(connectorId: string, workspaceId: string): Promise<Result<boolean>> {
-  if (!isSupabaseConfigured) return { data: null, error: "Supabase is not configured." };
-  const { data, error } = await loose().rpc("revoke_connector", { p_connector_id: connectorId, p_workspace_id: workspaceId });
+  if (!isSupabaseConfigured) return { data: null, error: NOT_CONFIGURED };
+  const { data, error } = await supabase.rpc("revoke_connector", { p_connector_id: connectorId, p_workspace_id: workspaceId });
   if (error) return { data: null, error: error.message };
   return { data: Boolean(data), error: null };
 }

@@ -16,10 +16,7 @@ export async function fetchRetrievalCoverage(
   workspaceId: string
 ): Promise<{ data: RetrievalCoverageRow[] | null; error: string | null }> {
   if (!isSupabaseConfigured) return { data: null, error: "Supabase is not configured." };
-  const client = supabase as unknown as {
-    rpc: (n: string, a: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
-  };
-  const { data, error } = await client.rpc("retrieval_coverage", { p_workspace_id: workspaceId });
+  const { data, error } = await supabase.rpc("retrieval_coverage", { p_workspace_id: workspaceId });
   if (error) return { data: null, error: error.message };
-  return { data: (data as RetrievalCoverageRow[]) ?? [], error: null };
+  return { data: data ?? [], error: null };
 }

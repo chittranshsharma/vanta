@@ -27,6 +27,21 @@ export const JOB_TYPES: readonly JobType[] = [
   "embedding_refresh",
 ] as const;
 
+/**
+ * Every legal status, as runtime values. Generated Supabase types cannot
+ * express the CHECK constraint behind `jobs.status`, so the client narrows the
+ * `string` it receives against this list instead of asserting a type.
+ */
+export const JOB_STATUSES: readonly JobStatus[] = [
+  "awaiting_approval",
+  "queued",
+  "running",
+  "succeeded",
+  "failed",
+  "dead",
+  "cancelled",
+] as const;
+
 export const TERMINAL_STATUSES: ReadonlySet<JobStatus> = new Set(["succeeded", "dead", "cancelled"]);
 
 /** Legal transitions. Anything not listed is rejected by the RPCs. */

@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from "./supabase";
+import { isMissingRelationError } from "./rows";
 import type { Brand } from "./brandBrain";
 import type { CreativeAssetRow } from "./creativeIntake";
 import type { SourceRegistryRow } from "./sourceRegistry";
@@ -94,19 +95,14 @@ interface CountResult {
   missing: boolean;
 }
 
+/** Tables the Decision Room ladder counts. Literal names, so the generated schema checks every one of them. */
+type CountableTable = "creative_twins" | "metric_definitions" | "experiments" | "experiment_outcomes" | "post_observations";
+
 /** Row count for one workspace. Returns `missing` rather than an error when the table does not exist yet. */
-async function countRows(table: string, workspaceId: string): Promise<CountResult> {
-  const client = supabase as unknown as {
-    from: (t: string) => {
-      select: (cols: string, opts: { count: "exact"; head: true }) => {
-        eq: (col: string, val: string) => PromiseLike<{ count: number | null; error: { message: string; code?: string } | null }>;
-      };
-    };
-  };
-  const { count, error } = await client.from(table).select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId);
+async function countRows(table: CountableTable, workspaceId: string): Promise<CountResult> {
+  const { count, error } = await supabase.from(table).select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId);
   if (error) {
-    const missing = /does not exist|42P01|schema cache/i.test(error.message) || error.code === "42P01";
-    return { count: null, error: error.message, missing };
+    return { count: null, error: error.message, missing: isMissingRelationError(error) };
   }
   return { count: count ?? 0, error: null, missing: false };
 }

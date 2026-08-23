@@ -26,6 +26,8 @@ export function canTransitionExperiment(from: ExperimentStatus, to: ExperimentSt
 
 export type OutcomeSourceKind = "connector" | "csv_import" | "none";
 
+export const OUTCOME_SOURCE_KINDS: readonly OutcomeSourceKind[] = ["connector", "csv_import", "none"] as const;
+
 export interface ExperimentDefinition {
   hypothesis: string;
   /** Metric key from metric_definitions; the only thing an outcome can be read against. */

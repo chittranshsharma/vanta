@@ -16,6 +16,9 @@ export const MAX_IMPORT_ROWS = 5000;
 
 export type SourceCitability = "verified" | "citable_stale" | "citable_unverified";
 
+/** Runtime values, for narrowing the `string` that generated DB types produce. */
+export const SOURCE_CITABILITIES: readonly SourceCitability[] = ["verified", "citable_stale", "citable_unverified"] as const;
+
 export interface ColumnMap {
   /** Header naming the variant. Values are matched against variant labels, then ids. */
   variant: string;

@@ -24,7 +24,7 @@
 - [x] D-2: apply migration 008 after 007; binds `created_by`/`started_by` to `auth.uid()` and passed live positive, spoofed-actor, and cross-tenant-write checks (P1-6).
 - [x] D-3: apply migration 009 (composite FKs, P1-7); verified validated composite FKs and negative cross-tenant writes blocked.
 - [x] Antigravity regenerated authoritative TypeScript database types from the live 001–017 schema in commit `8313539`; no hand-maintained shadow schema was introduced.
-- [ ] Claude removes remaining temporary client casts using the authoritative generated types and verifies all affected client contracts.
+- [x] Claude removed the remaining temporary client casts using the authoritative generated types and verified every affected client contract (`src/lib/rows.ts` boundary readers).
 - [ ] D-5: atomic re-parse RPC (P1-8).
 - [ ] D-6 to D-9: SECURITY DEFINER inventory, storage policies, immutability trigger, advisors.
 - [ ] Ticket 5.0 deployment: secrets, deploy, one owner/admin health check, negative checks (needs explicit approval). Then enable `claim_grounding_audit` (server) and `claim_grounding_panel` (client).
@@ -32,7 +32,7 @@
 - [ ] QA-1: two-user real-JWT isolation suite.
 - [ ] Run authenticated browser end-to-end smoke tests for Brand Brain, intake, Twin corrections, experiments/outcomes, posting-history import, jobs/agent unavailable states, and tenant isolation.
 
-- [ ] Configure git identity (user.name / user.email) so slices can be committed locally.
+- [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work
 
@@ -49,3 +49,4 @@
 - [ ] Local-timezone window buckets (current buckets are UTC and labelled UTC).
 - [x] Gateway probe result lifted into the workspace and consumed by the agent runtime gate.
 - [x] Accessibility pass on Brand Brain and Source Registry forms (aria-describedby, aria-busy, inline save errors).
+- [ ] Give `save_scene_correction_atomic` explicit `DEFAULT NULL` on `p_start_seconds`, `p_end_seconds`, and `p_reading_burden_wpm` so the nullable contract survives type generation; until then `sceneTimingArgs` in `src/lib/creativeTwin.ts` widens once, in one documented place.

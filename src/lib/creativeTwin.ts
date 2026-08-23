@@ -9,7 +9,8 @@
  */
 
 import { supabase } from './supabase';
-import type { Database } from '../types/database.types';
+import { jsonObject, type JsonObject } from './rows';
+import type { Database, Json } from '../types/database.types';
 
 export type CreativeSceneRow = Database['public']['Tables']['creative_scenes']['Row'];
 export type CreativeClaimRow = Database['public']['Tables']['creative_claims']['Row'];
@@ -492,7 +493,10 @@ export async function initializeStructuredTwin(
       .eq('workspace_id', workspaceId)
       .single();
 
-    const snapshot = {
+    // Snapshots are jsonb, so every member is written out explicitly. Mapping
+    // the parsed structures field by field lets the compiler check the stored
+    // shape instead of the client asserting one.
+    const snapshot: JsonObject = {
       twin_id: twinId,
       title: twinData?.title || 'Creative Twin',
       asset_kind: twinData?.asset_kind || 'script',
@@ -501,8 +505,27 @@ export async function initializeStructuredTwin(
       deterministic_features: twinData?.deterministic_features || {},
       known_gaps: twinData?.known_gaps || [],
       state: 'grounded_stub',
-      scenes: parsedScenes,
-      claims: extractedClaims,
+      scenes: parsedScenes.map((s) => ({
+        sceneIndex: s.sceneIndex,
+        startSeconds: s.startSeconds,
+        endSeconds: s.endSeconds,
+        shotPurpose: s.shotPurpose,
+        spokenTranscript: s.spokenTranscript,
+        onScreenText: s.onScreenText,
+        providedVisualNotes: s.providedVisualNotes,
+        readingBurdenWpm: s.readingBurdenWpm,
+      })),
+      claims: extractedClaims.map((c) => ({
+        claimText: c.claimText,
+        claimClassification: c.claimClassification,
+        brandAlignmentStatus: c.brandAlignmentStatus,
+        matchingBrandClaimId: c.matchingBrandClaimId,
+        sourceCharOffsetStart: c.sourceCharOffsetStart,
+        sourceCharOffsetEnd: c.sourceCharOffsetEnd,
+        sourceExcerpt: c.sourceExcerpt,
+        proofReference: c.proofReference,
+        sceneIndices: c.sceneIndices,
+      })),
       snapshotted_at: new Date().toISOString(),
     };
 
@@ -519,7 +542,7 @@ export async function initializeStructuredTwin(
         twin_id: twinId,
         workspace_id: workspaceId,
         version_number: 1,
-        snapshot: snapshot as unknown as Database['public']['Tables']['creative_twin_versions']['Insert']['snapshot'],
+        snapshot,
         change_summary: 'Initial deterministic decomposition from raw text asset',
         created_by: userId,
       });
@@ -605,6 +628,41 @@ export async function fetchStructuredTwin(
   }
 }
 
+/** The three scene timings, as `save_scene_correction_atomic` declares them. */
+type SceneTimingArgs = Pick<
+  Database['public']['Functions']['save_scene_correction_atomic']['Args'],
+  'p_start_seconds' | 'p_end_seconds' | 'p_reading_burden_wpm'
+>;
+
+/**
+ * Migration 20260822000006 declares these parameters NUMERIC, NUMERIC and INT.
+ * SQL function parameters accept NULL, but generated types report every scalar
+ * parameter as non-null because codegen cannot express parameter nullability.
+ * The widening is confined here, checked against that signature, rather than
+ * each call site claiming an absent timing is a number.
+ */
+function sceneTimingArgs(timings: {
+  startSeconds: number | null;
+  endSeconds: number | null;
+  readingBurdenWpm: number | null;
+}): SceneTimingArgs {
+  return {
+    p_start_seconds: timings.startSeconds,
+    p_end_seconds: timings.endSeconds,
+    p_reading_burden_wpm: timings.readingBurdenWpm,
+  } as SceneTimingArgs;
+}
+
+/**
+ * Reads the version number out of a correction RPC's jsonb result. Returns
+ * undefined when the database sent no number, so the caller reports the save it
+ * really made without inventing a version it cannot see.
+ */
+function versionNumberFrom(data: Json | null): number | undefined {
+  const result = jsonObject(data);
+  return typeof result?.version_number === 'number' ? result.version_number : undefined;
+}
+
 /**
  * Atomically updates a scene and records an immutable version snapshot via PostgreSQL stored procedure.
  */
@@ -631,15 +689,12 @@ export async function correctSceneAtomic(
       p_spoken_transcript: updates.spokenTranscript,
       p_on_screen_text: updates.onScreenText || '',
       p_provided_visual_notes: updates.providedVisualNotes || '',
-      p_start_seconds: updates.startSeconds as unknown as number,
-      p_end_seconds: updates.endSeconds as unknown as number,
-      p_reading_burden_wpm: updates.readingBurdenWpm as unknown as number,
+      ...sceneTimingArgs(updates),
       p_change_summary: changeSummary,
     });
 
     if (error) throw error;
-    const result = data as { version_number: number };
-    return { success: true, newVersionNumber: result?.version_number };
+    return { success: true, newVersionNumber: versionNumberFrom(data) };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
@@ -674,8 +729,7 @@ export async function correctClaimAtomic(
     });
 
     if (error) throw error;
-    const result = data as { version_number: number };
-    return { success: true, newVersionNumber: result?.version_number };
+    return { success: true, newVersionNumber: versionNumberFrom(data) };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
   }

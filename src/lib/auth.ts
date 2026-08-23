@@ -1,5 +1,6 @@
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { narrow } from "./rows";
 import type { Database } from "../types/database.types";
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -9,6 +10,13 @@ export type WorkspaceMember = Database["public"]["Tables"]["workspace_members"][
 export type WorkspaceWithRole = Workspace & {
   role: "owner" | "admin" | "member" | "viewer";
 };
+
+/**
+ * Runtime values for the membership role. `workspace_members.role` is
+ * CHECK-constrained in the database but generated types report it as `string`,
+ * so it is narrowed here rather than asserted.
+ */
+const WORKSPACE_ROLES: readonly WorkspaceWithRole["role"][] = ["owner", "admin", "member", "viewer"] as const;
 
 export async function signUpWithEmail(
   email: string,
@@ -85,12 +93,20 @@ export async function fetchUserWorkspaces(userId: string): Promise<WorkspaceWith
     return [];
   }
 
-  return data
-    .filter((item) => item.workspaces !== null)
-    .map((item) => ({
-      ...(item.workspaces as unknown as Workspace),
-      role: item.role as WorkspaceWithRole["role"]
-    }));
+  // A membership whose workspace or role cannot be read is skipped, not
+  // defaulted: granting a role this build does not understand would be a
+  // privilege claim nothing backs.
+  const workspaces: WorkspaceWithRole[] = [];
+  for (const item of data) {
+    if (!item.workspaces) continue;
+    const role = narrow(WORKSPACE_ROLES, item.role);
+    if (!role) {
+      console.error(`Skipping workspace membership with unrecognized role "${item.role}".`);
+      continue;
+    }
+    workspaces.push({ ...item.workspaces, role });
+  }
+  return workspaces;
 }
 
 export async function createNewWorkspace(
