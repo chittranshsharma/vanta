@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { Modal } from "./Modal";
 import { supabase } from "../lib/supabase";
 import { fetchMetricDefinitions, fetchSourcesForWorkspace, type MetricDefinitionRow, type SourceRegistryRow } from "../lib/sourceRegistry";
-import { accessStateFor, listConnectors, type ConnectorAccountPublic } from "../lib/connectors";
-import { analyticsProviders } from "../../shared/connectors/providers";
+import { listConnectors, type ConnectorAccountPublic } from "../lib/connectors";
+import { connectorOutcomeSourceState, describeAllOutcomeSync, type OutcomeSyncCapability } from "../../shared/connectors/outcomeSync";
 import { createExperiment, isMissingTableError, listExperiments, listOutcomes, setExperimentStatus, type ExperimentOutcomeRow, type ExperimentRow } from "../lib/experiments";
 import { OutcomeImportModal } from "./OutcomeImportModal";
+import { OutcomeSyncStatus } from "./OutcomeSyncStatus";
 import { calibrationReadiness, canTransitionExperiment, evaluateReadiness, HYPOTHESIS_MIN_LENGTH, type ExperimentStatus, type OutcomeSourceKind } from "../../shared/experiments/model";
 
 interface TwinLite { id: string; title: string }
@@ -81,9 +82,11 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
     else setReloadToken((t) => t + 1);
   };
 
-  const anyAnalyticsAvailable = current
-    ? analyticsProviders().some((p) => accessStateFor(current.connectors, p.id, p.analyticsScopes).state === "available")
-    : false;
+  // What a connector could actually deliver, not merely whether one is connected.
+  // An account with a live token is not an available outcome source while no sync
+  // path exists to read it, so readiness is derived from the sync capability.
+  const syncCapabilities: OutcomeSyncCapability[] = current ? describeAllOutcomeSync(current.connectors, new Date()) : [];
+  const connectorSourceState = connectorOutcomeSourceState(syncCapabilities);
 
   return (
     <section className="vp-panel" aria-labelledby="experiments-heading">
@@ -141,7 +144,7 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
               {
                 metricDefined: current.metrics.some((m) => m.metric_key === exp.primary_metric_key),
                 variantsExist: current.twins.map((t) => t.id),
-                sourceState: exp.outcome_source === "connector" ? (anyAnalyticsAvailable ? "available" : "unknown") : "not_applicable"
+                sourceState: exp.outcome_source === "connector" ? connectorSourceState : "not_applicable"
               }
             );
             return (
@@ -181,8 +184,10 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
 
       {importedNote && <p className="vp-note" role="status">{importedNote}</p>}
 
+      {current && !current.experimentsError && <OutcomeSyncStatus capabilities={syncCapabilities} />}
+
       <p className="vp-note">
-        CSV import is available now: rows must name a registered source and are stored as <strong>observed from that source</strong>, with the source's citability at import time recorded on each row. Connector sync is deferred until a provider is authorized. Nothing computes a winner.
+        CSV import is available now: rows must name a registered source and are stored as <strong>observed from that source</strong>, with the source's citability at import time recorded on each row. Nothing computes a winner.
       </p>
 
       {current && importFor && (
@@ -214,6 +219,7 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
           }}
           workspaceId={workspaceId}
           userId={userId}
+          syncCapabilities={syncCapabilities}
         />
       )}
     </section>
@@ -253,7 +259,7 @@ function OutcomeSummary({ experiment, workspaceId, refreshToken }: { experiment:
   );
 }
 
-function CreateExperimentModal({ open, onClose, twins, metrics, onCreated, workspaceId, userId }: {
+function CreateExperimentModal({ open, onClose, twins, metrics, onCreated, workspaceId, userId, syncCapabilities }: {
   open: boolean;
   onClose: () => void;
   twins: TwinLite[];
@@ -261,6 +267,7 @@ function CreateExperimentModal({ open, onClose, twins, metrics, onCreated, works
   onCreated: () => void;
   workspaceId: string;
   userId: string;
+  syncCapabilities: OutcomeSyncCapability[];
 }) {
   const [title, setTitle] = useState("");
   const [hypothesis, setHypothesis] = useState("");
@@ -271,9 +278,10 @@ function CreateExperimentModal({ open, onClose, twins, metrics, onCreated, works
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const connectorSourceState = connectorOutcomeSourceState(syncCapabilities);
   const readiness = evaluateReadiness(
     { hypothesis, primaryMetricKey: metricKey, variantTwinIds: variants, minObservationsPerVariant: minObs, outcomeSource: source },
-    { metricDefined: metrics.some((m) => m.metric_key === metricKey), variantsExist: twins.map((t) => t.id), sourceState: source === "connector" ? "unknown" : "not_applicable" }
+    { metricDefined: metrics.some((m) => m.metric_key === metricKey), variantsExist: twins.map((t) => t.id), sourceState: source === "connector" ? connectorSourceState : "not_applicable" }
   );
 
   const submit = async (e: React.FormEvent) => {
@@ -330,10 +338,13 @@ function CreateExperimentModal({ open, onClose, twins, metrics, onCreated, works
           Outcomes will come from
           <select value={source} onChange={(e) => setSource(e.target.value as OutcomeSourceKind)}>
             <option value="csv_import">CSV import from a registered source</option>
-            <option value="connector">Authorized connector sync</option>
+            <option value="connector">
+              Authorized connector sync{connectorSourceState === "available" ? "" : " (no sync path in this build)"}
+            </option>
             <option value="none">Undeclared (experiment can never conclude)</option>
           </select>
         </label>
+        {source === "connector" && <OutcomeSyncStatus capabilities={syncCapabilities} heading="What connector sync would need" />}
         {readiness.blockers.length > 0 && (
           <ul className="vp-steps" aria-label="Blockers">
             {readiness.blockers.map((b) => (

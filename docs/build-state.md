@@ -10,7 +10,7 @@ Verified locally on 2026-08-23:
 |---|---|
 | `npm run lint` | 0 errors, 0 warnings |
 | `npm run typecheck` | clean |
-| `npm test` | 503 passed / 503, 37 suites |
+| `npm test` | 519 passed / 519, 38 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run test:e2e` | 30 skipped with reason (no staging credentials); suite authored for QA-1 |
 | `npm run typecheck:worker` | clean |
@@ -43,7 +43,7 @@ Access boundary this phase: **Read-only live inspection completed on 2026-08-23*
 
 All migrations 001–017 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
-## Test suite (37 files, 503 tests; plus 15 pytest, 30 Playwright authored)
+## Test suite (38 files, 519 tests; plus 15 pytest, 30 Playwright authored)
 
 Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 
@@ -63,6 +63,7 @@ Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 | `shared/publishing/batches.test.ts` | 9 | Batch grouping counts only stored rows, orders by instant across offsets, keeps unbatched rows separate |
 | `shared/publishing/history.test.ts` | 11 | Import plan requires a clock time and dedupes; window buckets use wall-clock time in a named IANA zone, honour the offset in force on each date, and report the zone actually used |
 | `shared/media/artifacts.test.ts` | 18 | Thumbnail and frame-sample `features` contracts (frames require `at_seconds`); probe facts distinguish recorded absence of audio from silence; readiness separates not-applicable, no producer in build, none produced yet, unreadable rows, and ready |
+| `shared/connectors/outcomeSync.test.ts` | 16 | Outcome sync reports no sync path for every provider in this build and offers no next input; connector access still resolved so a revoked account stays visible; a metric-free feed is not an outcome source; with a sync path present, setup-required, blocked, stale, and ready are distinguished; connector source state is never `available` while nothing can sync |
 | `src/lib/auth.test.ts` | 8 | Unconfigured fail-closed and configured pass-through, mocked client |
 | `src/lib/evidence.test.ts` | 3 | Numeric claim gate |
 
@@ -230,6 +231,21 @@ Out of scope: a thumbnail or frame producer, video byte intake (`VIDEO_INTAKE_EN
 Data/security effect: one new read query scoped by both `workspace_id` and `asset_id`. No policy, function, column, or migration changed.
 Acceptance checks: 503 tests (18 new in `shared/media/artifacts.test.ts`), lint, typecheck, worker typecheck, production build.
 Live verification deferred: rendering a real signed thumbnail end to end, which needs a producer that does not exist yet and an authenticated browser session (Antigravity).
+```
+
+```
+Slice: Connector outcome-sync capability and setup/blocked states
+Why now: an experiment could declare `outcome_source = 'connector'`, and the panel then read that source as `available` whenever any analytics connector happened to be connected. Nothing in this build can fetch an outcome, so a connected account produced a readiness claim that was false in the one direction that matters: an experiment appeared able to conclude when no row could ever arrive.
+In scope: `shared/connectors/outcomeSync.ts` resolves per-provider sync capability; `src/components/OutcomeSyncStatus.tsx` renders it; `ExperimentsPanel` derives an experiment's connector source state from that capability instead of from mere connection, and shows the same status in the create modal when connector sync is chosen.
+Six states, so absence is never one word: `not_applicable` (a public feed carries no performance metrics, so it is not an outcome source at all), `not_implemented` (this build has no sync path), `setup_required` (a path exists and no connection has been established), `blocked` (a connection exists and cannot be used — revoked, errored, expired token, or short of scopes), `stale` (past the freshness window), and `ready`. `OUTCOME_SYNC_PROVIDERS_IN_BUILD` separates the build's own gap from the connector's, and is empty.
+`not_implemented` outranks every connector state on purpose, and carries `nextInput: null`. Telling an operator to complete a consent flow that cannot produce a row is asking for work with no result. Connector access is still resolved and reported alongside, so a revoked or expired account stays visible rather than being hidden behind the missing feature.
+Four independent absences, named rather than summarised as "not connected": no OAuth application is registered for any provider (F-1); no job type enqueues a sync and no worker handler writes `experiment_outcomes`; `experiment_outcomes.variant_twin_id` is NOT NULL and nothing records which external post carried which variant, so a fetched metric could not be attributed to a variant without inventing the link; and `experiment_outcomes.source_id` is NOT NULL, so a synced row would have nothing to cite. They are listed once per screen, not once per provider, because they are the same four everywhere. Clearing consent alone would still yield zero rows — the variant link is the decisive gap and it needs a migration.
+No sync control was added. A button that cannot produce a row is worse than no button, so the panel states the gap and points at CSV import, which does work today.
+Reuse over duplication: `describeAccess` still owns scope, expiry, and freshness logic; this module only decides whether the build can act on it, and splits setup from blocked using the connector's own status.
+Out of scope: registering OAuth apps, a sync job type or handler, and the external-post-to-variant link table.
+Data/security effect: none. No new query, policy, function, column, or migration; the panel already read `connector_accounts_public`, and tokens still never reach the browser.
+Acceptance checks: 519 tests (16 new in `shared/connectors/outcomeSync.test.ts`), lint, typecheck, worker typecheck, production build.
+Live verification deferred: none required; the module is pure and the connector branches are covered by passing an explicit implemented-provider set. Anything beyond that waits on F-1 and a migration.
 ```
 
 ## Supabase project (from prior state; unverified this phase)
