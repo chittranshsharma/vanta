@@ -10,7 +10,7 @@ Verified locally on 2026-08-23:
 |---|---|
 | `npm run lint` | 0 errors, 0 warnings |
 | `npm run typecheck` | clean |
-| `npm test` | 567 passed / 567, 41 suites |
+| `npm test` | 586 passed / 586, 42 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run test:e2e` | 30 skipped with reason (no staging credentials); suite authored for QA-1 |
 | `npm run typecheck:worker` | clean |
@@ -43,7 +43,7 @@ Access boundary this phase: **Read-only live inspection completed on 2026-08-23*
 
 All migrations 001–017 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
-## Test suite (41 files, 567 tests; plus 15 pytest, 30 Playwright authored)
+## Test suite (42 files, 586 tests; plus 15 pytest, 30 Playwright authored)
 
 Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 
@@ -65,6 +65,7 @@ Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 | `shared/media/artifacts.test.ts` | 18 | Thumbnail and frame-sample `features` contracts (frames require `at_seconds`); probe facts distinguish recorded absence of audio from silence; readiness separates not-applicable, no producer in build, none produced yet, unreadable rows, and ready |
 | `shared/connectors/outcomeSync.test.ts` | 16 | Outcome sync reports no sync path for every provider in this build and offers no next input; connector access still resolved so a revoked account stays visible; a metric-free feed is not an outcome source; with a sync path present, setup-required, blocked, stale, and ready are distinguished; connector source state is never `available` while nothing can sync |
 | `src/lib/auth.test.ts` | 8 | Unconfigured fail-closed and configured pass-through, mocked client |
+| `src/lib/brandBrain.test.ts` | 12 | Codex reads report a failure class instead of an empty codex; a refused read is never an absent brand; an unread claim list is never an empty grounding set; retry is invited only for a request that never arrived |
 | `src/lib/evidence.test.ts` | 3 | Numeric claim gate |
 
 Removed: `src/lib/rls.test.ts` (8 tautologies).
@@ -264,6 +265,22 @@ Out of scope: a retrieval coverage widget (nothing consumes retrieval, so a live
 Data/security effect: two new read queries (`workspace_quotas` and a `model_task_runs` head count, both scoped by `workspace_id`) and one existing SECURITY INVOKER RPC now actually called. No policy, function, column, or migration changed, and no write path was added.
 Acceptance checks: 567 tests (48 new across `rows`, `quotas`, `modelRuns`, `retrieval`, `configStatus`, and the job policy contract), lint, typecheck, worker typecheck, production build.
 Live verification deferred: the `denied` and `reset_pending` branches against a real non-member session and a counter left overnight, plus a real `retrieval_coverage` response — all need an authenticated browser session (Antigravity).
+```
+
+```
+Slice: Error and recovery states across the Brand Brain read path
+Why now: every Brand Brain read swallowed its error. `fetchBrandForWorkspace` logged and returned `null`, and the six list readers logged and returned `[]`, so a refused read, a dropped connection and an unwritten codex were indistinguishable. Two user-visible consequences followed. The panel rendered "No brand defined yet for this workspace" and offered to create a brand that may already exist, so the create would then fail on a uniqueness or policy check. And a failed claims read rendered as an empty grounding set, which is not an absence of information but a positive statement — "this brand claims nothing" — that changes what a variant is allowed to say. `BrandBrain.tsx` already had an error branch and a `bb-error-state` style for it; `setError` was only ever called with `null`, so the branch was dead code.
+In scope: `src/lib/rows.ts` gains `isTransientReadError`, an `offline` member of `ReadFailure`, and `isRetryable`; `src/lib/brandBrain.ts` converts all seven fetchers to a `BrandRead<T>` result and adds `brandReadSummary`; `BrandBrain.tsx`, `CreativeTwinEditor.tsx` and `Workspace.tsx` report the failure instead of rendering an empty codex.
+One helper at the boundary rather than seven call sites: `read()` turns a single PostgREST response into a `BrandRead`, keeping the failure class from `classifyReadError`. Converting all seven fetchers cost nothing in ripple — `fetchBrandCompetitors`, `fetchBrandTone` and `fetchBrandCompliance` have no callers outside the module, and `snapshotBrandCodex` does not call the fetchers internally.
+Retryability is a contract, not a button that is always shown. `isRetryable` is true only for `offline` and `failed`. A denied read will be denied again and an absent relation stays absent, so offering "try again" for those spends the user's one action on an attempt guaranteed to fail the same way; the denied copy names the recovery that does apply ("ask an admin for access rather than retrying"). `unconfigured` is not retryable either, since no configuration changes from a button click.
+`offline` is deliberately narrow. A bare `/timeout/` in the pattern classified `canceling statement due to statement timeout` (SQLSTATE `57014`) as offline, and the offline copy asserts "the request did not arrive, so nothing was changed" — false for a server-side abort, where Postgres received the query and did work. A test caught this during the slice; the pattern now matches only network-phase timeouts and a regression test pins `57014` as not transient. `denied` still outranks `offline`, so an expired JWT whose message happens to contain "failed to fetch" is reported as a session problem rather than a network one.
+The codex fails as one object. Showing positioning while the claims are unknown would invite an approval decision on evidence that was never read, so one failed part fails the panel. Each of the three parallel reads is checked separately rather than through an aliased `??` chain, because narrowing does not propagate through an alias across three variables.
+A written-but-unread outcome is reported as itself. When a manual snapshot succeeds and the version reread fails, the panel says "Snapshot saved, but the version list could not be reloaded" rather than presenting the whole action as failed — the user must not retry a write that already landed.
+The Decision Matrix keeps its props. `Workspace.tsx` surfaces the grounding-claim read failure above the matrix and offers retry there, so claim coverage reads as unknown rather than absent without changing `DecisionMatrix`'s interface.
+Out of scope: explicit `offline` branches in `quotas.ts`, `modelRuns.ts` and `retrieval.ts` — each already has an unreadable fallthrough that carries the platform message, and three new state unions would have grown three test matrices for no user-visible gain in this slice. Deduping the four local `Result<T>` types was also left alone; a local type in `brandBrain.ts` matches surrounding code rather than starting a cross-file refactor mid-slice.
+Data/security effect: none. No new query, policy, function, column, or migration; the same seven reads run with the same workspace and brand scoping, and error text reaching the browser is the platform message that was already being written to the console.
+Acceptance checks: 586 tests (19 new: 12 in `src/lib/brandBrain.test.ts`, 7 in `src/lib/rows.test.ts`), lint, typecheck, worker typecheck, production build.
+Live verification deferred: the `denied` branch against a real non-member session and the `offline` branch against a genuinely dropped connection, both of which need an authenticated browser session (Antigravity). The classification itself is pure and covered by unit tests.
 ```
 
 ## Supabase project (from prior state; unverified this phase)

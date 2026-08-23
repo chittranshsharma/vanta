@@ -75,17 +75,48 @@ export function isPermissionDeniedError(error: { message: string; code?: string 
 }
 
 /**
+ * True when the request never reached Postgres: the browser is offline, the
+ * fetch was refused, or the connection timed out. `supabase-js` surfaces these
+ * as an error with a message from the platform and no Postgres code, which is
+ * why they are matched on text.
+ *
+ * This is the only failure class the caller can honestly invite a retry on. A
+ * denied read will be denied again and an absent relation stays absent, so
+ * offering "try again" for those wastes the one action the user has.
+ */
+export function isTransientReadError(error: { message: string; code?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === "502" || error.code === "503" || error.code === "504") return true;
+  // Deliberately not a bare /timeout/: "canceling statement due to statement
+  // timeout" is a server-side abort. The request arrived and Postgres did work,
+  // so calling it offline would state something untrue about what was attempted.
+  return /failed to fetch|fetch failed|networkerror|network request failed|load failed|connection appears to be offline|etimedout|econnreset|econnrefused|socket hang up|network timeout|connection timed out|request timed out/i.test(
+    error.message
+  );
+}
+
+/**
  * Why a workspace-scoped read produced no rows.
  *
  * `absent` is a repository state (a migration this build expects has not been
- * applied), `denied` is an authorization state, `failed` is everything else and
- * keeps its message. Callers report the distinction instead of collapsing all
- * three into an empty list.
+ * applied), `denied` is an authorization state, `offline` is a request that
+ * never arrived and is worth retrying, `failed` is everything else and keeps its
+ * message. Callers report the distinction instead of collapsing all four into an
+ * empty list.
  */
-export type ReadFailure = "absent" | "denied" | "failed";
+export type ReadFailure = "absent" | "denied" | "offline" | "failed";
+
+/** The failure classes where retrying the same read can plausibly succeed. */
+export function isRetryable(failure: ReadFailure): boolean {
+  // `failed` is included because it is the unclassified bucket: a 500 from a
+  // trigger, a malformed filter, a statement timeout. Some of those clear on a
+  // second attempt, and none of them are answered by another action.
+  return failure === "offline" || failure === "failed";
+}
 
 export function classifyReadError(error: { message: string; code?: string }): ReadFailure {
   if (isPermissionDeniedError(error)) return "denied";
+  if (isTransientReadError(error)) return "offline";
   if (isMissingRelationError(error)) return "absent";
   return "failed";
 }

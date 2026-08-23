@@ -5,7 +5,7 @@ import { Suspense, lazy, useEffect, useState } from "react";
 import { deriveEvidenceState } from "../lib/evidence";
 import { supabase } from "../lib/supabase";
 import { Modal } from "./Modal";
-import { fetchBrandClaims, type BrandClaim } from "../lib/brandBrain";
+import { fetchBrandClaims, brandReadSummary, type BrandClaim } from "../lib/brandBrain";
 import { EMPTY_OVERVIEW, fetchWorkspaceOverview, type LoadStatus, type WorkspaceOverview } from "../lib/workspaceOverview";
 import { evaluateSourceCitability } from "../lib/sourceRegistry";
 import { deriveGuidance, type ApprovedClaimCount, type WorkspacePanel } from "../lib/decisionRoom";
@@ -127,6 +127,8 @@ export function Workspace({
     scenesMap: Record<string, CreativeSceneRow[]>;
     claimsMap: Record<string, CreativeClaimRow[]>;
     brandClaims: BrandClaim[];
+    /** Set when the grounding claims could not be read, so an empty list is never read as "no claims". */
+    brandClaimsError: string | null;
   } | null>(null);
   const matrixKey = activeWorkspace ? `${activeWorkspace.id}:${matrixRefreshToken}` : null;
   const matrixIsCurrent = matrixResult !== null && matrixResult.key === matrixKey;
@@ -135,6 +137,7 @@ export function Workspace({
   const matrixScenesMap = matrixIsCurrent ? matrixResult.scenesMap : {};
   const matrixClaimsMap = matrixIsCurrent ? matrixResult.claimsMap : {};
   const matrixBrandClaims = matrixIsCurrent ? matrixResult.brandClaims : [];
+  const matrixBrandClaimsError = matrixIsCurrent ? matrixResult.brandClaimsError : null;
   // Gateway readiness is only known after an explicit probe in Setup and status; it stays "unknown" until then.
   const [gatewayState, setGatewayState] = useState<"configured" | "missing" | "unknown">("unknown");
   const [newWsModalOpen, setNewWsModalOpen] = useState(false);
@@ -169,8 +172,16 @@ export function Workspace({
         })
       );
 
-      const brandClaims = brandId ? await fetchBrandClaims(brandId) : [];
-      if (mounted) setMatrixResult({ key, twins, scenesMap, claimsMap, brandClaims });
+      const claimsRead = brandId ? await fetchBrandClaims(brandId) : null;
+      if (mounted)
+        setMatrixResult({
+          key,
+          twins,
+          scenesMap,
+          claimsMap,
+          brandClaims: claimsRead?.data ?? [],
+          brandClaimsError: claimsRead?.error ? brandReadSummary(claimsRead.error) : null
+        });
     })();
 
     return () => {
@@ -441,20 +452,29 @@ export function Workspace({
             {matrixLoading ? (
               <div className="brand-brain-loading" role="status" aria-live="polite">Loading workspace variants…</div>
             ) : (
-              <DecisionMatrix
-                twins={matrixTwins}
-                scenesByTwinId={matrixScenesMap}
-                claimsByTwinId={matrixClaimsMap}
-                brandClaims={matrixBrandClaims}
-                onOpenTwin={(twinId) => {
-                  setSelectedTwinId(twinId);
-                  setActivePanel("twin");
-                }}
-                onOpenTimelineDoctor={(twinId) => {
-                  setSelectedTwinId(twinId);
-                  setActivePanel("twin");
-                }}
-              />
+              <>
+                {matrixBrandClaimsError && (
+                  <p className="error-text" role="alert" style={{ marginBottom: 12 }}>
+                    Grounding claims could not be read, so claim coverage below is unknown rather than absent.{" "}
+                    {matrixBrandClaimsError}{" "}
+                    <button className="ghost-button" onClick={() => setMatrixRefreshToken((t) => t + 1)}>Retry</button>
+                  </p>
+                )}
+                <DecisionMatrix
+                  twins={matrixTwins}
+                  scenesByTwinId={matrixScenesMap}
+                  claimsByTwinId={matrixClaimsMap}
+                  brandClaims={matrixBrandClaims}
+                  onOpenTwin={(twinId) => {
+                    setSelectedTwinId(twinId);
+                    setActivePanel("twin");
+                  }}
+                  onOpenTimelineDoctor={(twinId) => {
+                    setSelectedTwinId(twinId);
+                    setActivePanel("twin");
+                  }}
+                />
+              </>
             )}
           </div>
         ) : activePanel === "connectors" && activeWorkspace && user && isFlagOn("connectors_panel") ? (

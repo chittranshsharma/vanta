@@ -28,15 +28,18 @@ import {
   insertBrandAudience,
   snapshotBrandCodex,
   fetchBrandCodexVersions,
+  brandReadSummary,
   type Brand,
   type BrandClaim,
   type BrandAudience,
   type BrandCodexVersion,
+  type BrandReadFailure,
   type ClaimType,
   type BrandInsert,
   type BrandClaimInsert,
   type BrandAudienceInsert
 } from "../lib/brandBrain";
+import { isRetryable } from "../lib/rows";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type BrandBrainTab = "positioning" | "claims" | "audiences" | "history";
@@ -73,9 +76,10 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
   const [audiences, setAudiences] = useState<BrandAudience[]>([]);
   const [codexVersions, setCodexVersions] = useState<BrandCodexVersion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ failure: BrandReadFailure; message: string } | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
 
   // Form state
   const [showBrandForm, setShowBrandForm] = useState(false);
@@ -90,23 +94,38 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
       setError(null);
       const b = await fetchBrandForWorkspace(workspaceId);
       if (!mounted) return;
-      setBrand(b);
-      if (b) {
+      if (b.error) {
+        setError(b.error);
+        setLoading(false);
+        return;
+      }
+      setBrand(b.data);
+      if (b.data) {
+        const brandId = b.data.id;
         const [c, a, v] = await Promise.all([
-          fetchBrandClaims(b.id),
-          fetchBrandAudiences(b.id),
-          fetchBrandCodexVersions(b.id)
+          fetchBrandClaims(brandId),
+          fetchBrandAudiences(brandId),
+          fetchBrandCodexVersions(brandId)
         ]);
         if (!mounted) return;
-        setClaims(c);
-        setAudiences(a);
-        setCodexVersions(v);
+        // The codex is read as one object. Showing positioning while the claims
+        // are unknown would invite an approval decision on evidence that was
+        // never read, so one failed part fails the panel. Each read is checked
+        // separately so its success arm narrows.
+        if (c.error || a.error || v.error) {
+          setError(c.error ?? a.error ?? v.error);
+          setLoading(false);
+          return;
+        }
+        setClaims(c.data);
+        setAudiences(a.data);
+        setCodexVersions(v.data);
       }
       setLoading(false);
     }
     load();
     return () => { mounted = false; };
-  }, [workspaceId]);
+  }, [workspaceId, reloadToken]);
 
   if (loading) {
     return (
@@ -119,9 +138,19 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
 
   if (error) {
     return (
-      <div className="bb-error-state">
+      <div className="bb-error-state" role="alert">
         <ShieldAlert size={20} color="#f87171" />
-        <span>{error}</span>
+        <div>
+          <p>{brandReadSummary(error)}</p>
+          <p className="vp-hint">
+            Nothing was written. The codex is not shown as empty, because it was not read.
+          </p>
+          {error.failure !== "unconfigured" && isRetryable(error.failure) && (
+            <button className="ghost-button" onClick={() => setReloadToken((t) => t + 1)}>
+              Retry
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -149,10 +178,21 @@ export function BrandBrain({ workspaceId, userId, isAdmin }: BrandBrainProps) {
               className="ghost-button-sm"
               onClick={async () => {
                 setSaving(true);
-                await snapshotBrandCodex(brand, claims, audiences, userId, "Manual snapshot");
+                setSaveError(null);
+                const { error: snapErr } = await snapshotBrandCodex(brand, claims, audiences, userId, "Manual snapshot");
+                if (snapErr) {
+                  setSaving(false);
+                  setSaveError(snapErr.message);
+                  return;
+                }
                 const v = await fetchBrandCodexVersions(brand.id);
-                setCodexVersions(v);
                 setSaving(false);
+                if (v.error) {
+                  // The snapshot was written; only the reread failed. Say which.
+                  setSaveError(`Snapshot saved, but the version list could not be reloaded. ${brandReadSummary(v.error)}`);
+                  return;
+                }
+                setCodexVersions(v.data);
                 setTab("history");
               }}
               disabled={saving}

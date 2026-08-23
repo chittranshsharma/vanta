@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { classifyReadError, isMissingRelationError, isPermissionDeniedError, jsonObject, jsonObjectArray, narrow } from "./rows";
+import {
+  classifyReadError,
+  isMissingRelationError,
+  isPermissionDeniedError,
+  isRetryable,
+  isTransientReadError,
+  jsonObject,
+  jsonObjectArray,
+  narrow,
+  type ReadFailure
+} from "./rows";
 
 const STATUSES = ["queued", "running", "succeeded"] as const;
 
@@ -122,6 +132,57 @@ describe("classifyReadError", () => {
   });
 
   it("classifies anything else as failed, so the message survives", () => {
-    expect(classifyReadError({ message: "TypeError: Failed to fetch" })).toBe("failed");
+    expect(classifyReadError({ message: "canceling statement due to statement timeout" })).toBe("failed");
+  });
+
+  it("classifies a request that never arrived as offline", () => {
+    // The browser produced this without reaching Postgres, so nothing was read
+    // and nothing was written. Retrying is the recovery.
+    expect(classifyReadError({ message: "TypeError: Failed to fetch" })).toBe("offline");
+    expect(classifyReadError({ message: "NetworkError when attempting to fetch resource." })).toBe("offline");
+    expect(classifyReadError({ message: "Load failed" })).toBe("offline");
+    expect(classifyReadError({ message: "connect ECONNREFUSED 127.0.0.1:54321" })).toBe("offline");
+    expect(classifyReadError({ message: "Bad gateway", code: "502" })).toBe("offline");
+  });
+
+  it("prefers denied over offline, because an expired token is not a network problem", () => {
+    // Retrying an expired JWT fails the same way. The recovery is a new session,
+    // not another attempt.
+    expect(classifyReadError({ message: "JWT expired: failed to fetch key", code: "PGRST301" })).toBe("denied");
+  });
+});
+
+describe("isTransientReadError", () => {
+  it("is false for no error and for a database-side failure", () => {
+    expect(isTransientReadError(null)).toBe(false);
+    expect(isTransientReadError({ message: "permission denied for table brands", code: "42501" })).toBe(false);
+    expect(isTransientReadError({ message: 'relation "public.jobs" does not exist', code: "42P01" })).toBe(false);
+  });
+
+  it("does not treat a server-side statement timeout as offline", () => {
+    // The request arrived and Postgres did work before aborting, so the "nothing
+    // was attempted" copy an offline state licenses would be false.
+    expect(isTransientReadError({ message: "canceling statement due to statement timeout", code: "57014" })).toBe(false);
+  });
+});
+
+describe("isRetryable", () => {
+  it("invites a retry only where another attempt can plausibly succeed", () => {
+    expect(isRetryable("offline")).toBe(true);
+    // `failed` is the unclassified bucket; some of it clears on a second attempt.
+    expect(isRetryable("failed")).toBe(true);
+  });
+
+  it("does not invite a retry for a refusal or a missing relation", () => {
+    // Offering "try again" here spends the user's one action on an attempt that
+    // is guaranteed to fail the same way.
+    expect(isRetryable("denied")).toBe(false);
+    expect(isRetryable("absent")).toBe(false);
+  });
+
+  it("covers every failure class, so a new one must decide deliberately", () => {
+    const classes: ReadFailure[] = ["absent", "denied", "offline", "failed"];
+    for (const c of classes) expect(typeof isRetryable(c)).toBe("boolean");
+    expect(classes.filter(isRetryable)).toEqual(["offline", "failed"]);
   });
 });

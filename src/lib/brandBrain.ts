@@ -1,10 +1,18 @@
 /**
  * Brand Brain typed queries
  * All functions are workspace-scoped and read their own brand only.
- * No fake data is ever seeded or returned; callers receive null if no brand exists.
+ * No fake data is ever seeded or returned.
+ *
+ * A read that fails returns its failure class instead of an empty result. These
+ * queries used to log the error and return `null` or `[]`, which made a refused
+ * read and an unwritten codex look identical: the screen offered to create a
+ * brand that already existed, and a grounding claim list could be empty because
+ * the network dropped. An absent codex is a real and common state, so it has to
+ * be told apart from not being allowed to see one.
  */
 
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { classifyReadError, type ReadFailure } from "./rows";
 import type { Database } from "../types/database.types";
 
 export type Brand = Database["public"]["Tables"]["brands"]["Row"];
@@ -38,77 +46,100 @@ export type BrandFull = {
 // READ
 // ============================================================
 
-/** Fetch the Brand Brain root for a workspace. Returns null if none exists yet. */
-export async function fetchBrandForWorkspace(workspaceId: string): Promise<Brand | null> {
-  if (!isSupabaseConfigured) return null;
-  const { data, error } = await supabase
-    .from("brands")
-    .select("*")
-    .eq("workspace_id", workspaceId)
-    .maybeSingle();
-  if (error) {
-    console.error("fetchBrandForWorkspace error:", error.message);
-    return null;
+/** Why a Brand Brain read produced nothing. `unconfigured` is not a failure of the query. */
+export type BrandReadFailure = ReadFailure | "unconfigured";
+
+export type BrandRead<T> =
+  | { data: T; error: null }
+  | { data: null; error: { failure: BrandReadFailure; message: string } };
+
+const UNCONFIGURED = {
+  data: null,
+  error: { failure: "unconfigured" as const, message: "Supabase is not configured." }
+};
+
+/** Turns one PostgREST response into a `BrandRead`, keeping the failure class. */
+function read<T>(
+  response: { data: T | null; error: { message: string; code?: string } | null },
+  whenNoRows: T
+): BrandRead<T> {
+  if (response.error) {
+    return { data: null, error: { failure: classifyReadError(response.error), message: response.error.message } };
   }
-  return data;
+  return { data: response.data ?? whenNoRows, error: null };
+}
+
+/** Fetch the Brand Brain root for a workspace. `data: null` means no brand exists yet. */
+export async function fetchBrandForWorkspace(workspaceId: string): Promise<BrandRead<Brand | null>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED;
+  const response = await supabase.from("brands").select("*").eq("workspace_id", workspaceId).maybeSingle();
+  // `maybeSingle` already returns null for no rows, and here null is the answer
+  // rather than a stand-in for one, so the no-rows fallback is null.
+  return read<Brand | null>(response, null);
 }
 
 /** Fetch all claims for a brand, optionally filtered by type. */
-export async function fetchBrandClaims(
-  brandId: string,
-  claimType?: ClaimType
-): Promise<BrandClaim[]> {
-  if (!isSupabaseConfigured) return [];
+export async function fetchBrandClaims(brandId: string, claimType?: ClaimType): Promise<BrandRead<BrandClaim[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED;
   let query = supabase.from("brand_claims").select("*").eq("brand_id", brandId).order("created_at");
   if (claimType) query = query.eq("claim_type", claimType);
-  const { data, error } = await query;
-  if (error) { console.error("fetchBrandClaims error:", error.message); return []; }
-  return data || [];
+  return read(await query, []);
 }
 
 /** Fetch all audiences for a brand. */
-export async function fetchBrandAudiences(brandId: string): Promise<BrandAudience[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
-    .from("brand_audiences").select("*").eq("brand_id", brandId).order("created_at");
-  if (error) { console.error("fetchBrandAudiences error:", error.message); return []; }
-  return data || [];
+export async function fetchBrandAudiences(brandId: string): Promise<BrandRead<BrandAudience[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED;
+  return read(await supabase.from("brand_audiences").select("*").eq("brand_id", brandId).order("created_at"), []);
 }
 
 /** Fetch all competitors for a brand. */
-export async function fetchBrandCompetitors(brandId: string): Promise<BrandCompetitor[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
-    .from("brand_competitors").select("*").eq("brand_id", brandId).order("watch_level");
-  if (error) { console.error("fetchBrandCompetitors error:", error.message); return []; }
-  return data || [];
+export async function fetchBrandCompetitors(brandId: string): Promise<BrandRead<BrandCompetitor[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED;
+  return read(await supabase.from("brand_competitors").select("*").eq("brand_id", brandId).order("watch_level"), []);
 }
 
 /** Fetch all tone guidelines for a brand. */
-export async function fetchBrandTone(brandId: string): Promise<BrandToneGuideline[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
-    .from("brand_tone_guidelines").select("*").eq("brand_id", brandId).order("dimension");
-  if (error) { console.error("fetchBrandTone error:", error.message); return []; }
-  return data || [];
+export async function fetchBrandTone(brandId: string): Promise<BrandRead<BrandToneGuideline[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED;
+  return read(await supabase.from("brand_tone_guidelines").select("*").eq("brand_id", brandId).order("dimension"), []);
 }
 
 /** Fetch all compliance boundaries for a brand. */
-export async function fetchBrandCompliance(brandId: string): Promise<BrandComplianceBoundary[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
-    .from("brand_compliance_boundaries").select("*").eq("brand_id", brandId).order("enforcement_level");
-  if (error) { console.error("fetchBrandCompliance error:", error.message); return []; }
-  return data || [];
+export async function fetchBrandCompliance(brandId: string): Promise<BrandRead<BrandComplianceBoundary[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED;
+  return read(
+    await supabase.from("brand_compliance_boundaries").select("*").eq("brand_id", brandId).order("enforcement_level"),
+    []
+  );
 }
 
 /** Fetch codex version history for a brand. */
-export async function fetchBrandCodexVersions(brandId: string): Promise<BrandCodexVersion[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
-    .from("brand_codex_versions").select("*").eq("brand_id", brandId).order("version_number", { ascending: false });
-  if (error) { console.error("fetchBrandCodexVersions error:", error.message); return []; }
-  return data || [];
+export async function fetchBrandCodexVersions(brandId: string): Promise<BrandRead<BrandCodexVersion[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED;
+  return read(
+    await supabase
+      .from("brand_codex_versions")
+      .select("*")
+      .eq("brand_id", brandId)
+      .order("version_number", { ascending: false }),
+    []
+  );
+}
+
+/** One sentence for a failed Brand Brain read, naming the recovery that applies. */
+export function brandReadSummary(error: { failure: BrandReadFailure; message: string }): string {
+  switch (error.failure) {
+    case "unconfigured":
+      return "Supabase is not configured, so the codex cannot be read in this build.";
+    case "denied":
+      return "You are not allowed to read this workspace's codex. Ask an admin for access rather than retrying.";
+    case "absent":
+      return `A table this build expects is not reachable: ${error.message}`;
+    case "offline":
+      return "The codex could not be reached. The request did not arrive, so nothing was changed — check the connection and try again.";
+    case "failed":
+      return `The codex could not be read: ${error.message}`;
+  }
 }
 
 // ============================================================

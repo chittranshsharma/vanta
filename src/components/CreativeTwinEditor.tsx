@@ -14,7 +14,7 @@ import {
   type ClaimClassification,
   type BrandAlignmentStatus,
 } from '../lib/creativeTwin';
-import { fetchBrandForWorkspace, fetchBrandClaims, type BrandClaim } from '../lib/brandBrain';
+import { fetchBrandForWorkspace, fetchBrandClaims, brandReadSummary, type BrandClaim } from '../lib/brandBrain';
 import { TimelineDoctor } from './TimelineDoctor';
 import { ClaimGroundingPanel } from './ClaimGroundingPanel';
 import { isFlagOn } from '../lib/flags';
@@ -83,9 +83,15 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
         setDetails(twinRes.data);
       }
 
-      if (brandRes) {
-        const claims = await fetchBrandClaims(brandRes.id);
-        setBrandClaims(claims);
+      if (brandRes.error) {
+        // Grounding claims decide what this twin may say. An unread claim list
+        // is not an empty one, so the editor reports the read failure instead of
+        // rendering as though the brand had no claims.
+        setError(brandReadSummary(brandRes.error));
+      } else if (brandRes.data) {
+        const claims = await fetchBrandClaims(brandRes.data.id);
+        if (claims.error) setError(brandReadSummary(claims.error));
+        else setBrandClaims(claims.data);
       }
 
       setLoading(false);
