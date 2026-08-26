@@ -37,6 +37,8 @@
 - [ ] Resolve the Groq 404 by querying the authenticated provider model catalog, updating only the secure `GROQ_MODEL` environment value to a supported model, and repeating the bounded live-audit checks.
 - [ ] Verify `groq/compound-mini` or another selected `GROQ_MODEL` against Groq’s current authenticated model catalog and Vanta’s schema-validation requirements before configuration.
 - [ ] Compare all eligible models returned by the authenticated Groq catalog using a fixed non-sensitive Claim Grounding evaluation set before selecting the beta default.
+- [ ] Before broader Groq enablement, set an explicit secure `GROQ_MODEL` value rather than relying on source fallback; investigate the one Qwen verdict-quality miss, capture per-request usage/cost metadata, and test the actual beta origin.
+- [ ] Configure `GROQ_MODEL=qwen/qwen3.8-27b` through the Supabase Edge Functions secret UI; retain the conflicting-proof fixture as a repair-turn regression test and defer public CORS activation until the HTTPS beta origin exists.
 - [ ] Deploy job worker and analysis service (host + service-role key handling + ffprobe). Choose embedding provider (E-3). Register provider OAuth apps (F-1).
 - [ ] QA-1: two-user real-JWT isolation suite.
 - [ ] Run authenticated browser end-to-end smoke tests for Brand Brain, intake, Twin corrections, experiments/outcomes, posting-history import, jobs/agent unavailable states, and tenant isolation.
