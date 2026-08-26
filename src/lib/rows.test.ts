@@ -4,10 +4,14 @@ import {
   isMissingRelationError,
   isPermissionDeniedError,
   isRetryable,
+  isRetryableRead,
   isTransientReadError,
   jsonObject,
   jsonObjectArray,
   narrow,
+  readFailureSummary,
+  readRows,
+  UNCONFIGURED_READ,
   type ReadFailure
 } from "./rows";
 
@@ -184,5 +188,81 @@ describe("isRetryable", () => {
     const classes: ReadFailure[] = ["absent", "denied", "offline", "failed"];
     for (const c of classes) expect(typeof isRetryable(c)).toBe("boolean");
     expect(classes.filter(isRetryable)).toEqual(["offline", "failed"]);
+  });
+});
+
+describe("readRows", () => {
+  it("returns the rows a successful read produced", () => {
+    const result = readRows({ data: [{ id: "a" }], error: null }, []);
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual([{ id: "a" }]);
+  });
+
+  it("treats a null payload on a successful read as genuinely no rows", () => {
+    // PostgREST returns null rather than [] for some shapes. That is a real
+    // empty result, not a failure, and must not be reported as one.
+    const result = readRows<{ id: string }[]>({ data: null, error: null }, []);
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual([]);
+  });
+
+  it("never reports a failed read as an empty list", () => {
+    const result = readRows({ data: null, error: { message: "permission denied for table source_registry", code: "42501" } }, []);
+    expect(result.data).toBeNull();
+    expect(result.error).toEqual({ failure: "denied", message: "permission denied for table source_registry" });
+  });
+
+  it("keeps the failure class the error text implies", () => {
+    expect(readRows({ data: null, error: { message: "Failed to fetch" } }, []).error?.failure).toBe("offline");
+    expect(readRows({ data: null, error: { message: "relation does not exist", code: "42P01" } }, []).error?.failure).toBe("absent");
+    expect(readRows({ data: null, error: { message: "unexpected trigger error" } }, []).error?.failure).toBe("failed");
+  });
+
+  it("reports an unconfigured build as its own class, not as a failed query", () => {
+    // Nothing was asked, so nothing failed. Copy for a query error would blame
+    // the wrong thing and offer the wrong recovery.
+    expect(UNCONFIGURED_READ.data).toBeNull();
+    expect(UNCONFIGURED_READ.error.failure).toBe("unconfigured");
+  });
+});
+
+describe("readFailureSummary", () => {
+  it("names the recovery that applies instead of a generic retry", () => {
+    expect(readFailureSummary({ failure: "denied", message: "permission denied" }, "the source registry")).toContain("Ask an admin");
+    expect(readFailureSummary({ failure: "unconfigured", message: "no project" }, "the source registry")).toContain("not configured");
+    expect(readFailureSummary({ failure: "offline", message: "Failed to fetch" }, "the source registry")).toContain("try again");
+  });
+
+  it("states that nothing changed when the request never arrived", () => {
+    const summary = readFailureSummary({ failure: "offline", message: "Failed to fetch" }, "this workspace's intake records");
+    expect(summary).toContain("nothing was changed");
+  });
+
+  it("keeps the underlying message for the classes where it is the only detail", () => {
+    expect(readFailureSummary({ failure: "failed", message: "statement timeout" }, "the registry")).toContain("statement timeout");
+    expect(readFailureSummary({ failure: "absent", message: "relation does not exist" }, "the registry")).toContain("relation does not exist");
+  });
+
+  it("never renders a failed read as an empty result", () => {
+    const classes = ["absent", "denied", "offline", "failed", "unconfigured"] as const;
+    for (const failure of classes) {
+      const summary = readFailureSummary({ failure, message: "detail" }, "the source registry");
+      expect(summary.length).toBeGreaterThan(0);
+      expect(summary).not.toMatch(/^no sources|no evidence|no assets/i);
+    }
+  });
+});
+
+describe("isRetryableRead", () => {
+  it("offers a retry for a request that may succeed on a second attempt", () => {
+    expect(isRetryableRead({ failure: "offline", message: "Failed to fetch" })).toBe(true);
+    expect(isRetryableRead({ failure: "failed", message: "statement timeout" })).toBe(true);
+  });
+
+  it("does not offer a retry for a refusal, a missing relation, or a missing project", () => {
+    expect(isRetryableRead({ failure: "denied", message: "permission denied" })).toBe(false);
+    expect(isRetryableRead({ failure: "absent", message: "does not exist" })).toBe(false);
+    // No amount of retrying gives this build a Supabase project to read from.
+    expect(isRetryableRead({ failure: "unconfigured", message: "not configured" })).toBe(false);
   });
 });

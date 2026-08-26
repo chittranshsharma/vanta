@@ -7,9 +7,15 @@
  * Notice: Ordinary users cannot set health_status = 'connected'.
  * The updateSourceStatus API explicitly excludes 'connected' from its allowed status union,
  * and the database trigger trg_block_connected_status enforces this for any authenticated JWT.
+ *
+ * A failed read returns its failure class rather than an empty list. These readers
+ * used to log the error and return `[]`, which rendered a refused or unreachable
+ * registry as a workspace with no sources and no evidence — a positive claim about
+ * what may be cited, made from data that was never read.
  */
 
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { classifyReadError, readFailureSummary, readRows, UNCONFIGURED_READ, type ReadResult } from "./rows";
 import type { Database } from "../types/database.types";
 import type { CitabilityResult, EvidenceClass } from "./evidence";
 
@@ -110,8 +116,18 @@ export async function resolveEvidenceCitability(
     .eq("workspace_id", workspaceId)
     .maybeSingle();
 
-  if (error || !source) {
-    return { status: "blocked", reason: error?.message || "Source record not found in workspace." };
+  if (error) {
+    // Blocked either way, but the reason has to name the right recovery. A refused
+    // read is not an unregistered source, and telling the user to register one
+    // sends them to add a row that already exists and that they still cannot see.
+    return {
+      status: "blocked",
+      reason: readFailureSummary({ failure: classifyReadError(error), message: error.message }, "the source registry")
+    };
+  }
+
+  if (!source) {
+    return { status: "blocked", reason: "Source record not found in workspace." };
   }
 
   return evaluateSourceCitability(source);
@@ -121,19 +137,15 @@ export async function resolveEvidenceCitability(
 // SOURCE REGISTRY READ & WRITE
 // ============================================================
 
-export async function fetchSourcesForWorkspace(workspaceId: string): Promise<SourceRegistryRow[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
+export async function fetchSourcesForWorkspace(workspaceId: string): Promise<ReadResult<SourceRegistryRow[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED_READ;
+  const response = await supabase
     .from("source_registry")
     .select("*")
     .eq("workspace_id", workspaceId)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("fetchSourcesForWorkspace error:", error.message);
-    return [];
-  }
-  return data || [];
+  return readRows(response, []);
 }
 
 export async function insertSource(
@@ -218,8 +230,8 @@ export async function updateSourceStatus(
 export async function fetchEvidenceItems(
   workspaceId: string,
   filter?: { sourceId?: string; evidenceClass?: EvidenceClass }
-): Promise<EvidenceItemRow[]> {
-  if (!isSupabaseConfigured) return [];
+): Promise<ReadResult<EvidenceItemRow[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED_READ;
   let query = supabase
     .from("evidence_items")
     .select("*")
@@ -233,12 +245,7 @@ export async function fetchEvidenceItems(
     query = query.eq("evidence_class", filter.evidenceClass);
   }
 
-  const { data, error } = await query;
-  if (error) {
-    console.error("fetchEvidenceItems error:", error.message);
-    return [];
-  }
-  return data || [];
+  return readRows(await query, []);
 }
 
 export async function insertEvidenceItem(
@@ -283,19 +290,15 @@ export async function insertEvidenceItem(
 // METRIC DEFINITIONS READ & WRITE
 // ============================================================
 
-export async function fetchMetricDefinitions(workspaceId: string): Promise<MetricDefinitionRow[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
+export async function fetchMetricDefinitions(workspaceId: string): Promise<ReadResult<MetricDefinitionRow[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED_READ;
+  const response = await supabase
     .from("metric_definitions")
     .select("*")
     .eq("workspace_id", workspaceId)
     .order("metric_key");
 
-  if (error) {
-    console.error("fetchMetricDefinitions error:", error.message);
-    return [];
-  }
-  return data || [];
+  return readRows(response, []);
 }
 
 export async function insertMetricDefinition(

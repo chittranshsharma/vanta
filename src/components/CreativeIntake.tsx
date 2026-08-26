@@ -29,6 +29,7 @@ import {
   type AssetKind
 } from "../lib/creativeIntake";
 import { initializeStructuredTwin } from "../lib/creativeTwin";
+import { isRetryableRead, readFailureSummary, type ReadError } from "../lib/rows";
 import { MediaReadiness } from "./MediaReadiness";
 import { Modal } from "./Modal";
 
@@ -55,7 +56,7 @@ export function CreativeIntake({ workspaceId, userId, onOpenTwin }: CreativeInta
   const [assets, setAssets] = useState<CreativeAssetRow[]>([]);
   const [twins, setTwins] = useState<CreativeTwinRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ReadError | null>(null);
 
   // Modal / Form state
   const [showModal, setShowModal] = useState(false);
@@ -89,13 +90,22 @@ export function CreativeIntake({ workspaceId, userId, onOpenTwin }: CreativeInta
           fetchWorkspaceAssets(workspaceId),
           fetchWorkspaceTwins(workspaceId)
         ]);
-        setAssets(a);
-        setTwins(t);
-        if (a.length > 0) {
-          setSelectedAssetId((prev) => prev ?? a[0].id);
+        // A twin is the grounded manifest of an asset. Listing assets while the
+        // twin read failed would show every one of them as never decomposed, so
+        // one failed part fails the panel rather than inviting a re-ingest of
+        // material that is already stored and already grounded.
+        if (a.error || t.error) {
+          setError(a.error ?? t.error);
+          return;
+        }
+        setAssets(a.data);
+        setTwins(t.data);
+        if (a.data.length > 0) {
+          const firstId = a.data[0].id;
+          setSelectedAssetId((prev) => prev ?? firstId);
         }
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to load creative assets.");
+        setError({ failure: "failed", message: err instanceof Error ? err.message : "Failed to load creative assets." });
       } finally {
         setLoading(false);
       }
@@ -219,10 +229,17 @@ export function CreativeIntake({ workspaceId, userId, onOpenTwin }: CreativeInta
     return (
       <div className="bb-error-state" role="alert">
         <ShieldAlert size={20} color="#f87171" />
-        <span>{error}</span>
-        <button type="button" className="ghost-button-sm" onClick={reload}>
-          Retry
-        </button>
+        <div>
+          <p>{readFailureSummary(error, "this workspace's intake records")}</p>
+          <p className="vp-hint">
+            Nothing was uploaded or written. The workspace is not shown as having no assets, because they were not read.
+          </p>
+          {isRetryableRead(error) && (
+            <button type="button" className="ghost-button-sm" onClick={reload}>
+              Retry
+            </button>
+          )}
+        </div>
       </div>
     );
   }

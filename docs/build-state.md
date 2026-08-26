@@ -10,7 +10,7 @@ Verified locally on 2026-08-23:
 |---|---|
 | `npm run lint` | 0 errors, 0 warnings |
 | `npm run typecheck` | clean |
-| `npm test` | 586 passed / 586, 42 suites |
+| `npm test` | 610 passed / 610, 42 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run test:e2e` | 30 skipped with reason (no staging credentials); suite authored for QA-1 |
 | `npm run typecheck:worker` | clean |
@@ -43,19 +43,20 @@ Access boundary this phase: **Read-only live inspection completed on 2026-08-23*
 
 All migrations 001–017 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
-## Test suite (42 files, 586 tests; plus 15 pytest, 30 Playwright authored)
+## Test suite (42 files, 610 tests; plus 15 pytest, 30 Playwright authored)
 
 Per-upgrade breakdown lives in `docs/upgrade-reviews.md`. Core suites:
 
 | File | Tests | Covers |
 |---|---:|---|
 | `src/lib/migrations.test.ts` | 121 | Static SQL contract: every table enables RLS, every policy tenant-scoped, INSERT policies bind the actor column, snapshot tables deny UPDATE/DELETE, SECURITY DEFINER functions set search_path, RPCs revoke PUBLIC/anon, storage policies use the defensive helper, composite FKs present (including 009 upgrades) |
-| `src/lib/creativeIntake.test.ts` | 23 | Intake validators, SHA-256, CSV headers, known gaps |
+| `src/lib/creativeIntake.test.ts` | 27 | Intake validators, SHA-256, CSV headers, known gaps; an unread asset or twin list is never a workspace that has ingested nothing |
 | `supabase/functions/model-gateway/tasks/claimGroundingAudit.test.ts` | 19 | Ticket 5.1 output contract: allowed-ID citation checks, per-verdict rules, fail-closed whole-response rejection, task not yet allowlisted |
 | `supabase/functions/model-gateway/guards.test.ts` | 23 | Body size by bytes, field whitelist, UUID/task allowlist, fail-closed rate limit, audit row shape, CORS never wildcard, output schema |
 | `src/lib/creativeTwin.test.ts` | 13 | Scene parsing, WPM, claim extraction |
 | `src/lib/creativeDoctor.test.ts` | 12 | Diagnostic rules, matrix derivation |
-| `src/lib/sourceRegistry.test.ts` | 12 | Citability and freshness |
+| `src/lib/sourceRegistry.test.ts` | 21 | Citability and freshness; registry, evidence and metric reads report a failure class instead of an empty registry; a refused source lookup is never an unregistered source |
+| `src/lib/rows.test.ts` | 41 | Boundary narrowing and jsonb reads; failure classification including the `57014` server-side-abort exclusion; `readRows` keeps a failed read distinct from a genuinely empty one; retry is offered only for `offline` and `failed` |
 | `src/lib/workspaceOverview.test.ts` | 12 | Read failures reported, not masked as empty; absent tables become null counts, not errors; approved-claim count distinguishes no brand, observed zero, and unreadable |
 | `src/lib/decisionRoom.test.ts` | 11 | Ladder ordering and blocked steps; approved-claim copy never states a count it does not have and never implies performance |
 | `src/lib/modelGateway.test.ts` | 9 | Client adapter fail-closed paths |
@@ -281,6 +282,21 @@ Out of scope: explicit `offline` branches in `quotas.ts`, `modelRuns.ts` and `re
 Data/security effect: none. No new query, policy, function, column, or migration; the same seven reads run with the same workspace and brand scoping, and error text reaching the browser is the platform message that was already being written to the console.
 Acceptance checks: 586 tests (19 new: 12 in `src/lib/brandBrain.test.ts`, 7 in `src/lib/rows.test.ts`), lint, typecheck, worker typecheck, production build.
 Live verification deferred: the `denied` branch against a real non-member session and the `offline` branch against a genuinely dropped connection, both of which need an authenticated browser session (Antigravity). The classification itself is pure and covered by unit tests.
+```
+
+```
+Slice: Fail-closed reads across Source Registry and Creative Intake
+Why now: the same defect Brand Brain had, in the two panels that define what a workspace may cite and what it has ingested. All five readers — `fetchSourcesForWorkspace`, `fetchEvidenceItems`, `fetchMetricDefinitions`, `fetchWorkspaceAssets`, `fetchWorkspaceTwins` — logged their error to the console and returned `[]`. Both panels wrapped the calls in `try/catch`, but since the fetchers never threw, both error branches were dead code: a denied read, a dropped connection and an unwritten workspace all rendered as "0 sources · 0 evidence assertions" or as a workspace with no assets. Neither is a cosmetic difference. An empty evidence layer is a positive claim about what may be cited, and an empty asset list invites a re-upload of material that is already stored.
+In scope: `src/lib/rows.ts` gains a shared `ReadResult<T>` (`ReadError`, `UNCONFIGURED_READ`, `readRows`, `readFailureSummary`, `isRetryableRead`); `sourceRegistry.ts` and `creativeIntake.ts` convert their five readers; `SourceRegistry.tsx`, `CreativeIntake.tsx`, `ExperimentsPanel.tsx` and `PublishingPlanner.tsx` report the failure class. Write paths, validators, ingest paths and both audit inserts are untouched.
+One helper at the boundary, in the module that already owns the classifier. `readRows` turns a PostgREST response into a `ReadResult`, keeping the class from `classifyReadError`; `readFailureSummary(error, subject)` writes the one sentence, so the same five states are not phrased differently on each of the four screens. `subject` is a mid-sentence noun phrase, so no branch produces a sentence that starts lowercase. `isRetryableRead` exists separately from `isRetryable` because `unconfigured` is not a `ReadFailure` and is never retryable.
+`brandBrain.ts` was deliberately not migrated onto the shared type. Its copy is codex-specific and its tests pin exact strings; the duplication is already filed in `todo.md` and folding it in mid-slice would have been a cross-file refactor for no user-visible gain.
+Each panel fails as one posture, with a stated reason. Source Registry: showing sources while the evidence read failed would put a citability decision in front of the user on coverage that was never read. Creative Intake: a twin is the grounded manifest of an asset, so listing assets while the twin read failed would show every one of them as never decomposed. Each read is checked directly rather than through an aliased `??` chain, because narrowing does not propagate through an alias across separate results.
+Experiments and the planner consume the same registries, so their claims were false in the same way. A failed metric read made `metricDefined: false` for every experiment — unknown reported as a definite blocker — and the empty state stated a metric count it did not have. Both the list and the empty state are now suppressed behind one notice, and "New experiment" is disabled while the metric registry is unread. A failed source read disables outcome import in both panels, which it already did in the planner, but silently; the reason is now stated, and the planner still distinguishes a registry that is genuinely empty ("add one in Source registry first") from one that was not read.
+Retry is offered only where another attempt can succeed: `offline` and `failed`. `denied` names the recovery that applies, `absent` names the unreachable relation, `unconfigured` says this build has no project to read from. `sourceLabel` in the planner already degraded honestly to a truncated id and was left alone.
+Copy corrected against the live ledger while in these files: two strings still claimed migrations 016 and 017 were "authored in the repository but pending live apply". All migrations 001–017 are applied, so an absent relation means this environment is not the one they were applied to, and both strings now say that.
+Data/security effect: none. The same five queries run with the same `workspace_id` scoping; no policy, function, column, or migration changed, and no write path was added. Error text reaching the browser is the platform message that was already being written to the console. Private-intake privacy guarantees, source provenance on imported rows, and the known-gaps derivation are unchanged.
+Acceptance checks: 610 tests (24 new: 11 in `src/lib/rows.test.ts`, 9 in `src/lib/sourceRegistry.test.ts`, 4 in `src/lib/creativeIntake.test.ts`), lint, typecheck, worker typecheck, production build.
+Live verification deferred: the `denied` branch against a real non-member session and the `offline` branch against a genuinely dropped connection, on all four panels — both need an authenticated browser session (Antigravity). The classification and the copy selection are pure and covered by unit tests.
 ```
 
 ## Supabase project (from prior state; unverified this phase)

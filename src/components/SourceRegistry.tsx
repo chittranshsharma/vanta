@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { EvidenceClass } from "../lib/evidence";
+import { isRetryableRead, readFailureSummary, type ReadError } from "../lib/rows";
 import {
   fetchSourcesForWorkspace,
   fetchEvidenceItems,
@@ -86,7 +87,7 @@ export function SourceRegistry({ workspaceId, userId, isAdmin }: SourceRegistryP
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItemRow[]>([]);
   const [metricDefs, setMetricDefs] = useState<MetricDefinitionRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ReadError | null>(null);
 
   // Forms
   const [showSourceForm, setShowSourceForm] = useState(false);
@@ -110,11 +111,19 @@ export function SourceRegistry({ workspaceId, userId, isAdmin }: SourceRegistryP
           fetchEvidenceItems(workspaceId),
           fetchMetricDefinitions(workspaceId)
         ]);
-        setSources(s);
-        setEvidenceItems(e);
-        setMetricDefs(m);
+        // The registry is read as one evidence posture. Showing sources while the
+        // evidence read failed would put a citability decision in front of the
+        // user on coverage that was never read, so one failed part fails the
+        // panel. Each read is checked directly so its success arm narrows.
+        if (s.error || e.error || m.error) {
+          setError(s.error ?? e.error ?? m.error);
+          return;
+        }
+        setSources(s.data);
+        setEvidenceItems(e.data);
+        setMetricDefs(m.data);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to load source registry.");
+        setError({ failure: "failed", message: err instanceof Error ? err.message : "Failed to load source registry." });
       } finally {
         setLoading(false);
       }
@@ -135,10 +144,17 @@ export function SourceRegistry({ workspaceId, userId, isAdmin }: SourceRegistryP
     return (
       <div className="bb-error-state" role="alert">
         <ShieldAlert size={20} color="#f87171" />
-        <span>{error}</span>
-        <button type="button" className="ghost-button-sm" onClick={reload}>
-          Retry
-        </button>
+        <div>
+          <p>{readFailureSummary(error, "the source registry")}</p>
+          <p className="vp-hint">
+            Nothing was written. Sources, evidence and metrics are not shown as empty, because they were not read.
+          </p>
+          {isRetryableRead(error) && (
+            <button type="button" className="ghost-button-sm" onClick={reload}>
+              Retry
+            </button>
+          )}
+        </div>
       </div>
     );
   }

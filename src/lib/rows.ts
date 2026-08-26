@@ -120,3 +120,61 @@ export function classifyReadError(error: { message: string; code?: string }): Re
   if (isMissingRelationError(error)) return "absent";
   return "failed";
 }
+
+/**
+ * Why a read produced nothing, including the one reason that is not the query's
+ * fault: this build has no Supabase project to ask.
+ */
+export type ReadError = { failure: ReadFailure | "unconfigured"; message: string };
+
+/**
+ * A read that either produced data or says why it did not.
+ *
+ * The alternative — logging the error and returning `null` or `[]` — makes a
+ * refused read and an empty table render identically. For a registry of sources
+ * or a list of assets that is not a cosmetic difference: an empty evidence layer
+ * is a positive statement about what this workspace can cite.
+ */
+export type ReadResult<T> = { data: T; error: null } | { data: null; error: ReadError };
+
+/** The result every reader returns before it has a project to read from. */
+export const UNCONFIGURED_READ = {
+  data: null,
+  error: { failure: "unconfigured" as const, message: "Supabase is not configured." }
+};
+
+/** Turns one PostgREST response into a `ReadResult`, keeping the failure class. */
+export function readRows<T>(
+  response: { data: T | null; error: { message: string; code?: string } | null },
+  whenNoRows: T
+): ReadResult<T> {
+  if (response.error) {
+    return { data: null, error: { failure: classifyReadError(response.error), message: response.error.message } };
+  }
+  return { data: response.data ?? whenNoRows, error: null };
+}
+
+/**
+ * One sentence for a failed read, naming the recovery that applies to its class.
+ * `subject` is a lowercase noun phrase used mid-sentence, e.g. "the source
+ * registry", so the copy never has to be written twice per screen.
+ */
+export function readFailureSummary(error: ReadError, subject: string): string {
+  switch (error.failure) {
+    case "unconfigured":
+      return `Supabase is not configured, so ${subject} cannot be read in this build.`;
+    case "denied":
+      return `You are not allowed to read ${subject}. Ask an admin for access rather than retrying.`;
+    case "absent":
+      return `A table ${subject} needs is not reachable: ${error.message}`;
+    case "offline":
+      return `The request for ${subject} did not arrive, so nothing was changed. Check the connection and try again.`;
+    case "failed":
+      return `Could not read ${subject}: ${error.message}`;
+  }
+}
+
+/** True when the user can be offered a retry for this error. `unconfigured` never is. */
+export function isRetryableRead(error: ReadError): boolean {
+  return error.failure !== "unconfigured" && isRetryable(error.failure);
+}

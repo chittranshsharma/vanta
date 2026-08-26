@@ -8,6 +8,7 @@ import { groupImportBatches, type ImportBatchSummary } from "../../shared/publis
 import { deleteImportBatch, listPostObservations, type PostObservationRow } from "../lib/postHistory";
 import { fetchMetricDefinitions, fetchSourcesForWorkspace, type MetricDefinitionRow, type SourceRegistryRow } from "../lib/sourceRegistry";
 import { isMissingTableError } from "../lib/experiments";
+import { isRetryableRead, readFailureSummary, type ReadError } from "../lib/rows";
 import { HistoryImportModal } from "./HistoryImportModal";
 import { Modal } from "./Modal";
 
@@ -26,6 +27,8 @@ interface Loaded {
   historyError: string | null;
   metrics: MetricDefinitionRow[];
   sources: SourceRegistryRow[];
+  /** Non-null when the registry reads an import needs did not succeed, so neither list is empty — it is unread. */
+  registryError: ReadError | null;
 }
 
 /**
@@ -55,7 +58,19 @@ export function PublishingPlanner({ workspaceId, userId, isAdmin }: { workspaceI
         fetchSourcesForWorkspace(workspaceId)
       ]);
       if (!mounted) return;
-      setLoaded({ key, connectors: conns.data ?? [], history: history.data ?? [], historyError: history.error, metrics, sources });
+      // An import row must name a registered source and a defined metric, so both
+      // registry reads gate the same affordance. Reporting whichever failed is
+      // enough: the recovery is the same read, and neither list may be shown as
+      // empty on data that was never read.
+      setLoaded({
+        key,
+        connectors: conns.data ?? [],
+        history: history.data ?? [],
+        historyError: history.error,
+        metrics: metrics.data ?? [],
+        sources: sources.data ?? [],
+        registryError: sources.error ?? metrics.error
+      });
     })();
     return () => {
       mounted = false;
@@ -102,20 +117,41 @@ export function PublishingPlanner({ workspaceId, userId, isAdmin }: { workspaceI
             Candidate windows are derived from your own observed posting history and are run as experiments. There is no universal best time, and Vanta will not invent one.
           </p>
         </div>
-        <button type="button" className="ghost-button-sm" onClick={() => setImportOpen(true)} disabled={!historyReady || (current?.sources.length ?? 0) === 0}>
+        <button type="button" className="ghost-button-sm" onClick={() => setImportOpen(true)} disabled={!historyReady || Boolean(current?.registryError) || (current?.sources.length ?? 0) === 0}>
           <Upload size={14} aria-hidden="true" /> Import posting history
         </button>
       </header>
 
       {!current && <div className="brand-brain-loading" role="status" aria-live="polite">Checking authorized sources and history…</div>}
 
+      {current?.registryError && (
+        <section className="load-error" role="alert">
+          <div>
+            <p className="state-overline">Import is unavailable</p>
+            <p>{readFailureSummary(current.registryError, "the source registry and metric definitions this import needs")}</p>
+            <p className="vp-hint">
+              Every imported row must name a registered source and a defined metric. Neither is shown as empty, because neither was read.
+            </p>
+          </div>
+          {isRetryableRead(current.registryError) && (
+            <button className="ghost-button" onClick={() => setReloadToken((t) => t + 1)}>Retry</button>
+          )}
+        </section>
+      )}
+
+      {current && !current.registryError && current.sources.length === 0 && (
+        <p className="vp-note" role="status">
+          Import is unavailable: this workspace has no registered sources. Add one in Source registry first, since every imported row records where it came from.
+        </p>
+      )}
+
       {current?.historyError && (
         <section className="load-error" role="alert">
           <div>
-            <p className="state-overline">{isMissingTableError(current.historyError) ? "Posting history table is not applied yet" : "Could not read posting history"}</p>
+            <p className="state-overline">{isMissingTableError(current.historyError) ? "Posting history table is not reachable" : "Could not read posting history"}</p>
             <p>
               {isMissingTableError(current.historyError)
-                ? "Migration 017 is authored in the repository but pending live apply. Until an operator applies it, no history can be stored and no window can be derived."
+                ? "The posting-history table is not reachable from this build. Migration 017 defines it; ask an operator to confirm it is applied to this environment. Until then no history can be stored and no window can be derived."
                 : current.historyError}
             </p>
           </div>

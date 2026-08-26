@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  fetchWorkspaceAssets,
+  fetchWorkspaceTwins,
   validateManualText,
   validateDeclaredFileMetadata,
   sanitizeFilename,
@@ -8,6 +10,80 @@ import {
   buildDeterministicFeatures,
   deriveKnownGaps
 } from "./creativeIntake";
+
+const mockState = vi.hoisted(() => ({
+  configured: true,
+  result: { data: null as unknown, error: null as { message: string; code?: string } | null },
+  tables: [] as string[]
+}));
+
+vi.mock("./supabase", () => {
+  /** One chainable stub: every builder method returns it, and awaiting it resolves the result. */
+  const chain: Record<string, unknown> = {
+    select: () => chain,
+    order: () => chain,
+    eq: () => chain,
+    then: (resolve: (v: unknown) => unknown) => Promise.resolve(mockState.result).then(resolve)
+  };
+  return {
+    get isSupabaseConfigured() {
+      return mockState.configured;
+    },
+    supabase: {
+      from: (table: string) => {
+        mockState.tables.push(table);
+        return chain;
+      }
+    }
+  };
+});
+
+describe("intake reads report a failure class instead of an empty workspace", () => {
+  beforeEach(() => {
+    mockState.configured = true;
+    mockState.result = { data: null, error: null };
+    mockState.tables = [];
+  });
+
+  it("distinguishes a workspace that has ingested nothing from one that was not read", async () => {
+    mockState.result = { data: [], error: null };
+    const empty = await fetchWorkspaceAssets("ws-001");
+    expect(empty.error).toBeNull();
+    expect(empty.data).toEqual([]);
+
+    mockState.result = { data: null, error: { message: "permission denied for table creative_assets", code: "42501" } };
+    const denied = await fetchWorkspaceAssets("ws-001");
+    // Rendering the refusal as "no assets" invites a re-upload of material that
+    // is already stored, and states something false about private intake.
+    expect(denied.data).toBeNull();
+    expect(denied.error?.failure).toBe("denied");
+  });
+
+  it("never reports a failed twin read as no twins", async () => {
+    mockState.result = { data: null, error: { message: "Failed to fetch" } };
+    const res = await fetchWorkspaceTwins("ws-001");
+    expect(res.data).toBeNull();
+    expect(res.error?.failure).toBe("offline");
+    expect(mockState.tables).toEqual(["creative_twins"]);
+  });
+
+  it("returns the rows a successful read produced", async () => {
+    mockState.result = { data: [{ id: "twin-1" }], error: null };
+    const res = await fetchWorkspaceTwins("ws-001");
+    expect(res.error).toBeNull();
+    expect(res.data).toHaveLength(1);
+  });
+
+  it("reports an unconfigured build without pretending to have read anything", async () => {
+    mockState.configured = false;
+    for (const read of [fetchWorkspaceAssets("ws-001"), fetchWorkspaceTwins("ws-001")]) {
+      const res = await read;
+      expect(res.data).toBeNull();
+      expect(res.error?.failure).toBe("unconfigured");
+    }
+    expect(mockState.tables).toEqual([]);
+  });
+});
 
 describe("validateManualText", () => {
   it("accepts valid manual text within boundaries", () => {

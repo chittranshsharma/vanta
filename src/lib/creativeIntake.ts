@@ -5,9 +5,15 @@
  * private Supabase Storage upload, and grounded Creative Twin manifest generation.
  *
  * NO model calls, NO video byte ingestion, NO semantic analysis, NO fabricated metrics.
+ *
+ * A failed asset or twin read returns its failure class rather than an empty list.
+ * These readers used to log the error and return `[]`, which rendered a refused or
+ * unreachable workspace as one that has ingested nothing — an invitation to
+ * re-upload material that may already be stored.
  */
 
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { readRows, UNCONFIGURED_READ, type ReadResult } from "./rows";
 import { verifyDeclaredType } from "../../shared/media/magicBytes";
 import type { Database } from "../types/database.types";
 
@@ -334,34 +340,26 @@ export function deriveKnownGaps(input: {
 // DATA SERVICES (SUPABASE WORKSPACE-SCOPED)
 // ============================================================
 
-export async function fetchWorkspaceAssets(workspaceId: string): Promise<CreativeAssetRow[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
+export async function fetchWorkspaceAssets(workspaceId: string): Promise<ReadResult<CreativeAssetRow[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED_READ;
+  const response = await supabase
     .from("creative_assets")
     .select("*")
     .eq("workspace_id", workspaceId)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("fetchWorkspaceAssets error:", error.message);
-    return [];
-  }
-  return data || [];
+  return readRows(response, []);
 }
 
-export async function fetchWorkspaceTwins(workspaceId: string): Promise<CreativeTwinRow[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
+export async function fetchWorkspaceTwins(workspaceId: string): Promise<ReadResult<CreativeTwinRow[]>> {
+  if (!isSupabaseConfigured) return UNCONFIGURED_READ;
+  const response = await supabase
     .from("creative_twins")
     .select("*")
     .eq("workspace_id", workspaceId)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("fetchWorkspaceTwins error:", error.message);
-    return [];
-  }
-  return data || [];
+  return readRows(response, []);
 }
 
 /**

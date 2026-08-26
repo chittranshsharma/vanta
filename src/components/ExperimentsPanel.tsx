@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "./Modal";
 import { supabase } from "../lib/supabase";
 import { fetchMetricDefinitions, fetchSourcesForWorkspace, type MetricDefinitionRow, type SourceRegistryRow } from "../lib/sourceRegistry";
+import { isRetryableRead, readFailureSummary, type ReadError } from "../lib/rows";
 import { listConnectors, type ConnectorAccountPublic } from "../lib/connectors";
 import { connectorOutcomeSourceState, describeAllOutcomeSync, type OutcomeSyncCapability } from "../../shared/connectors/outcomeSync";
 import { createExperiment, isMissingTableError, listExperiments, listOutcomes, setExperimentStatus, type ExperimentOutcomeRow, type ExperimentRow } from "../lib/experiments";
@@ -18,8 +19,12 @@ interface Loaded {
   experimentsError: string | null;
   twins: TwinLite[];
   metrics: MetricDefinitionRow[];
+  /** Non-null when the metric registry was not read, so "metric not defined" is unknown rather than false. */
+  metricsError: ReadError | null;
   connectors: ConnectorAccountPublic[];
   sources: SourceRegistryRow[];
+  /** Non-null when the source registry was not read, so outcome import has no source to name. */
+  sourcesError: ReadError | null;
 }
 
 const STATUS_NEXT: Partial<Record<ExperimentStatus, { to: ExperimentStatus; label: string }[]>> = {
@@ -61,9 +66,11 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
         experiments: exp.data ?? [],
         experimentsError: exp.error,
         twins: (twinsRes.data ?? []) as TwinLite[],
-        metrics,
+        metrics: metrics.data ?? [],
+        metricsError: metrics.error,
         connectors: conns.data ?? [],
-        sources
+        sources: sources.data ?? [],
+        sourcesError: sources.error
       });
     })();
     return () => {
@@ -98,7 +105,7 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
             A hypothesis, the variants it compares, the metric it is read against, and where observed outcomes will come from. No reading exists until sourced outcome rows do.
           </p>
         </div>
-        <button type="button" className="primary-button" onClick={() => setCreateOpen(true)} disabled={!current || Boolean(current.experimentsError)}>
+        <button type="button" className="primary-button" onClick={() => setCreateOpen(true)} disabled={!current || Boolean(current.experimentsError) || Boolean(current.metricsError)}>
           <Plus size={16} aria-hidden="true" /> New experiment
         </button>
       </header>
@@ -108,19 +115,34 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
       {current?.experimentsError && (
         <section className="load-error" role="alert">
           <div>
-            <p className="state-overline">{isMissingTableError(current.experimentsError) ? "Experiment tables are not applied yet" : "Could not load experiments"}</p>
+            <p className="state-overline">{isMissingTableError(current.experimentsError) ? "Experiment tables are not reachable" : "Could not load experiments"}</p>
             <p>
               {isMissingTableError(current.experimentsError)
-                ? "Migration 016 is authored in the repository but pending live apply. Definitions cannot be saved until an operator applies it."
+                ? "The experiment tables are not reachable from this build. Migration 016 defines them; ask an operator to confirm it is applied to this environment. Definitions cannot be saved until it is."
                 : current.experimentsError}
             </p>
           </div>
           <button className="ghost-button" onClick={() => setReloadToken((t) => t + 1)}>Retry</button>
         </section>
       )}
+
+      {current?.metricsError && (
+        <section className="load-error" role="alert">
+          <div>
+            <p className="state-overline">Metric definitions were not read</p>
+            <p>{readFailureSummary(current.metricsError, "this workspace's metric definitions")}</p>
+            <p className="vp-hint">
+              Experiments are not listed and no readiness is shown. Whether each experiment's metric is defined is unknown, not false, so nothing here would be safe to read as a blocker.
+            </p>
+          </div>
+          {isRetryableRead(current.metricsError) && (
+            <button className="ghost-button" onClick={() => setReloadToken((t) => t + 1)}>Retry</button>
+          )}
+        </section>
+      )}
       {actionError && <p className="error-text" role="alert">{actionError}</p>}
 
-      {current && !current.experimentsError && current.experiments.length === 0 && (
+      {current && !current.experimentsError && !current.metricsError && current.experiments.length === 0 && (
         <div className="vp-empty">
           <span className="vp-row-state"><FlaskConical size={15} aria-hidden="true" /> No experiments</span>
           <h3>Nothing is under test.</h3>
@@ -130,7 +152,7 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
         </div>
       )}
 
-      {current && current.experiments.length > 0 && (
+      {current && !current.metricsError && current.experiments.length > 0 && (
         <ul className="vp-list">
           {current.experiments.map((exp) => {
             const readiness = evaluateReadiness(
@@ -169,7 +191,7 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
                     <button type="button" className="link-button" onClick={() => setSelected(selected === exp.id ? null : exp.id)} aria-expanded={selected === exp.id}>
                       {selected === exp.id ? "Hide outcomes" : "Show outcomes"}
                     </button>
-                    <button type="button" className="ghost-button-sm" onClick={() => setImportFor(exp)} disabled={exp.status === "draft" || exp.status === "abandoned"}>
+                    <button type="button" className="ghost-button-sm" onClick={() => setImportFor(exp)} disabled={exp.status === "draft" || exp.status === "abandoned" || Boolean(current.sourcesError)}>
                       Import outcomes
                     </button>
                     {exp.status === "draft" && <span className="vp-hint">Mark the experiment ready before importing outcomes.</span>}
@@ -189,6 +211,12 @@ export function ExperimentsPanel({ workspaceId, userId }: { workspaceId: string;
       <p className="vp-note">
         CSV import is available now: rows must name a registered source and are stored as <strong>observed from that source</strong>, with the source's citability at import time recorded on each row. Nothing computes a winner.
       </p>
+
+      {current?.sourcesError && (
+        <p className="vp-note" role="status">
+          Outcome import is unavailable. {readFailureSummary(current.sourcesError, "the source registry")} Every imported row must name a registered source, so no import can record its provenance until the registry can be read.
+        </p>
+      )}
 
       {current && importFor && (
         <OutcomeImportModal
