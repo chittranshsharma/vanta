@@ -15,6 +15,8 @@
 
 ## Blocked on live Supabase access (operator runs `docs/supabase-deferred-validation.md`)
 
+- [x] Complete authenticated browser E2E and QA-1 multi-user isolation validation; Core Beta gate passed at commit `fc5974d` with 610 tests and no observed browser-console errors.
+- [ ] Prepare a controlled Core Beta onboarding/release checklist before inviting users; retain Groq and OAuth connectors as separate explicit approvals.
 - [ ] Resolve duplicate Supabase MCP configuration, perform read-only project/migration inventory, and validate migrations 007–017 only in an isolated branch before any live-project proposal.
 - [ ] Reconcile the live migration ledger (which currently omits an explicit 00006 record) and classify/remediate all 17 Supabase security-advisor warnings before approving any migration application.
 - [x] Remove the live-data JSON export from repository/docs and replace its inaccurate “physical backup” claim with a secure manual recovery procedure.
@@ -28,6 +30,13 @@
 - [ ] D-5: atomic re-parse RPC (P1-8).
 - [ ] D-6 to D-9: SECURITY DEFINER inventory, storage policies, immutability trigger, advisors.
 - [ ] Ticket 5.0 deployment: secrets, deploy, one owner/admin health check, negative checks (needs explicit approval). Then enable `claim_grounding_audit` (server) and `claim_grounding_panel` (client).
+- [ ] Activate Groq only through Antigravity and only for the bounded Claim Grounding Audit after secret, authorization, rate/budget, malformed-output, and audit-log safety checks pass.
+- [ ] Before Groq deployment, decide and test Claim Grounding Audit member-vs-editor authorization, remove/verify the legacy quota fallback now that migration 015 is live, and confirm an explicit user disclosure before creative/claim text is sent to Groq.
+- [ ] Before Groq deployment, confirm the provider/model wording shown in the disclosure is accurate, allowlist the actual beta origin, and run post-deploy owner/negative/CORS/rate-limit/audit-redaction checks before enabling the panel.
+- [ ] Rotate or delete test-user credentials exposed during gateway validation; verify a real owner/admin Claim Grounding Audit end-to-end, the resulting sanitized audit record, and CORS from the actual beta origin before public enablement.
+- [ ] Resolve the Groq 404 by querying the authenticated provider model catalog, updating only the secure `GROQ_MODEL` environment value to a supported model, and repeating the bounded live-audit checks.
+- [ ] Verify `groq/compound-mini` or another selected `GROQ_MODEL` against Groq’s current authenticated model catalog and Vanta’s schema-validation requirements before configuration.
+- [ ] Compare all eligible models returned by the authenticated Groq catalog using a fixed non-sensitive Claim Grounding evaluation set before selecting the beta default.
 - [ ] Deploy job worker and analysis service (host + service-role key handling + ffprobe). Choose embedding provider (E-3). Register provider OAuth apps (F-1).
 - [ ] QA-1: two-user real-JWT isolation suite.
 - [ ] Run authenticated browser end-to-end smoke tests for Brand Brain, intake, Twin corrections, experiments/outcomes, posting-history import, jobs/agent unavailable states, and tenant isolation.

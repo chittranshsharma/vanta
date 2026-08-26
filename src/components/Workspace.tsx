@@ -444,6 +444,7 @@ export function Workspace({
               twinId={selectedTwinId}
               workspaceId={activeWorkspace.id}
               userId={user.id}
+              userRole={activeWorkspace.role}
               onBack={() => setActivePanel("intake")}
             />
           </div>

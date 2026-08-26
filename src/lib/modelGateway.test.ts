@@ -49,7 +49,7 @@ describe('Model Gateway Client Adapter & Security Invariants', () => {
           },
           latency_ms: 180,
           correlation_id: 'corr-123',
-          model: 'llama-3.3-70b-versatile',
+          model: 'qwen/qwen3.8-27b',
         },
         error: null,
       });
@@ -189,6 +189,43 @@ describe('Model Gateway Client Adapter & Security Invariants', () => {
       expect(res.error).toBe('validation_failed');
       expect(res.validationErrors).toHaveLength(2);
       expect(res.validationErrors?.[0]).toContain('Nonce verification failed');
+    });
+
+    it('invokeClaimGroundingAudit validates UUIDs and dispatches strictly twin_id, task_type, workspace_id', async () => {
+      const { invokeClaimGroundingAudit } = await import('./modelGateway');
+      const badRes = await invokeClaimGroundingAudit('bad-ws', 'bad-twin');
+      expect(badRes.success).toBe(false);
+      expect(badRes.error).toBe('invalid_request');
+
+      const validTwinId = '22222222-3333-4444-5555-666666666666';
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            verdicts: [],
+            evidence_class: 'inference',
+            needs_human_review: true,
+            prompt_version: '1.0.0',
+            schema_version: '1.0.0',
+            repaired: false,
+          },
+          latency_ms: 350,
+          correlation_id: 'corr-claim-1',
+          model: 'qwen/qwen3.8-27b',
+        },
+        error: null,
+      });
+
+      const goodRes = await invokeClaimGroundingAudit(validWorkspaceId, validTwinId);
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('model-gateway', {
+        body: {
+          workspace_id: validWorkspaceId,
+          task_type: 'claim_grounding_audit',
+          twin_id: validTwinId,
+        },
+      });
+      expect(goodRes.success).toBe(true);
+      expect(goodRes.data?.needs_human_review).toBe(true);
     });
   });
 });

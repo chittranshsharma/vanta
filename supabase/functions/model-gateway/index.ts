@@ -4,9 +4,7 @@ import { validateHealthCheckOutput } from "./schemas.ts";
 import { isTaskEnabled } from "./flags.ts";
 import { logEvent } from "./log.ts";
 import {
-  AUDIT_ACTION,
   buildAuditEvent,
-  evaluateRateLimit,
   resolveCorsOrigin,
   validateRequestBody,
   type AuditEventInsert,
@@ -107,7 +105,7 @@ Deno.serve(async (req: Request) => {
     }
     const userId = userData.user.id;
 
-    // 5. Authorize caller role. Health check: owner/admin. Content tasks: any member.
+    // 5. Authorize caller role. All model gateway tasks are restricted to owner/admin for initial beta.
     const { data: memberData, error: memberError } = await supabase
       .from("workspace_members")
       .select("role")
@@ -117,8 +115,8 @@ Deno.serve(async (req: Request) => {
     if (memberError || !memberData) {
       return fail(403, "forbidden", "Caller is not a member of the workspace.");
     }
-    if (taskType === "gateway_health_check" && !["owner", "admin"].includes(memberData.role)) {
-      return fail(403, "forbidden", "Only workspace owners and administrators may invoke the model gateway health check.");
+    if (!["owner", "admin"].includes(memberData.role)) {
+      return fail(403, "forbidden", "Only workspace owners and administrators may invoke model gateway tasks.");
     }
 
     // 6. Provider configuration
@@ -126,35 +124,17 @@ Deno.serve(async (req: Request) => {
     if (!groqApiKey) {
       return fail(503, "gateway_not_configured", "Server model inference provider credentials are not configured.");
     }
-    const groqModel = Deno.env.get("GROQ_MODEL") || "llama-3.3-70b-versatile";
+    const groqModel = Deno.env.get("GROQ_MODEL") || "qwen/qwen3.8-27b";
 
-    // 7. Quota. Prefer the atomic per-workspace daily counter (migration 015). If that
-    // function is not deployed yet (42883), fall back to the best-effort audit-count
-    // limiter so the health check still works during staged rollout. Both fail closed.
-    let quotaMode: "daily_quota" | "best_effort" = "daily_quota";
+    // 7. Atomic Quota (Migration 015). Fails closed.
     const quota = await supabase.rpc("consume_quota", { p_workspace_id: workspaceId, p_kind: "model_call" });
-    if (quota.error && (quota.error as { code?: string }).code === "42883") {
-      quotaMode = "best_effort";
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { count: recentInvocations, error: countError } = await supabase
-        .from("audit_events")
-        .select("id", { count: "exact", head: true })
-        .eq("workspace_id", workspaceId)
-        .eq("action", AUDIT_ACTION)
-        .gte("created_at", oneHourAgo);
-      const limit = evaluateRateLimit({ count: recentInvocations, countError });
-      if (!limit.allow) {
-        logEvent("warn", "rate limited", { correlation_id: correlationId, task_type: taskType, workspace_id: workspaceId, status: limit.status });
-        return fail(limit.status, limit.error, limit.message, { quota_mode: quotaMode });
-      }
-    } else if (quota.error) {
+    if (quota.error) {
       return fail(503, "rate_limit_unavailable", "Quota state could not be read; request refused (fail-closed).");
-    } else {
-      const row = (Array.isArray(quota.data) ? quota.data[0] : quota.data) as { allowed?: boolean; used?: number; daily_limit?: number } | null;
-      if (!row || row.allowed !== true) {
-        logEvent("warn", "quota exhausted", { correlation_id: correlationId, task_type: taskType, workspace_id: workspaceId, status: 429 });
-        return fail(429, "rate_limited", `Workspace daily model-call quota reached (${row?.used ?? "?"} of ${row?.daily_limit ?? "?"}).`, { quota_mode: quotaMode });
-      }
+    }
+    const row = (Array.isArray(quota.data) ? quota.data[0] : quota.data) as { allowed?: boolean; used?: number; daily_limit?: number } | null;
+    if (!row || row.allowed !== true) {
+      logEvent("warn", "quota exhausted", { correlation_id: correlationId, task_type: taskType, workspace_id: workspaceId, status: 429 });
+      return fail(429, "rate_limited", `Workspace daily model-call quota reached (${row?.used ?? "?"} of ${row?.daily_limit ?? "?"}).`);
     }
 
     let auditWriteFailed = false;

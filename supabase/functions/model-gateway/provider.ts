@@ -28,6 +28,9 @@ export type ProviderResult =
 
 export const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
 
+/** Wall-clock deadline for a single Groq inference call (ms). */
+export const GROQ_REQUEST_TIMEOUT_MS = 25_000;
+
 export async function runStructuredCompletion(
   req: StructuredCompletionRequest,
   fetchImpl: typeof fetch
@@ -37,6 +40,7 @@ export async function runStructuredCompletion(
     response = await fetchImpl(GROQ_CHAT_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${req.apiKey}`, "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(GROQ_REQUEST_TIMEOUT_MS),
       body: JSON.stringify({
         model: req.model,
         temperature: req.temperature ?? 0,

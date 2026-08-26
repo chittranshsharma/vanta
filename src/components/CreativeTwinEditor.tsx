@@ -23,6 +23,7 @@ interface CreativeTwinEditorProps {
   twinId: string;
   workspaceId: string;
   userId: string;
+  userRole?: string;
   onBack: () => void;
 }
 
@@ -30,6 +31,7 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
   twinId,
   workspaceId,
   userId,
+  userRole,
   onBack,
 }) => {
   const [details, setDetails] = useState<StructuredTwinDetails | null>(null);
@@ -530,7 +532,7 @@ export const CreativeTwinEditor: React.FC<CreativeTwinEditorProps> = ({
           )}
 
           {isFlagOn('claim_grounding_panel') && (
-            <ClaimGroundingPanel workspaceId={workspaceId} twinId={twinId} claims={claims} brandClaims={brandClaims} />
+            <ClaimGroundingPanel workspaceId={workspaceId} twinId={twinId} claims={claims} brandClaims={brandClaims} userRole={userRole} />
           )}
         </div>
       )}

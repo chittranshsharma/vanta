@@ -13,6 +13,7 @@ interface ClaimGroundingPanelProps {
   twinId: string;
   claims: CreativeClaimRow[];
   brandClaims: BrandClaim[];
+  userRole?: string;
 }
 
 const VERDICT_LABEL: Record<ClaimGroundingVerdict['verdict'], string> = {
@@ -35,11 +36,14 @@ const VERDICT_CLASS: Record<ClaimGroundingVerdict['verdict'], string> = {
  * Review queue for the Ticket 5.1 model task. Every verdict is labelled as
  * model inference needing human review. Nothing here writes to creative_claims.
  */
-export function ClaimGroundingPanel({ workspaceId, twinId, claims, brandClaims }: ClaimGroundingPanelProps) {
+export function ClaimGroundingPanel({ workspaceId, twinId, claims, brandClaims, userRole }: ClaimGroundingPanelProps) {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<ClaimGroundingResult | null>(null);
 
+  const isAuthorized = !userRole || ['owner', 'admin'].includes(userRole);
+
   const run = async () => {
+    if (!isAuthorized) return;
     setRunning(true);
     setResult(null);
     const res = await invokeClaimGroundingAudit(workspaceId, twinId);
@@ -65,11 +69,23 @@ export function ClaimGroundingPanel({ workspaceId, twinId, claims, brandClaims }
         <button
           type="button"
           onClick={run}
-          disabled={running || claims.length === 0}
+          disabled={running || claims.length === 0 || !isAuthorized}
           className="px-3 py-2 text-xs font-semibold rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-100"
         >
           {running ? 'Running…' : 'Run audit'}
         </button>
+      </div>
+
+      <div className="text-[11px] text-zinc-400 bg-zinc-950/70 border border-zinc-800/80 rounded-lg p-2.5 space-y-1">
+        <div className="text-zinc-300 font-medium">Provider disclosure before dispatch:</div>
+        <div>
+          Audit dispatches extracted claim text and active Brand Codex proof points to Groq (<code className="font-mono text-zinc-300">qwen/qwen3.8-27b</code>) for structured verification. Raw media files are never transmitted.
+        </div>
+        {!isAuthorized && (
+          <div className="text-amber-400/90 font-medium">
+            Only workspace owners and administrators can dispatch Claim Grounding Audits during beta.
+          </div>
+        )}
       </div>
 
       {claims.length === 0 && <p className="text-xs text-zinc-500">No extracted claims; nothing to ground.</p>}
