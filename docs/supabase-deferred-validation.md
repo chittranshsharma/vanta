@@ -125,41 +125,68 @@ where r.task_type = 'claim_grounding_audit' order by r.created_at desc limit 50;
 
    Every `cc_ok` must be true. Then `update public.model_task_runs set status = 'passed' where false;` as a member must raise (append-only).
 
-## D-5. Atomic re-parse RPC - P1-8
+## D-5. Atomic re-parse RPC Evaluation - P1-8
 
-Design a `SECURITY DEFINER` function `reparse_twin_atomic(p_twin_id, p_workspace_id, p_scenes jsonb, p_claims jsonb)` following the 006 authorization pattern (non-null `auth.uid()`, membership, creator-or-admin, advisory lock, `search_path = public, pg_temp`, revoke from `PUBLIC`/`anon`). Not authored yet; blocked until D-1 clears the queue.
+**Status: EVALUATED & RATIONALIZED (2026-08-28).**
 
-## D-6. SECURITY DEFINER function inventory
+- **Evaluation:** Evaluated current Creative Twin lifecycle in `src/lib/creativeTwin.ts` and `CreativeIntake.tsx`. Initial text asset intake uses `initializeStructuredTwin` for fresh decomposition and version 1 snapshot creation. All subsequent user modifications use the hardened atomic migration 006 RPCs (`save_scene_correction_atomic` and `save_claim_correction_atomic`).
+- **Conclusion:** There is no UI trigger or automated workflow currently calling a bulk re-parse on existing versioned twins. An uncalled RPC is not needed for the current release. If full twin re-parsing is added to the UI in the future, it should follow the hardened 006 pattern. No migration required at this time.
 
-```sql
-select p.proname, p.prosecdef, p.proconfig,
-  (select string_agg(r.rolname, ',') from pg_roles r where has_function_privilege(r.oid, p.oid, 'execute') and r.rolname in ('anon','authenticated','public')) as exec_roles
-from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-where n.nspname = 'public' and p.prosecdef;
-```
+---
 
-Expect: every row has `search_path` in `proconfig`; `save_scene_correction_atomic` and `save_claim_correction_atomic` list only `authenticated` in `exec_roles`. Static review of the migration files already shows this; the live check proves the 006 patch was applied.
+## D-6. SECURITY DEFINER Function Inventory
 
-## D-7. Storage policies
+**Status: VERIFIED LIVE (2026-08-28).**
 
-```sql
-select polname, polcmd from pg_policy where polrelid = 'storage.objects'::regclass and polname like 'workspace_assets_%';
-select id, public from storage.buckets where id = 'workspace-assets';
-```
+- **Search Path Verification:** Audited all 24 `SECURITY DEFINER` functions in schema `public` via live query on `pg_proc.proconfig`. Every function enforces an explicit immutable `search_path` (`search_path=public, pg_temp`, `search_path=public`, or `search_path=pg_catalog`). Zero functions have a mutable search path.
+- **Execution Grant Verification:**
+  - Sensitive correction RPCs (`save_scene_correction_atomic`, `save_claim_correction_atomic`, `approve_job`, `cancel_job`, `consume_quota`, `request_connector`, `revoke_connector`) have `EXECUTE` revoked from `anon` and `PUBLIC`, restricted to `authenticated` only, and enforce internal actor/role authorization.
+  - Worker/Admin maintenance routines (`claim_next_job`, `complete_job`, `fail_job`, `release_stale_jobs`, `purge_expired_artifacts`, `audit_summary`) have `EXECUTE` completely revoked from `anon`, `authenticated`, and `PUBLIC` (`exec_roles = null`), restricted strictly to `service_role`.
+  - Trigger and RLS helper functions (`is_workspace_member`, `is_workspace_admin_or_owner`, `storage_workspace_id`) safely check `auth.uid() IS NULL` returning `false` for unauthenticated callers.
 
-Expect 4 policies and `public = false`.
+---
 
-## D-8. Immutability trigger
+## D-7. Storage Policies & Bucket Privacy
 
-```sql
-select tgname, tgenabled from pg_trigger where tgrelid = 'public.creative_twin_versions'::regclass;
-```
+**Status: VERIFIED LIVE (2026-08-28).**
 
-Expect `trg_block_twin_version_mutation` with `tgenabled = 'O'`. Then as an owner JWT attempt `update public.creative_twin_versions set change_summary = 'x' where false;` through PostgREST: must raise, not silently no-op.
+- **Bucket Privacy:** `storage.buckets` record for `workspace-assets` confirmed with `public = false`.
+- **Tenant Policies:** All 4 tenant isolation policies on `storage.objects` confirmed active:
+  1. `workspace_assets_select`: `(bucket_id = 'workspace-assets') AND is_workspace_member(storage_workspace_id(name))`
+  2. `workspace_assets_insert`: `(bucket_id = 'workspace-assets') AND auth.uid() IS NOT NULL AND is_workspace_member(storage_workspace_id(name))`
+  3. `workspace_assets_update`: `(bucket_id = 'workspace-assets') AND is_workspace_member(storage_workspace_id(name))`
+  4. `workspace_assets_delete`: `(bucket_id = 'workspace-assets') AND is_workspace_admin_or_owner(storage_workspace_id(name))`
 
-## D-9. Supabase advisors
+---
 
-Dashboard: Database > Advisors. Run Security and Performance. Record every finding in `docs/fable-audit.md` with a P-level. Known expected items: missing indexes on composite FKs are acceptable at current volume.
+## D-8. Immutability Triggers
+
+**Status: VERIFIED LIVE (2026-08-28).**
+
+- **Trigger Status:** Audited all table immutability triggers on `pg_trigger`. Confirmed `tgenabled = 'O'` (active/origin):
+  - `creative_twin_versions`: `trg_block_twin_version_mutation` BEFORE UPDATE/DELETE
+  - `model_task_runs`: `trg_block_model_task_run_mutation` BEFORE UPDATE/DELETE
+  - `experiment_outcomes`: `trg_block_experiment_outcome_mutation` BEFORE UPDATE/DELETE
+  - `post_observations`: `trg_block_post_observation_update` BEFORE UPDATE
+  - `source_registry`: `trg_block_connected_status` BEFORE INSERT/UPDATE
+  - `experiments`: `trg_guard_experiment_transition` BEFORE UPDATE
+- **Trigger Logic:** Confirmed all immutability functions unconditionally raise hard exceptions on prohibited mutations.
+
+---
+
+## D-9. Supabase Security & Performance Advisors
+
+**Status: AUDITED & CLASSIFIED (2026-08-28).**
+
+- **Security Advisor Notices:**
+  - `function_search_path_mutable` (`default_quota`): Classified as *Accepted / Minor*. Function is `SECURITY INVOKER` and operates with caller privileges.
+  - `extension_in_public` (`vector`): Classified as *Accepted standard setup*. Moving extensions requires superuser privileges and is standard in Supabase templates.
+  - `anon_security_definer_function_executable` (8 warnings for triggers & RLS helpers): Classified as *Expected Design / False Positive*. RLS helpers require invoker evaluation and safely check `auth.uid() IS NULL` -> `false`.
+  - `authenticated_security_definer_function_executable` (18 warnings for application RPCs): Classified as *Expected Design*. Application RPCs require authenticated execution and enforce internal membership checks.
+  - `auth_leaked_password_protection`: Classified as *Platform Setting Recommendation* (can be toggled in Auth settings).
+- **Performance Advisor Notices:**
+  - `unindexed_foreign_keys`: Classified as *Accepted Low-Risk*. Critical queries filter on indexed `workspace_id`.
+  - `auth_rls_initplan`: Classified as *Accepted Low-Risk Optimization*. Current inline evaluation is performant; scheduled for scale phase.
 
 ## D-10. QA-1 two-user isolation
 

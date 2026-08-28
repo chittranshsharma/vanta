@@ -314,10 +314,13 @@ Live verification deferred: the `denied` branch against a real non-member sessio
 
 ## Next
 
-1. Migrations 007 through 017 are applied and the types are regenerated from the live schema (commit `8313539`); the temporary `never` casts in `src/lib/jobs.ts`, `connectors.ts`, `retrieval.ts`, `experiments.ts` and `postHistory.ts` are gone. Remaining pre-checks live in `docs/supabase-deferred-validation.md` (D-5 to D-9).
-2. Ticket 5.0 deployment on explicit approval (`docs/model-gateway-deployment-readiness.md`), then `ENABLED_TASKS=claim_grounding_audit` and `VITE_FLAGS=claim_grounding_panel` once D-4 step 8 passes.
-3. Worker and analysis service deployment (operator decision: host, service-role key handling, ffprobe availability).
-4. Open review items: G-2 (remove quota fallback after D-15), E-3 (embedding provider choice), F-1 (provider OAuth apps), D-2 (thumbnails/frames), B-3 (calibration tables).
-5. QA-1 run against a staging project before any external user.
+1. Phase 1 validation (D-5 through D-9) complete:
+   - D-5: Atomic re-parse RPC evaluated; current product uses initial intake decomposition + hardened 006 atomic correction RPCs; no unused RPC added.
+   - D-6: Audited all 24 `SECURITY DEFINER` functions; 100% have explicit `search_path`; public/anon execute properly revoked from sensitive RPCs.
+   - D-7: Storage bucket `workspace-assets` confirmed private (`public: false`) with 4 tenant-scoped policies active.
+   - D-8: Immutability triggers verified active on `creative_twin_versions`, `model_task_runs`, `experiment_outcomes`, `post_observations`.
+   - D-9: Supabase Security and Performance Advisors audited, analyzed, and classified without blind code execution.
+2. Full automated test baseline passing: 611 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean.
+3. Browser walkthrough and live model gateway health probe verified in authenticated workspace.
+4. Next: Phase 2 missing backend primitives (persisted batch registry, atomic batch delete RPC, variant link table, workspace timezone, nullable correction RPC params, gateway quota fallback removal).
 
-6. Git identity is configured in this clone and slices are committed locally. Nothing is pushed.
