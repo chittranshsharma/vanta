@@ -8,7 +8,12 @@ export type JobType =
   | "campaign_csv_normalize"
   | "media_probe"
   | "source_refresh"
-  | "embedding_refresh";
+  | "embedding_refresh"
+  | "conversation_import_validate"
+  | "conversation_deduplicate"
+  | "conversation_interpretation_proposal"
+  | "conversation_attribution"
+  | "conversation_aggregate";
 
 export type JobStatus =
   | "awaiting_approval"
@@ -25,6 +30,11 @@ export const JOB_TYPES: readonly JobType[] = [
   "media_probe",
   "source_refresh",
   "embedding_refresh",
+  "conversation_import_validate",
+  "conversation_deduplicate",
+  "conversation_interpretation_proposal",
+  "conversation_attribution",
+  "conversation_aggregate",
 ] as const;
 
 /**

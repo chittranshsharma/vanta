@@ -47,6 +47,17 @@
   - [x] Nullable correction RPC parameters (`DEFAULT NULL`) on `save_scene_correction_atomic` and authoritative regenerated TypeScript types.
   - [x] Removed G-2 legacy quota fallback (model gateway and job enqueue fail closed strictly on `consume_quota`).
 
+- [x] Phase 3: Conversation Intelligence Foundation (Migration 019 live as `20260828183603`).
+  - [x] `conversation_observations` immutable audience signals table with composite tenant FKs, pseudonymized `author_ref`, deterministic idempotency keys, and core-content immutability trigger.
+  - [x] `conversation_interpretations` inference layer table with mandatory `uncertainty_note`, `review_state`, and human review fields.
+  - [x] `conversation_attributions` explicit Twin/Variant/Claim/CTA/Experiment linkage table.
+  - [x] `conversation_review_events` append-only audit ledger (UPDATE and DELETE denied via `USING (false)`).
+  - [x] Atomic review RPCs `review_conversation_observation_atomic` and `review_conversation_interpretation_atomic` with transactional audit logging.
+  - [x] Pure CSV import validator (`shared/conversations/csvImport.ts`) with byte/length/header limits and deterministic line rejections.
+  - [x] Pure source-grounded reply draft validator (`shared/conversations/replyDrafts.ts`) failing closed when approved claims/proofs are absent.
+  - [x] 5 Conversation job types added to `shared/jobs/policy.ts`.
+  - [x] Pure spike aggregation module (`shared/conversations/spikeAggregation.ts`) reporting exact counts in workspace timezone and flagging unknown baselines without fake virality.
+
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work

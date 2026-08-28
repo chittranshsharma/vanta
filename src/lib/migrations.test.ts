@@ -96,6 +96,7 @@ describe("migration files", () => {
       "20260822000016_experiments.sql",
       "20260822000017_post_observations.sql",
       "20260822000018_backend_primitives.sql",
+      "20260822000019_conversation_intelligence.sql",
     ]);
   });
 
@@ -121,8 +122,8 @@ describe("row level security coverage", () => {
   const enabled = rlsEnabledTables(code);
   const policies = policiesByTable(code);
 
-  it("creates the 32 tenant tables the product documents", () => {
-    expect(tables).toHaveLength(32);
+  it("creates the 36 tenant tables the product documents", () => {
+    expect(tables).toHaveLength(36);
   });
 
   it.each(tables)("enables RLS on public.%s", (table) => {
@@ -150,7 +151,13 @@ describe("row level security coverage", () => {
     expect(cmds).not.toContain("delete");
   });
 
-  it.each(["creative_twin_versions", "brand_codex_versions", "model_task_runs", "experiment_outcomes"])(
+  it.each([
+    "creative_twin_versions",
+    "brand_codex_versions",
+    "model_task_runs",
+    "experiment_outcomes",
+    "conversation_review_events",
+  ])(
     "denies UPDATE and DELETE on snapshot table public.%s at policy level",
     (table) => {
       const denies = (policies.get(table) ?? []).filter(
@@ -184,6 +191,10 @@ describe("row level security coverage", () => {
     ["post_observations", "created_by"],
     ["import_batches", "created_by"],
     ["post_variant_attributions", "created_by"],
+    ["conversation_observations", "created_by"],
+    ["conversation_interpretations", "created_by"],
+    ["conversation_attributions", "created_by"],
+    ["conversation_review_events", "created_by"],
   ];
 
   it.each(actorBoundTables)(
@@ -204,6 +215,47 @@ describe("row level security coverage", () => {
     expect(code).toMatch(
       /create\s+trigger\s+trg_block_twin_version_mutation\s+before\s+update\s+or\s+delete\s+on\s+public\.creative_twin_versions/i
     );
+  });
+
+  it("protects conversation_observations with a core immutability trigger", () => {
+    expect(code).toMatch(
+      /create\s+trigger\s+trg_block_conversation_observation_core_mutation\s+before\s+update\s+on\s+public\.conversation_observations/i
+    );
+  });
+});
+
+describe("conversation intelligence foundation (migration 019)", () => {
+  const sql = sqlByFile["20260822000019_conversation_intelligence.sql"];
+
+  it("creates conversation_observations with evidence_class = observed and review state checks", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.conversation_observations/i);
+    expect(sql).toMatch(/evidence_class\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'observed'\s+CHECK\s*\(\s*evidence_class\s*=\s*'observed'\s*\)/i);
+    expect(sql).toMatch(/review_state\s+IN\s*\(\s*'unreviewed',\s*'needs_human',\s*'accepted',\s*'rejected',\s*'corrected'\s*\)/i);
+    expect(sql).toMatch(/UNIQUE\s*\(\s*workspace_id,\s*idempotency_key\s*\)/i);
+  });
+
+  it("creates conversation_interpretations with evidence_class = inference and mandatory uncertainty note", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.conversation_interpretations/i);
+    expect(sql).toMatch(/evidence_class\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'inference'\s+CHECK\s*\(\s*evidence_class\s*=\s*'inference'\s*\)/i);
+    expect(sql).toMatch(/uncertainty_note\s+TEXT\s+NOT\s+NULL/i);
+  });
+
+  it("creates conversation_attributions with composite FKs", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.conversation_attributions/i);
+    expect(sql).toMatch(/REFERENCES\s+public\.conversation_observations\(id,\s*workspace_id\)\s*\n?\s*ON\s+DELETE\s+CASCADE/i);
+  });
+
+  it("creates append-only conversation_review_events (denies update and delete)", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.conversation_review_events/i);
+    expect(sql).toMatch(/conversation_review_events_no_update[\s\S]*?USING\s*\(\s*false\s*\)/i);
+    expect(sql).toMatch(/conversation_review_events_no_delete[\s\S]*?USING\s*\(\s*false\s*\)/i);
+  });
+
+  it("provides hardened review RPCs with transactional audit logging", () => {
+    expect(sql).toMatch(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.review_conversation_observation_atomic/i);
+    expect(sql).toMatch(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.review_conversation_interpretation_atomic/i);
+    expect(sql).toMatch(/REVOKE\s+ALL\s+ON\s+FUNCTION\s+public\.review_conversation_observation_atomic/i);
+    expect(sql).toMatch(/GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+public\.review_conversation_observation_atomic[\s\S]*?TO\s+authenticated/i);
   });
 });
 
@@ -321,6 +373,9 @@ describe("privileged SQL", () => {
       "consume_quota",
       "audit_summary",
       "delete_post_observation_batch",
+      "block_conversation_observation_core_mutation",
+      "review_conversation_observation_atomic",
+      "review_conversation_interpretation_atomic",
     ]) {
       expect(names.has(expected), `missing SECURITY DEFINER function ${expected}`).toBe(true);
     }

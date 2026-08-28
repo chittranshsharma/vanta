@@ -651,6 +651,331 @@ export type Database = {
           },
         ]
       }
+      conversation_attributions: {
+        Row: {
+          brand_claim_id: string | null
+          created_at: string
+          created_by: string | null
+          cta_identifier: string | null
+          destination_url: string | null
+          experiment_id: string | null
+          id: string
+          observation_id: string
+          provenance: Json
+          twin_id: string | null
+          twin_version_id: string | null
+          variant_twin_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          brand_claim_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_identifier?: string | null
+          destination_url?: string | null
+          experiment_id?: string | null
+          id?: string
+          observation_id: string
+          provenance?: Json
+          twin_id?: string | null
+          twin_version_id?: string | null
+          variant_twin_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          brand_claim_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_identifier?: string | null
+          destination_url?: string | null
+          experiment_id?: string | null
+          id?: string
+          observation_id?: string
+          provenance?: Json
+          twin_id?: string | null
+          twin_version_id?: string | null
+          variant_twin_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_attributions_brand_claim_id_workspace_id_fkey"
+            columns: ["brand_claim_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "brand_claims"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_attributions_experiment_id_workspace_id_fkey"
+            columns: ["experiment_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_attributions_observation_id_workspace_id_fkey"
+            columns: ["observation_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_observations"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_attributions_twin_id_workspace_id_fkey"
+            columns: ["twin_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twins"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_attributions_twin_version_id_workspace_id_fkey"
+            columns: ["twin_version_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twin_versions"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_attributions_variant_twin_id_workspace_id_fkey"
+            columns: ["variant_twin_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twins"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_attributions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_interpretations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          evidence_class: string
+          id: string
+          interpretation_type: string
+          model_ref: string | null
+          observation_id: string
+          prompt_version: string | null
+          review_state: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          supporting_evidence_ids: Json
+          uncertainty_note: string
+          value: Json
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          id?: string
+          interpretation_type: string
+          model_ref?: string | null
+          observation_id: string
+          prompt_version?: string | null
+          review_state?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          supporting_evidence_ids?: Json
+          uncertainty_note: string
+          value: Json
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          id?: string
+          interpretation_type?: string
+          model_ref?: string | null
+          observation_id?: string
+          prompt_version?: string | null
+          review_state?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          supporting_evidence_ids?: Json
+          uncertainty_note?: string
+          value?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_interpretations_observation_id_workspace_id_fkey"
+            columns: ["observation_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_observations"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_interpretations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_observations: {
+        Row: {
+          author_ref: string
+          character_count: number
+          created_at: string
+          created_by: string | null
+          evidence_class: string
+          external_event_id: string | null
+          external_post_id: string | null
+          id: string
+          idempotency_key: string
+          import_batch_id: string | null
+          ingested_at: string
+          observed_at: string
+          provenance: Json
+          provider: string
+          provider_account_ref: string | null
+          raw_text: string
+          retention_until: string | null
+          review_state: string
+          source_id: string
+          text_sha256: string
+          workspace_id: string
+        }
+        Insert: {
+          author_ref: string
+          character_count: number
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          external_event_id?: string | null
+          external_post_id?: string | null
+          id?: string
+          idempotency_key: string
+          import_batch_id?: string | null
+          ingested_at?: string
+          observed_at: string
+          provenance?: Json
+          provider?: string
+          provider_account_ref?: string | null
+          raw_text: string
+          retention_until?: string | null
+          review_state?: string
+          source_id: string
+          text_sha256: string
+          workspace_id: string
+        }
+        Update: {
+          author_ref?: string
+          character_count?: number
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          external_event_id?: string | null
+          external_post_id?: string | null
+          id?: string
+          idempotency_key?: string
+          import_batch_id?: string | null
+          ingested_at?: string
+          observed_at?: string
+          provenance?: Json
+          provider?: string
+          provider_account_ref?: string | null
+          raw_text?: string
+          retention_until?: string | null
+          review_state?: string
+          source_id?: string
+          text_sha256?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_observations_import_batch_id_workspace_id_fkey"
+            columns: ["import_batch_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_observations_source_id_workspace_id_fkey"
+            columns: ["source_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "source_registry"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_observations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_review_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_kind: string
+          id: string
+          interpretation_id: string | null
+          metadata: Json
+          new_state: string
+          observation_id: string | null
+          previous_state: string | null
+          rationale: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_kind: string
+          id?: string
+          interpretation_id?: string | null
+          metadata?: Json
+          new_state: string
+          observation_id?: string | null
+          previous_state?: string | null
+          rationale?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_kind?: string
+          id?: string
+          interpretation_id?: string | null
+          metadata?: Json
+          new_state?: string
+          observation_id?: string | null
+          previous_state?: string | null
+          rationale?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_review_events_interpretation_id_workspace_id_fkey"
+            columns: ["interpretation_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_interpretations"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_review_events_observation_id_workspace_id_fkey"
+            columns: ["observation_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_observations"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "conversation_review_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creative_assets: {
         Row: {
           asset_kind: string
@@ -2389,6 +2714,26 @@ export type Database = {
           source_table: string
           total_rows: number
         }[]
+      }
+      review_conversation_interpretation_atomic: {
+        Args: {
+          p_interpretation_id: string
+          p_metadata?: Json
+          p_rationale?: string
+          p_review_state: string
+          p_workspace_id: string
+        }
+        Returns: Json
+      }
+      review_conversation_observation_atomic: {
+        Args: {
+          p_metadata?: Json
+          p_observation_id: string
+          p_rationale?: string
+          p_review_state: string
+          p_workspace_id: string
+        }
+        Returns: Json
       }
       revoke_connector: {
         Args: { p_connector_id: string; p_workspace_id: string }
