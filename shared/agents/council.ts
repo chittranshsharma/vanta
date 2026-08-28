@@ -7,7 +7,7 @@
 
 import {
   type AgentRole,
-  type EvidenceOriginClass,
+  type EvidenceClass,
   type TaskGraph,
   ROLE_CONTRACTS,
   planMinimalSubgraph,
@@ -29,7 +29,7 @@ export interface Finding<T = unknown> {
   id: string;
   role: AgentRole;
   /** Epistemic origin of the finding. Human approval never converts inference to observed. */
-  evidence_class: EvidenceOriginClass;
+  evidence_class: EvidenceClass;
   /** Administrative review governance state. */
   review_decision: ReviewDecision;
   /** Mandatory uncertainty disclosure for inference. */

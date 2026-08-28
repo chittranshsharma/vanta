@@ -139,6 +139,30 @@ describe("applyHumanReview", () => {
       has_reason: true,
     });
   });
+
+  it("human approval on a simulation finding preserves evidence_class as simulation", () => {
+    const simFinding: Finding<{ simulatedRetention: number }> = {
+      id: "fnd-sim-1",
+      role: "experiment_designer",
+      evidence_class: "simulation",
+      review_decision: "unreviewed",
+      uncertainty_note: "Simulated audience retention under hypothetical hook modification",
+      cited_entity_ids: ["twin-456"],
+      payload: { simulatedRetention: 0.62 },
+    };
+
+    const { updatedFinding } = applyHumanReview(
+      simFinding,
+      "accepted",
+      "usr-reviewer",
+      "ws-1",
+      "Approved simulation for experiment design"
+    );
+
+    expect(updatedFinding.review_decision).toBe("accepted");
+    // Invariant: Remains 'simulation', never promoted to 'observed'
+    expect(updatedFinding.evidence_class).toBe("simulation");
+  });
 });
 
 describe("createFindingFromFallback", () => {

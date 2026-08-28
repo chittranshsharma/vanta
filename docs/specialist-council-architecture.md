@@ -23,15 +23,17 @@ The **Specialist Council** is Vanta's multi-specialist analysis engine. Unlike u
 
 Vanta maintains a strict distinction between the **epistemic nature of data** (`evidence_class`) and the **human administrative status** (`review_decision`):
 
-### 2.1 Evidence Class (`evidence_class`)
-Describes how the data came into existence:
+### 2.1 Canonical Five-Class Evidence Taxonomy (`evidence_class`)
+Describes the epistemic grounding of the data:
 - `observed`: Directly recorded from empirical execution or platform measurement (e.g., recorded timestamp, exact post metrics, video pixel dimensions).
 - `sourced`: Extracted verbatim from a registered, provenanced document (e.g., Brand Codex claim text, registered source excerpt).
 - `inference`: Derived by statistical models, heuristic approximations, or LLM synthesis.
-- `unknown`: Baseline or state is unknown / missing.
-- `blocked`: Determination could not be made due to missing prerequisite permissions or policies.
+- `simulation`: Formulated through hypothetical scenario modeling, counterfactual variable mutation, or synthetic projection.
+- `unknown`: Baseline or empirical measurement is unknown / missing.
 
-> **Invariant:** A human approving an `inference` proposal records a `review_decision = 'accepted'`, but the proposition's `evidence_class` remains `inference`. Human approval is governance, not empirical proof.
+*(Note: `blocked`, `needs_human`, `insufficient_evidence`, `interpretation_unavailable`, and `deterministic_fallback` are operational/safety status states, NOT evidence classes).*
+
+> **Invariant:** A human approving an `inference` or `simulation` proposal records a `review_decision = 'accepted'`, but the proposition's `evidence_class` remains `inference` or `simulation`. Human approval is governance, not empirical proof.
 
 ### 2.2 Review Decision (`review_decision`)
 Describes the administrative governance state:

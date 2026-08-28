@@ -36,7 +36,9 @@ export const AGENT_ROLES: readonly AgentRole[] = [
   "performance_analyst",
 ] as const;
 
-export type EvidenceOriginClass = "inference" | "sourced" | "observed" | "unknown" | "blocked";
+export type EvidenceClass = "observed" | "sourced" | "inference" | "simulation" | "unknown";
+/** Backward-compatible alias */
+export type EvidenceOriginClass = EvidenceClass;
 
 export interface RoleContract {
   role: AgentRole;
@@ -52,8 +54,8 @@ export interface RoleContract {
   prohibitedActions: readonly string[];
   /** Output schema name validated server-side before anything is stored. */
   outputSchema: string;
-  /** Evidence class every output of this role carries. */
-  evidenceClass: EvidenceOriginClass;
+  /** Canonical evidence class every output of this role carries. */
+  evidenceClass: EvidenceClass;
   /** Whether the role may propose writes to stored truth (applied ONLY via human checkpoint). */
   mayProposeWrites: boolean;
   /** Quota bucket required */

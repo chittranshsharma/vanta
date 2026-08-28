@@ -1,9 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { AGENT_ROLES } from "./graph";
+import { AGENT_ROLES, type EvidenceClass } from "./graph";
 import { resolveRoleFallback } from "./fallback";
 
+const CANONICAL_5_EVIDENCE_CLASSES: ReadonlySet<EvidenceClass> = new Set([
+  "observed",
+  "sourced",
+  "inference",
+  "simulation",
+  "unknown",
+]);
+
 describe("resolveRoleFallback", () => {
-  it("resolves a deterministic fallback for all 11 roles without crashing", () => {
+  it("resolves a deterministic fallback for all 11 roles with an evidenceClass strictly within the canonical 5-class taxonomy", () => {
     for (const role of AGENT_ROLES) {
       const res = resolveRoleFallback(role, "provider_unavailable", {
         workspaceId: "ws-test-123",
@@ -18,7 +26,16 @@ describe("resolveRoleFallback", () => {
       expect(res.reason).toBe("provider_unavailable");
       expect(res.uncertaintyNote.length).toBeGreaterThan(0);
 
-      // Invariant: Non-human roles never produce 'observed' evidence
+      // Invariant 1: evidenceClass is strictly one of the 5 canonical classes
+      expect(CANONICAL_5_EVIDENCE_CLASSES.has(res.evidenceClass)).toBe(true);
+
+      // Invariant 2: operational status is separated from evidenceClass
+      expect(res.evidenceClass).not.toBe("blocked");
+      expect(res.evidenceClass).not.toBe("needs_human");
+      expect(res.evidenceClass).not.toBe("insufficient_evidence");
+      expect(res.evidenceClass).not.toBe("deterministic_fallback");
+
+      // Invariant 3: Non-human roles never produce 'observed' evidence
       if (role !== "human_reviewer") {
         expect(res.evidenceClass).not.toBe("observed");
       }
@@ -53,20 +70,20 @@ describe("resolveRoleFallback", () => {
     });
   });
 
-  it("evidence_arbiter fails closed and blocks progression when unavailable", () => {
+  it("evidence_arbiter fails closed and blocks progression with evidenceClass 'unknown'", () => {
     const res = resolveRoleFallback("evidence_arbiter", "timeout");
     expect(res.status).toBe("blocked");
-    expect(res.evidenceClass).toBe("blocked");
+    expect(res.evidenceClass).toBe("unknown");
     expect(res.deterministicOutput).toEqual({
       verdict: "rejected",
       rejectionReasons: ["arbiter_failure_timeout"],
     });
   });
 
-  it("compliance_reviewer blocks approval and never assumes compliance", () => {
+  it("compliance_reviewer blocks approval and sets evidenceClass 'unknown', never assuming compliance", () => {
     const res = resolveRoleFallback("compliance_reviewer", "provider_unavailable");
     expect(res.status).toBe("blocked");
-    expect(res.evidenceClass).toBe("blocked");
+    expect(res.evidenceClass).toBe("unknown");
     expect(res.deterministicOutput).toEqual({
       isCompliant: false,
       blockedReason: "compliance_check_unavailable_provider_unavailable",
@@ -114,10 +131,10 @@ describe("resolveRoleFallback", () => {
     });
   });
 
-  it("localization_reviewer blocks and never guesses translation accuracy", () => {
+  it("localization_reviewer blocks and sets evidenceClass 'unknown', never guessing translation accuracy", () => {
     const res = resolveRoleFallback("localization_reviewer", "provider_unavailable");
     expect(res.status).toBe("blocked");
-    expect(res.evidenceClass).toBe("blocked");
+    expect(res.evidenceClass).toBe("unknown");
     expect(res.deterministicOutput).toEqual({
       isCertified: false,
       blockedReason: "localization_check_unavailable_provider_unavailable",

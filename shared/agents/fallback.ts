@@ -3,9 +3,13 @@
  *
  * Fallback means truthful degradation to explicit unknown, blocked, or deterministic
  * calculations—never guessing, fabricating metrics, or promoting unverified claims.
+ *
+ * Invariant: Canonical evidence taxonomy contains exactly 5 classes:
+ * ('observed', 'sourced', 'inference', 'simulation', 'unknown').
+ * 'blocked', 'needs_human', etc. are operational status values, not evidence classes.
  */
 
-import type { AgentRole, EvidenceOriginClass } from "./graph";
+import type { AgentRole, EvidenceClass } from "./graph";
 
 export type FallbackStatus =
   | "unknown"
@@ -28,7 +32,7 @@ export interface RoleFallbackResult<T = unknown> {
   role: AgentRole;
   status: FallbackStatus;
   reason: FallbackReason;
-  evidenceClass: EvidenceOriginClass;
+  evidenceClass: EvidenceClass;
   uncertaintyNote: string;
   deterministicOutput?: T;
   requiresHumanReview: boolean;
@@ -47,6 +51,7 @@ export interface FallbackContext {
 /**
  * Resolves the deterministic fallback state for a given specialist role and failure reason.
  * Invariant: Never fabricates metrics, baseline virality, engagement, or approved claims.
+ * Invariant: evidenceClass is strictly one of the 5 canonical classes.
  */
 export function resolveRoleFallback(
   role: AgentRole,
@@ -92,7 +97,7 @@ export function resolveRoleFallback(
         role,
         status: "blocked",
         reason,
-        evidenceClass: "blocked",
+        evidenceClass: "unknown",
         uncertaintyNote: "Evidence arbiter verification failed or was unavailable. All candidate outputs fail closed.",
         deterministicOutput: {
           verdict: "rejected",
@@ -161,7 +166,7 @@ export function resolveRoleFallback(
         role,
         status: "blocked",
         reason,
-        evidenceClass: "blocked",
+        evidenceClass: "unknown",
         uncertaintyNote: "Compliance review unavailable. Prohibited from assuming or certifying compliance.",
         deterministicOutput: {
           isCompliant: false,
@@ -190,7 +195,7 @@ export function resolveRoleFallback(
         role,
         status: "blocked",
         reason,
-        evidenceClass: "blocked",
+        evidenceClass: "unknown",
         uncertaintyNote: "Localization fidelity verification unavailable. Prohibited from guessing translation correctness.",
         deterministicOutput: {
           isCertified: false,
