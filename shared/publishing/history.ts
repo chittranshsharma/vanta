@@ -106,6 +106,14 @@ export function runtimeTimeZone(): string {
 }
 
 /**
+ * Checks whether an IANA timezone string is valid and recognized by the runtime.
+ */
+export function isValidTimeZone(timeZone: string): boolean {
+  if (!timeZone || typeof timeZone !== "string") return false;
+  return wallClockFormatter(timeZone) !== null;
+}
+
+/**
  * Formatter for one zone, or `null` when the runtime rejects the zone name.
  * A rejected zone must be reported rather than silently swapped, because every
  * hour label downstream would otherwise name a zone the numbers are not in.

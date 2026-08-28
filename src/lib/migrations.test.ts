@@ -95,6 +95,7 @@ describe("migration files", () => {
       "20260822000015_workspace_quotas.sql",
       "20260822000016_experiments.sql",
       "20260822000017_post_observations.sql",
+      "20260822000018_backend_primitives.sql",
     ]);
   });
 
@@ -120,8 +121,8 @@ describe("row level security coverage", () => {
   const enabled = rlsEnabledTables(code);
   const policies = policiesByTable(code);
 
-  it("creates the 30 tenant tables the product documents", () => {
-    expect(tables).toHaveLength(30);
+  it("creates the 32 tenant tables the product documents", () => {
+    expect(tables).toHaveLength(32);
   });
 
   it.each(tables)("enables RLS on public.%s", (table) => {
@@ -181,6 +182,8 @@ describe("row level security coverage", () => {
     ["experiments", "created_by"],
     ["experiment_outcomes", "created_by"],
     ["post_observations", "created_by"],
+    ["import_batches", "created_by"],
+    ["post_variant_attributions", "created_by"],
   ];
 
   it.each(actorBoundTables)(
@@ -201,6 +204,42 @@ describe("row level security coverage", () => {
     expect(code).toMatch(
       /create\s+trigger\s+trg_block_twin_version_mutation\s+before\s+update\s+or\s+delete\s+on\s+public\.creative_twin_versions/i
     );
+  });
+});
+
+describe("backend primitives (migration 018)", () => {
+  const sql = sqlByFile["20260822000018_backend_primitives.sql"];
+
+  it("adds stable workspace timezone column", () => {
+    expect(sql).toMatch(/ALTER\s+TABLE\s+public\.workspaces\s+ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+timezone\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'UTC'/i);
+  });
+
+  it("creates import_batches with tenant isolation and status checks", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.import_batches/i);
+    expect(sql).toMatch(/batch_kind\s+IN\s*\(\s*'post_observations',\s*'experiment_outcomes',\s*'conversation_observations'\s*\)/i);
+    expect(sql).toMatch(/status\s+IN\s*\(\s*'pending',\s*'completed',\s*'partial',\s*'failed'\s*\)/i);
+    expect(sql).toMatch(/REFERENCES\s+public\.source_registry\(id,\s*workspace_id\)\s*\n?\s*ON\s+DELETE\s+SET\s+NULL/i);
+  });
+
+  it("creates post_variant_attributions with uniqueness preventing duplicate post mappings", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.post_variant_attributions/i);
+    expect(sql).toMatch(/UNIQUE\s*\(\s*workspace_id,\s*provider,\s*external_post_id\s*\)/i);
+    expect(sql).toMatch(/REFERENCES\s+public\.creative_assets\(id,\s*workspace_id\)\s*\n?\s*ON\s+DELETE\s+CASCADE/i);
+    expect(sql).toMatch(/REFERENCES\s+public\.creative_twins\(id,\s*workspace_id\)\s*\n?\s*ON\s+DELETE\s+CASCADE/i);
+  });
+
+  it("provides atomic batch deletion RPC with transactional audit write and admin guard", () => {
+    expect(sql).toMatch(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.delete_post_observation_batch/i);
+    expect(sql).toMatch(/is_workspace_admin_or_owner\(p_workspace_id\)/i);
+    expect(sql).toMatch(/INSERT\s+INTO\s+public\.audit_events/i);
+    expect(sql).toMatch(/REVOKE\s+ALL\s+ON\s+FUNCTION\s+public\.delete_post_observation_batch\(UUID,\s*UUID\)\s+FROM\s+PUBLIC,\s*anon/i);
+    expect(sql).toMatch(/GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+public\.delete_post_observation_batch\(UUID,\s*UUID\)\s+TO\s+authenticated/i);
+  });
+
+  it("adds DEFAULT NULL to scene correction parameters", () => {
+    expect(sql).toMatch(/p_start_seconds\s+NUMERIC\s+DEFAULT\s+NULL/i);
+    expect(sql).toMatch(/p_end_seconds\s+NUMERIC\s+DEFAULT\s+NULL/i);
+    expect(sql).toMatch(/p_reading_burden_wpm\s+INT\s+DEFAULT\s+NULL/i);
   });
 });
 
@@ -281,6 +320,7 @@ describe("privileged SQL", () => {
       "revoke_connector",
       "consume_quota",
       "audit_summary",
+      "delete_post_observation_batch",
     ]) {
       expect(names.has(expected), `missing SECURITY DEFINER function ${expected}`).toBe(true);
     }

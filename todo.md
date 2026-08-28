@@ -39,6 +39,14 @@
 - [ ] QA-1: two-user real-JWT isolation suite.
 - [ ] Run authenticated browser end-to-end smoke tests for Brand Brain, intake, Twin corrections, experiments/outcomes, posting-history import, jobs/agent unavailable states, and tenant isolation.
 
+- [x] Phase 2: Missing Backend Primitives (Migration 018 live).
+  - [x] Batch registry table `import_batches` with tenant RLS, validation summary, and provenance tracking.
+  - [x] Atomic `delete_post_observation_batch(p_workspace_id, p_batch_id)` RPC with transactional audit logging and owner/admin check.
+  - [x] External post-to-variant attribution table `post_variant_attributions` with provider/external post uniqueness.
+  - [x] Stable per-workspace `workspaces.timezone` setting with IANA validation helper and UTC fallback.
+  - [x] Nullable correction RPC parameters (`DEFAULT NULL`) on `save_scene_correction_atomic` and authoritative regenerated TypeScript types.
+  - [x] Removed G-2 legacy quota fallback (model gateway and job enqueue fail closed strictly on `consume_quota`).
+
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work

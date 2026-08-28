@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -1278,6 +1278,78 @@ export type Database = {
           },
         ]
       }
+      import_batches: {
+        Row: {
+          accepted_rows: number
+          batch_kind: string
+          completed_at: string
+          created_at: string
+          created_by: string | null
+          expected_rows: number | null
+          file_name: string | null
+          file_sha256: string | null
+          file_size_bytes: number | null
+          id: string
+          provenance: Json
+          rejected_rows: number
+          rejection_reasons: Json
+          source_id: string | null
+          status: string
+          workspace_id: string
+        }
+        Insert: {
+          accepted_rows?: number
+          batch_kind: string
+          completed_at?: string
+          created_at?: string
+          created_by?: string | null
+          expected_rows?: number | null
+          file_name?: string | null
+          file_sha256?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          provenance?: Json
+          rejected_rows?: number
+          rejection_reasons?: Json
+          source_id?: string | null
+          status?: string
+          workspace_id: string
+        }
+        Update: {
+          accepted_rows?: number
+          batch_kind?: string
+          completed_at?: string
+          created_at?: string
+          created_by?: string | null
+          expected_rows?: number | null
+          file_name?: string | null
+          file_sha256?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          provenance?: Json
+          rejected_rows?: number
+          rejection_reasons?: Json
+          source_id?: string | null
+          status?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_batches_source_id_workspace_id_fkey"
+            columns: ["source_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "source_registry"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "import_batches_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingestion_runs: {
         Row: {
           asset_id: string
@@ -1632,6 +1704,130 @@ export type Database = {
           },
         ]
       }
+      post_variant_attributions: {
+        Row: {
+          asset_id: string
+          connector_account_id: string | null
+          created_at: string
+          created_by: string | null
+          experiment_id: string | null
+          external_account_id: string | null
+          external_post_id: string
+          id: string
+          idempotency_key: string | null
+          provenance: Json
+          provider: string
+          published_at: string | null
+          source_id: string | null
+          twin_id: string
+          twin_version_id: string | null
+          variant_twin_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          asset_id: string
+          connector_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          experiment_id?: string | null
+          external_account_id?: string | null
+          external_post_id: string
+          id?: string
+          idempotency_key?: string | null
+          provenance?: Json
+          provider: string
+          published_at?: string | null
+          source_id?: string | null
+          twin_id: string
+          twin_version_id?: string | null
+          variant_twin_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          asset_id?: string
+          connector_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          experiment_id?: string | null
+          external_account_id?: string | null
+          external_post_id?: string
+          id?: string
+          idempotency_key?: string | null
+          provenance?: Json
+          provider?: string
+          published_at?: string | null
+          source_id?: string | null
+          twin_id?: string
+          twin_version_id?: string | null
+          variant_twin_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_variant_attributions_asset_id_workspace_id_fkey"
+            columns: ["asset_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_assets"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_variant_attributions_connector_account_id_workspace_i_fkey"
+            columns: ["connector_account_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "connector_accounts"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_variant_attributions_connector_account_id_workspace_i_fkey"
+            columns: ["connector_account_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "connector_accounts_public"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_variant_attributions_experiment_id_workspace_id_fkey"
+            columns: ["experiment_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_variant_attributions_source_id_workspace_id_fkey"
+            columns: ["source_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "source_registry"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_variant_attributions_twin_id_workspace_id_fkey"
+            columns: ["twin_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twins"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_variant_attributions_twin_version_id_workspace_id_fkey"
+            columns: ["twin_version_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twin_versions"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_variant_attributions_variant_twin_id_workspace_id_fkey"
+            columns: ["variant_twin_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twins"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "post_variant_attributions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1852,6 +2048,7 @@ export type Database = {
           id: string
           name: string
           slug: string
+          timezone: string
           updated_at: string
         }
         Insert: {
@@ -1860,6 +2057,7 @@ export type Database = {
           id?: string
           name: string
           slug: string
+          timezone?: string
           updated_at?: string
         }
         Update: {
@@ -1868,6 +2066,7 @@ export type Database = {
           id?: string
           name?: string
           slug?: string
+          timezone?: string
           updated_at?: string
         }
         Relationships: []
@@ -2097,6 +2296,10 @@ export type Database = {
         }[]
       }
       default_quota: { Args: { p_kind: string }; Returns: number }
+      delete_post_observation_batch: {
+        Args: { p_batch_id: string; p_workspace_id: string }
+        Returns: Json
+      }
       fail_job: {
         Args: {
           p_error: Json
@@ -2206,15 +2409,15 @@ export type Database = {
       }
       save_scene_correction_atomic: {
         Args: {
-          p_change_summary: string
-          p_end_seconds: number
-          p_on_screen_text: string
-          p_provided_visual_notes: string
-          p_reading_burden_wpm: number
+          p_change_summary?: string
+          p_end_seconds?: number
+          p_on_screen_text?: string
+          p_provided_visual_notes?: string
+          p_reading_burden_wpm?: number
           p_scene_id: string
           p_shot_purpose: string
           p_spoken_transcript: string
-          p_start_seconds: number
+          p_start_seconds?: number
           p_workspace_id: string
         }
         Returns: Json

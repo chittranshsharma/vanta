@@ -134,6 +134,31 @@ export async function deleteImportBatch(input: {
   // issue a delete whose filter says less than the caller thinks it does.
   if (!input.batchId) return { data: null, error: "No import batch was named, so nothing was deleted." };
 
+  // 1. Attempt atomic RPC execution (single transaction for delete + audit)
+  const { data: rpcData, error: rpcError } = await supabase.rpc("delete_post_observation_batch" as never, {
+    p_workspace_id: input.workspaceId,
+    p_batch_id: input.batchId,
+  } as never);
+
+  if (!rpcError && rpcData) {
+    const res = rpcData as { success?: boolean; deleted?: number; batch_id?: string };
+    const deleted = typeof res.deleted === "number" ? res.deleted : 0;
+    if (deleted === 0) {
+      return {
+        data: null,
+        error:
+          "No rows were removed. Either this batch is already gone, or deleting import batches is restricted to workspace owners and admins.",
+      };
+    }
+    return { data: { deleted, auditWriteFailed: null }, error: null };
+  }
+
+  // If the error was an explicit postgres authorization/business error (not missing function), return it
+  if (rpcError && !rpcError.message.includes("Could not find the function") && !rpcError.message.includes("does not exist")) {
+    return { data: null, error: rpcError.message };
+  }
+
+  // 2. Client fallback path
   const { data, error } = await supabase
     .from("post_observations")
     .delete()

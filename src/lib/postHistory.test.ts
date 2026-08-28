@@ -4,6 +4,7 @@ const mockState = vi.hoisted(() => ({
   configured: false,
   deleteResult: { data: null as Array<{ id: string }> | null, error: null as { message: string } | null },
   auditError: null as { message: string } | null,
+  rpcResult: null as { data: unknown; error: { message: string } | null } | null,
   /** Every `.eq()` the delete chain applied, so tests can assert the scope. */
   deleteFilters: [] as Array<[string, string]>,
   auditRows: [] as Array<Record<string, unknown>>
@@ -14,6 +15,7 @@ vi.mock("./supabase", () => ({
     return mockState.configured;
   },
   supabase: {
+    rpc: () => Promise.resolve(mockState.rpcResult ?? { data: null, error: { message: "Could not find the function delete_post_observation_batch" } }),
     from: (table: string) => ({
       delete: () => {
         const chain = {
@@ -39,6 +41,7 @@ import { deleteImportBatch, importPostObservations, listPostObservations } from 
 beforeEach(() => {
   mockState.configured = false;
   mockState.deleteResult = { data: [{ id: "o1" }, { id: "o2" }], error: null };
+  mockState.rpcResult = null;
   mockState.auditError = null;
   mockState.deleteFilters = [];
   mockState.auditRows = [];
@@ -115,10 +118,15 @@ describe("deleteImportBatch", () => {
     ]);
   });
 
-  it("reports an unwritten audit row rather than a clean success", async () => {
-    mockState.auditError = { message: "new row violates row-level security policy" };
+  it("executes atomic RPC when available", async () => {
+    mockState.rpcResult = { data: { success: true, deleted: 5, batch_id: "batch-a" }, error: null };
     const res = await deleteImportBatch({ workspaceId: "ws-1", userId: "u", batchId: "batch-a" });
-    expect(res.error).toBeNull();
-    expect(res.data).toEqual({ deleted: 2, auditWriteFailed: "new row violates row-level security policy" });
+    expect(res).toEqual({ data: { deleted: 5, auditWriteFailed: null }, error: null });
+  });
+
+  it("handles RPC error from permission denial", async () => {
+    mockState.rpcResult = { data: null, error: { message: "Access denied: only workspace owners and admins may delete post observation batches" } };
+    const res = await deleteImportBatch({ workspaceId: "ws-1", userId: "u", batchId: "batch-a" });
+    expect(res).toEqual({ data: null, error: "Access denied: only workspace owners and admins may delete post observation batches" });
   });
 });

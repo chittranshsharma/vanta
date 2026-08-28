@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHistoryImportPlan, describeWindow, runtimeTimeZone, toWindowObservations, type HistoryColumnMap } from "./history";
+import { buildHistoryImportPlan, describeWindow, isValidTimeZone, runtimeTimeZone, toWindowObservations, type HistoryColumnMap } from "./history";
 
 const map: HistoryColumnMap = { publishedAt: "published_at", value: "views", postId: "post_id" };
 
@@ -91,7 +91,7 @@ describe("toWindowObservations", () => {
   });
 });
 
-describe("runtimeTimeZone", () => {
+describe("runtimeTimeZone and isValidTimeZone", () => {
   it("returns a zone the observation builder accepts", () => {
     const zone = runtimeTimeZone();
     expect(zone.length).toBeGreaterThan(0);
@@ -100,6 +100,15 @@ describe("runtimeTimeZone", () => {
       zone
     );
     expect(timeZone).toBe(zone);
+  });
+
+  it("validates real IANA timezone identifiers and rejects invalid ones", () => {
+    expect(isValidTimeZone("UTC")).toBe(true);
+    expect(isValidTimeZone("America/New_York")).toBe(true);
+    expect(isValidTimeZone("Asia/Kolkata")).toBe(true);
+    expect(isValidTimeZone("Europe/London")).toBe(true);
+    expect(isValidTimeZone("Invalid/Timezone")).toBe(false);
+    expect(isValidTimeZone("")).toBe(false);
   });
 });
 

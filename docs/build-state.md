@@ -320,7 +320,14 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - D-7: Storage bucket `workspace-assets` confirmed private (`public: false`) with 4 tenant-scoped policies active.
    - D-8: Immutability triggers verified active on `creative_twin_versions`, `model_task_runs`, `experiment_outcomes`, `post_observations`.
    - D-9: Supabase Security and Performance Advisors audited, analyzed, and classified without blind code execution.
-2. Full automated test baseline passing: 611 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean.
-3. Browser walkthrough and live model gateway health probe verified in authenticated workspace.
-4. Next: Phase 2 missing backend primitives (persisted batch registry, atomic batch delete RPC, variant link table, workspace timezone, nullable correction RPC params, gateway quota fallback removal).
+2. Full automated test baseline passing: 636 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (651 total tests).
+3. Phase 2 (Missing Backend Primitives) complete & verified live:
+   - Migration `20260822000018_backend_primitives.sql` applied live to Supabase project `ujxrapbhiedkwleccvqw`.
+   - Batch registry table `import_batches` created with tenant RLS policies (SELECT/INSERT/UPDATE/DELETE).
+   - Atomic `delete_post_observation_batch` RPC created with transactional audit logging and owner/admin check.
+   - External post to variant attribution table `post_variant_attributions` created with composite uniqueness.
+   - Stable workspace timezone column `workspaces.timezone` created with IANA validation helper.
+   - Nullable correction parameters (`DEFAULT NULL`) on `save_scene_correction_atomic` and regenerated authoritative database types.
+   - G-2 legacy quota fallback removed; model gateway and job enqueue fail closed strictly via `consume_quota`.
+4. Next: Phase 3 — Conversation Intelligence Foundation (provider-neutral observation schemas, validators, human review contracts).
 

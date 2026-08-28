@@ -628,31 +628,6 @@ export async function fetchStructuredTwin(
   }
 }
 
-/** The three scene timings, as `save_scene_correction_atomic` declares them. */
-type SceneTimingArgs = Pick<
-  Database['public']['Functions']['save_scene_correction_atomic']['Args'],
-  'p_start_seconds' | 'p_end_seconds' | 'p_reading_burden_wpm'
->;
-
-/**
- * Migration 20260822000006 declares these parameters NUMERIC, NUMERIC and INT.
- * SQL function parameters accept NULL, but generated types report every scalar
- * parameter as non-null because codegen cannot express parameter nullability.
- * The widening is confined here, checked against that signature, rather than
- * each call site claiming an absent timing is a number.
- */
-function sceneTimingArgs(timings: {
-  startSeconds: number | null;
-  endSeconds: number | null;
-  readingBurdenWpm: number | null;
-}): SceneTimingArgs {
-  return {
-    p_start_seconds: timings.startSeconds,
-    p_end_seconds: timings.endSeconds,
-    p_reading_burden_wpm: timings.readingBurdenWpm,
-  } as SceneTimingArgs;
-}
-
 /**
  * Reads the version number out of a correction RPC's jsonb result. Returns
  * undefined when the database sent no number, so the caller reports the save it
@@ -687,9 +662,11 @@ export async function correctSceneAtomic(
       p_workspace_id: workspaceId,
       p_shot_purpose: updates.shotPurpose,
       p_spoken_transcript: updates.spokenTranscript,
-      p_on_screen_text: updates.onScreenText || '',
-      p_provided_visual_notes: updates.providedVisualNotes || '',
-      ...sceneTimingArgs(updates),
+      p_on_screen_text: updates.onScreenText ?? undefined,
+      p_provided_visual_notes: updates.providedVisualNotes ?? undefined,
+      p_start_seconds: updates.startSeconds ?? undefined,
+      p_end_seconds: updates.endSeconds ?? undefined,
+      p_reading_burden_wpm: updates.readingBurdenWpm ?? undefined,
       p_change_summary: changeSummary,
     });
 

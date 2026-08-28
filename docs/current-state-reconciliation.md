@@ -15,10 +15,10 @@ A complete, read-only audit of the local repository, build pipeline, test suites
 | **Lint** | `npm run lint` (ESLint flat config) | **PASSED** | 0 errors, 0 warnings |
 | **Web Typecheck** | `npm run typecheck` (`tsc -b --noEmit`) | **PASSED** | 0 type errors |
 | **Worker Typecheck** | `npm run typecheck:worker` | **PASSED** | 0 type errors across `services/job-worker` |
-| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 611 passed across 42 test files |
+| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 636 passed across 44 test files |
 | **Python Service Tests** | `python -m pytest services/analysis-worker/tests` | **PASSED** | 15 passed across 2 test modules |
-| **Production Build** | `npm run build` (`vite build`) | **PASSED** | Built in 6.91s, clean code-split chunks, total client bundle healthy |
-| **Total Automated Tests** | Vitest + Pytest | **626 tests** | 100% passing rate |
+| **Production Build** | `npm run build` (`vite build`) | **PASSED** | Built in 1.84s, clean code-split chunks, total client bundle healthy |
+| **Total Automated Tests** | Vitest + Pytest | **651 tests** | 100% passing rate |
 
 ---
 
@@ -55,17 +55,19 @@ The live migration ledger (`supabase_migrations.schema_migrations`) confirms all
 | `20260823084535` | `20260822000015_workspace_quotas` | Applied | Daily quotas + `consume_quota` RPC |
 | `20260823084612` | `20260822000016_experiments` | Applied | `experiments`, `experiment_outcomes` |
 | `20260823084622` | `20260822000017_post_observations` | Applied | `post_observations` observed history store |
+| `20260828182548` | `20260822000018_backend_primitives` | Applied | `import_batches`, `post_variant_attributions`, `workspaces.timezone`, `delete_post_observation_batch` RPC |
 
-*Crucial rule: Never reapply migrations 001–017.*
+*Crucial rule: Never reapply migrations 001–018.*
 
 ### 2.2 Table & RLS Inventory
 
-All 30 application tables in the `public` schema have Row Level Security enabled (`rls_enabled = true`):
+All 32 application tables in the `public` schema have Row Level Security enabled (`rls_enabled = true`):
 - `profiles`, `workspaces`, `workspace_members`, `audit_events`
 - `brands`, `brand_codex_versions`, `brand_audiences`, `brand_claims`, `brand_proof_points`, `brand_competitors`, `brand_tone_guidelines`, `brand_compliance_boundaries`
 - `source_registry`, `evidence_items`, `metric_definitions`
 - `creative_assets`, `ingestion_runs`, `creative_twins`, `creative_scenes`, `creative_claims`, `creative_twin_versions`
 - `model_task_runs`, `jobs`, `derived_artifacts`, `retrieval_embeddings`, `connector_accounts`, `workspace_quotas`, `experiments`, `experiment_outcomes`, `post_observations`
+- `import_batches`, `post_variant_attributions`
 
 ### 2.3 Storage Configuration
 
