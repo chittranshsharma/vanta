@@ -320,7 +320,7 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - D-7: Storage bucket `workspace-assets` confirmed private (`public: false`) with 4 tenant-scoped policies active.
    - D-8: Immutability triggers verified active on `creative_twin_versions`, `model_task_runs`, `experiment_outcomes`, `post_observations`.
    - D-9: Supabase Security and Performance Advisors audited, analyzed, and classified without blind code execution.
-2. Full automated test baseline passing: 745 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (760 total tests).
+2. Full automated test baseline passing: 763 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (778 total tests).
 3. Phase 2 (Missing Backend Primitives) complete & verified live (Migration 018).
 4. Phase 3 (Conversation Intelligence Foundation) complete & verified live (Migration 019).
 5. Phase 4 (Jobs, Aggregation, and Spike Observation Worker Integration) complete & verified live (Migration 020).
@@ -338,6 +338,13 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - Deterministic Fallback Matrix (`shared/agents/fallback.ts`) for all 11 roles, preserving truthful `unknown`/`blocked` states without fabricating metrics or ungrounded approvals.
    - Pre-flight Council budget and quota gating (`shared/agents/council.ts`), cross-tenant ID verification, and sanitized metadata logging.
    - Strict separation of epistemic `evidence_class` from administrative `review_decision` (human approval does not promote AI inference to empirical fact).
-   - 760 automated tests passing (745 Vitest + 15 Pytest).
-10. Next: Ticket 6.1 (Counterfactual Simulation Lab) or Phase 6 UI Polish.
+10. Ticket 6.1 (Counterfactual Simulation Lab — Backend & Domain) complete:
+   - Canonical 5-class evidence taxonomy strictly enforced (`observed`, `sourced`, `inference`, `simulation`, `unknown`) with operational statuses separated (`shared/simulation/types.ts`).
+   - 7 bounded mutation operations (`hook_replacement`, `cta_replacement`, `scene_reorder`, `scene_duration_adjust`, `on_screen_text_change`, `claim_substitution`, `tone_guideline_adaptation`) with immutability guarantees and Brand Codex claim verification (`shared/simulation/mutations.ts`).
+   - Deterministic structural deltas only (duration, WPM, scene count, claim count, coverage); zero performance predictions or arbitrary virality scores.
+   - Six-role Council analysis subgraph (`discovery` -> `creative_analyst` -> `claim_auditor` -> `experiment_designer` -> `evidence_arbiter` -> `evaluator`) and mandatory `human_reviewer` governance gate (`shared/simulation/engine.ts`).
+   - Traceability-only post-hoc empirical outcome linkage without variance/lift calculation (`shared/simulation/traceability.ts`).
+   - 778 automated tests passing (763 Vitest + 15 Pytest).
+11. Next: Phase 6 (Restrained Visual Polish & ReactBits Motion) or UI Integration slices.
+
 

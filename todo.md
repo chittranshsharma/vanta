@@ -88,7 +88,13 @@
   - [x] Deterministic Fallback Matrix (`shared/agents/fallback.ts`) for all 11 roles, preserving truthful `unknown`/`blocked` states without fabricating metrics, baseline virality, or ungrounded approvals.
   - [x] Pre-flight Council budget and quota gating (`shared/agents/council.ts`), cross-tenant ID verification, and sanitized metadata logging.
   - [x] Strict separation of epistemic `evidence_class` from administrative `review_decision` (human approval does not promote AI inference to empirical fact).
-  - [x] 745 Vitest + 15 Pytest = 760 automated tests passing cleanly.
+- [x] Ticket 6.1: Counterfactual Simulation Lab (Backend & Domain):
+  - [x] Canonical 5-class evidence taxonomy strictly enforced (`observed`, `sourced`, `inference`, `simulation`, `unknown`) with separate operational statuses (`shared/simulation/types.ts`).
+  - [x] 7 bounded mutation operations (`hook_replacement`, `cta_replacement`, `scene_reorder`, `scene_duration_adjust`, `on_screen_text_change`, `claim_substitution`, `tone_guideline_adaptation`) with immutability guarantees and Brand Codex claim verification (`shared/simulation/mutations.ts`).
+  - [x] Deterministic structural deltas only (duration, WPM, scene count, claim count, coverage); zero performance predictions or arbitrary virality scores.
+  - [x] Six-role Council analysis subgraph (`discovery` -> `creative_analyst` -> `claim_auditor` -> `experiment_designer` -> `evidence_arbiter` -> `evaluator`) and mandatory `human_reviewer` governance gate (`shared/simulation/engine.ts`).
+  - [x] Traceability-only post-hoc empirical outcome linkage without variance/lift calculation (`shared/simulation/traceability.ts`).
+  - [x] 763 Vitest + 15 Pytest = 778 automated tests passing cleanly.
 
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
