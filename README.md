@@ -407,7 +407,7 @@ VITE_SUPABASE_ANON_KEY=your-publishable-anon-key
 ```
 
 ### 4. Run the Full Verification
-Lint, typecheck (web + worker), 721 Vitest and 15 Pytest tests (736 total tests) across 52 suites, then a production build:
+Lint, typecheck (web + worker), 763 Vitest and 15 Pytest tests (778 total tests) across 58 suites, then a production build:
 ```bash
 npm run verify
 ```
@@ -426,24 +426,58 @@ Open `http://localhost:5173` to launch the Vanta cinematic interface.
 
 ---
 
-## 🗺 Implementation Roadmap
+## 🗺 Implementation Roadmap & Milestone Architecture
 
-- [x] **Ticket 0.1: Durable Project Memory & Scaffold** (Docs, architecture contracts, risk register)
+### 📐 How the Numbering Math Works
+Vanta’s architectural roadmap uses a structured **`[Phase].[Ticket]`** coordinate system:
+- **Phase Index (First Digit):** Corresponds to the major architectural capability pillar (e.g., `Phase 5` = Multi-Agent Council & Model Gateway; `Phase 6` = Counterfactual Simulation Lab & Workspace Integration).
+- **Ticket Index (Second Digit):** Corresponds to the sequential delivery slice within that phase (e.g., `Ticket 5.1` = First Evidence-Gated Model Task, `Ticket 5.2` = 11-Role Specialist Council Rollout).
+- **Advancing from `Ticket 5.2` to `Ticket 6.1`:** Completing `Ticket 5.2` marks the completion of the Phase 5 backend foundation. The natural next step is `Ticket 6.1`—the opening milestone of Phase 6 (Counterfactual Simulation Engine).
+
+---
+
+### 📦 Complete Phase & Milestone Ledger
+
+#### **Phase 0: Repository Audit & Database Infrastructure**
+- [x] **Ticket 0.1: Durable Project Memory & Scaffold** (Architecture contracts, risk register, base scaffold)
+- [x] **Phase 0 Live: Supabase Enterprise Ledger** (Migrations 001–020 live on Supabase with 100% RLS coverage)
+
+#### **Phase 1: Public Interface & Creative Ingestion**
 - [x] **Ticket 1.1: Cinematic Public Interface** (Marketing landing page, brand narrative, feature stages)
+- [x] **Ticket 1.2: Creative Ingestion & Pipeline** (Video-byte rejection, structured metadata parsing)
+
+#### **Phase 2: Tenant Fortress & Brand Brain**
 - [x] **Ticket 2.1: Multi-Tenant Auth & Workspaces** (Supabase Auth, RLS isolation, automated signup trigger)
-- [x] **Ticket 2.2: Brand Brain & Brand Codex** (Positioning, approved/prohibited claims, immutable snapshots)
-- [x] **Ticket 3.1: Evidence Layer & Source Registry** (Provenanced sources, 5-class evidence, metric dictionary)
-- [x] **Ticket 3.2: Creative Intake & Grounded Twins** (Text/file intake, video-byte rejection, grounded manifests)
-- [x] **Ticket 4.1: Creative Twin Structured Expansion & Versioning** (Scene decomposition, WPM, regex claims, immutable version snapshots, hardened correction RPCs)
+- [x] **Ticket 2.2: Brand Brain & Immutable Brand Codex** (Positioning, approved/prohibited claims, immutable snapshots)
+
+#### **Phase 3: Evidence Layer & Creative Twin**
+- [x] **Ticket 3.1: Evidence Layer & Source Registry** (Provenanced sources, canonical 5-class evidence taxonomy, metric dictionary)
+- [x] **Ticket 3.2: Creative Intake & Grounded Twins** (Text/file intake, grounded manifests, artifact readers)
+
+#### **Phase 4: Decision Room & Creative Diagnostics**
+- [x] **Ticket 4.1: Creative Twin Scene Decomposition & Versioning** (Scene decomposition, WPM, regex claims, immutable version snapshots, atomic correction RPCs)
 - [x] **Ticket 4.2: Creative Decision Matrix & Timeline Doctor** (Pure read-time derivation, multi-variant comparison, neutral policy rules, actionable edit briefs)
-- [x] **Ticket 5.0 - Secure Model Gateway foundation** (Groq Model Gateway v9 live with structured schema validation and cryptographic verification)
-- [x] **Phase 0 - Repository audit** (Migrations 001–020 live on Supabase project with 100% RLS coverage)
-- [x] **Ticket 5.1 - First evidence-gated model task & proposal queue** (Quota-gated conversation interpretations enqueued, validated, and proposal-registered)
-- [x] **Ticket 7.1: Trend & Publishing Intelligence** (RSS feed refresh connector jobs and timezone-aware volume aggregation buckets)
-- [x] **Ticket 8.1: Outcome Calibration Loop** (Import batches with atomic validation, same-workspace attribution, and idempotency key checks)
-- [x] **Ticket 5.2: Specialist Council Rollout** (11 agent personas with typed fallback matrices)
-- [x] **Ticket 6.1: Counterfactual Simulation Lab** (Controlled variable mutation & hypothesis testing)
-- [x] **Ticket QA-1: Real-JWT Two-User E2E Isolation Suite** (Playwright multi-tenant security verification)
+
+#### **Phase 5: Multi-Agent Council & Model Gateway**
+- [x] **Ticket 5.0: Secure Groq Model Gateway** (Edge Function gateway v9 with cryptographic payload verification and structured schema validation)
+- [x] **Ticket 5.1: First Evidence-Gated Model Task** (Quota-gated conversation interpretations enqueued, validated, and proposal-registered)
+- [x] **Ticket 5.2: Specialist Council Rollout** (11 typed specialist role contracts, capability-based least privilege, DAG minimal subgraph planner, deterministic fallback matrix)
+
+#### **Phase 6: Counterfactual Simulation Lab & Cinematic UI Polish**
+- [x] **Ticket 6.1: Counterfactual Simulation Lab Engine** (7 bounded mutations, 6-role analysis subgraph, mandatory human review gate, traceability-only linkage)
+- [ ] **Ticket 6.2: Workspace & Council UI Integration** (Connecting Specialist Council & Simulation Lab to the user interface with restrained ReactBits motion)
+
+#### **Phase 7: Trend & Publishing Intelligence**
+- [x] **Ticket 7.1: Trend & Publishing Intelligence Foundation** (RSS feed refresh connector jobs, timezone-aware volume aggregation buckets)
+- [ ] **Ticket 7.2: Publishing Schedule Optimizer** (Variant release schedule optimizer based on verified historical observation windows)
+
+#### **Phase 8: Outcome Calibration & Closed-Loop Learning**
+- [x] **Ticket 8.1: Outcome Calibration Loop** (Import batches with atomic validation, same-workspace attribution, idempotency key checks)
+- [ ] **Ticket 8.2: Official Platform OAuth Connector Ingestion** (Official Meta/Instagram Graph API, YouTube Analytics, and TikTok Business OAuth sync)
+
+#### **Phase QA: Isolation & Security Verifications**
+- [x] **Ticket QA-1: Real-JWT Two-User E2E Isolation Suite** (40/40 Playwright multi-tenant security verification tests passing live against Supabase)
+- [ ] **Ticket QA-2: End-to-End Browser Workflow Verification** (Authenticated full-lifecycle browser testing of intake, council, and simulation workflows)
 
 ---
 
