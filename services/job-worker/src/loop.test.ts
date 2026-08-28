@@ -95,4 +95,16 @@ describe("runLoop", () => {
     await runLoop(d, { pollIntervalMs: 1, shouldStop: () => false, maxIterations: 2 });
     expect(d.log).toHaveBeenCalledWith("error", "job finalization failed", expect.anything());
   });
+
+  it("handles conversation jobs cleanly through the loop", async () => {
+    const convJob = job({ id: "conv-1", job_type: "conversation_import_validate" });
+    const d = deps({
+      jobTypes: ["conversation_import_validate"],
+      claim: vi.fn().mockResolvedValueOnce(convJob).mockResolvedValue(null),
+      handlers: { conversation_import_validate: async () => ({ ok: true, result: { valid_count: 5 } }) },
+    });
+    await runLoop(d, { pollIntervalMs: 1, shouldStop: () => false, maxIterations: 2 });
+    expect(d.complete).toHaveBeenCalledWith(expect.objectContaining({ id: "conv-1" }), { valid_count: 5 });
+  });
 });
+

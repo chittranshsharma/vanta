@@ -10,7 +10,7 @@
  *  - Deterministic idempotency keys are calculated per row.
  */
 
-import { parseCsv, parseObservedAt } from "../experiments/outcomeImport";
+import { parseCsv, parseObservedAt } from "../experiments/outcomeImport.js";
 
 export const MAX_CONVERSATION_IMPORT_BYTES = 5 * 1024 * 1024; // 5 MB
 export const MAX_CONVERSATION_IMPORT_ROWS = 5000;

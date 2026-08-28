@@ -19,6 +19,11 @@ import { campaignCsvNormalizeHandler } from "./handlers/campaignCsvNormalize.js"
 import { makeMediaProbeHandler } from "./handlers/mediaProbe.js";
 import { makeEmbeddingRefreshHandler } from "./handlers/embeddingRefresh.js";
 import { makeSourceRefreshHandler } from "./handlers/sourceRefresh.js";
+import { makeConversationImportValidateHandler } from "./handlers/conversationImportValidate.js";
+import { makeConversationDeduplicateHandler } from "./handlers/conversationDeduplicate.js";
+import { makeConversationInterpretationProposalHandler } from "./handlers/conversationInterpretationProposal.js";
+import { makeConversationAttributionHandler } from "./handlers/conversationAttribution.js";
+import { makeConversationAggregateHandler } from "./handlers/conversationAggregate.js";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -36,6 +41,11 @@ const handlers: Partial<Record<JobType, JobHandler>> = {
   media_probe: makeMediaProbeHandler(supabase),
   embedding_refresh: makeEmbeddingRefreshHandler(supabase),
   source_refresh: makeSourceRefreshHandler(supabase),
+  conversation_import_validate: makeConversationImportValidateHandler(supabase),
+  conversation_deduplicate: makeConversationDeduplicateHandler(supabase),
+  conversation_interpretation_proposal: makeConversationInterpretationProposalHandler(supabase),
+  conversation_attribution: makeConversationAttributionHandler(supabase),
+  conversation_aggregate: makeConversationAggregateHandler(supabase),
 };
 
 const deps: WorkerDeps = {

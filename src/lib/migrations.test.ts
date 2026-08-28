@@ -97,6 +97,7 @@ describe("migration files", () => {
       "20260822000017_post_observations.sql",
       "20260822000018_backend_primitives.sql",
       "20260822000019_conversation_intelligence.sql",
+      "20260822000020_expand_job_types.sql",
     ]);
   });
 
@@ -519,3 +520,18 @@ describe("composite tenant foreign keys", () => {
     );
   });
 });
+
+describe("expand job types (migration 020)", () => {
+  const sql = sqlByFile["20260822000020_expand_job_types.sql"];
+
+  it("replaces jobs_job_type_check with all 10 job types", () => {
+    expect(sql).toMatch(/ALTER\s+TABLE\s+public\.jobs\s+DROP\s+CONSTRAINT\s+IF\s+EXISTS\s+jobs_job_type_check/i);
+    expect(sql).toMatch(/ALTER\s+TABLE\s+public\.jobs\s+ADD\s+CONSTRAINT\s+jobs_job_type_check\s+CHECK/i);
+    expect(sql).toMatch(/conversation_import_validate/i);
+    expect(sql).toMatch(/conversation_deduplicate/i);
+    expect(sql).toMatch(/conversation_interpretation_proposal/i);
+    expect(sql).toMatch(/conversation_attribution/i);
+    expect(sql).toMatch(/conversation_aggregate/i);
+  });
+});
+

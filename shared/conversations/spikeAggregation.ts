@@ -8,7 +8,7 @@
  *  - Never claims virality, algorithmic boost, or predicted reach.
  */
 
-import { isValidTimeZone } from "../publishing/history";
+import { isValidTimeZone } from "../publishing/history.js";
 
 export interface StoredObservationTimestamp {
   observed_at: string;

@@ -7,7 +7,7 @@
  * both places, and an ambiguous date is flagged rather than resolved.
  */
 
-import { parseCsv, parseMetricValue, parseObservedAt, type SourceCitability } from "../experiments/outcomeImport";
+import { parseCsv, parseMetricValue, parseObservedAt, type SourceCitability } from "../experiments/outcomeImport.js";
 
 export const MAX_HISTORY_ROWS = 10_000;
 
@@ -45,14 +45,14 @@ export function buildHistoryImportPlan(csvText: string, map: HistoryColumnMap, m
   if (parsed.headers.length > 0 && missing.length > 0) {
     return {
       accepted: [],
-      rejected: parsed.rows.map((_, i) => ({ line: i + 2, reason: `Mapping refers to headers not in the file: ${missing.join(", ")}.` })),
+      rejected: parsed.rows.map((_: Record<string, string>, i: number) => ({ line: i + 2, reason: `Mapping refers to headers not in the file: ${missing.join(", ")}.` })),
       duplicatesInFile: 0,
       ambiguousDates: 0,
       truncated: parsed.truncated
     };
   }
 
-  parsed.rows.forEach((raw, idx) => {
+  parsed.rows.forEach((raw: Record<string, string>, idx: number) => {
     const line = idx + 2;
     const { iso, ambiguous } = parseObservedAt(raw[map.publishedAt] ?? "");
     if (!iso) {

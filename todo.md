@@ -58,6 +58,15 @@
   - [x] 5 Conversation job types added to `shared/jobs/policy.ts`.
   - [x] Pure spike aggregation module (`shared/conversations/spikeAggregation.ts`) reporting exact counts in workspace timezone and flagging unknown baselines without fake virality.
 
+- [x] Phase 4: Jobs, Aggregation, and Spike Observation Worker Integration (Migration 020 live as `20260828184335`).
+  - [x] Expanded `jobs_job_type_check` in PostgreSQL to permit all 10 job types.
+  - [x] Implemented `conversation_import_validate` worker handler with batch integrity validation, tenant isolation, and status updates.
+  - [x] Implemented `conversation_deduplicate` worker handler with idempotency scanning and duplicate detection without silent row deletion.
+  - [x] Implemented `conversation_interpretation_proposal` worker handler with mandatory quota consumption (`consume_quota`), inference evidence classification, unreviewed status, and uncertainty notes.
+  - [x] Implemented `conversation_attribution` worker handler with explicit foreign ID validation (twins, variants, claims, experiments, CTAs) and strict workspace boundary enforcement.
+  - [x] Implemented `conversation_aggregate` worker handler with workspace timezone formatting and baseline availability reporting.
+  - [x] Registered all 5 handlers in `services/job-worker/src/worker.ts` and validated loop dispatch in `services/job-worker/src/loop.test.ts`.
+
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work

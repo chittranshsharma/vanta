@@ -320,19 +320,19 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - D-7: Storage bucket `workspace-assets` confirmed private (`public: false`) with 4 tenant-scoped policies active.
    - D-8: Immutability triggers verified active on `creative_twin_versions`, `model_task_runs`, `experiment_outcomes`, `post_observations`.
    - D-9: Supabase Security and Performance Advisors audited, analyzed, and classified without blind code execution.
-2. Full automated test baseline passing: 688 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (703 total tests).
+2. Full automated test baseline passing: 699 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (714 total tests).
 3. Phase 2 (Missing Backend Primitives) complete & verified live (Migration 018).
-4. Phase 3 (Conversation Intelligence Foundation) complete & verified live:
-   - Migration `20260822000019_conversation_intelligence.sql` applied live to Supabase project `ujxrapbhiedkwleccvqw` (version `20260828183603`).
-   - 36 public tables have Row Level Security enabled.
-   - `conversation_observations` table live with composite tenant FKs, pseudonymized author handling, idempotency key uniqueness, and core-mutation immutability trigger.
-   - `conversation_interpretations` inference table live with mandatory uncertainty explanation and human review fields.
-   - `conversation_attributions` explicit Twin/Variant/Claim/CTA linkage table live.
-   - `conversation_review_events` append-only audit ledger live (update/delete blocked).
-   - Hardened `SECURITY DEFINER` review RPCs (`review_conversation_observation_atomic`, `review_conversation_interpretation_atomic`) live with explicit search_paths and authenticated execution.
-   - Pure CSV import validator (`shared/conversations/csvImport.ts`) and client module (`src/lib/conversationImport.ts`) live.
-   - Source-grounded reply draft validator (`shared/conversations/replyDrafts.ts`) live.
-   - 5 Conversation job types added to `shared/jobs/policy.ts`.
-   - Deterministic spike aggregation module (`shared/conversations/spikeAggregation.ts`) live.
-5. Next: Phase 4 — Jobs, Aggregation, and Spike Observation Worker integration (or Phase 5 connectors).
+4. Phase 3 (Conversation Intelligence Foundation) complete & verified live (Migration 019).
+5. Phase 4 (Jobs, Aggregation, and Spike Observation Worker Integration) complete & verified live:
+   - Migration `20260822000020_expand_job_types.sql` applied live to Supabase project `ujxrapbhiedkwleccvqw` (version `20260828184335`).
+   - `jobs_job_type_check` in PostgreSQL expanded to support all 10 job types.
+   - Handlers implemented in `services/job-worker/src/handlers/`:
+     - `conversationImportValidate` (batch validation & status update)
+     - `conversationDeduplicate` (idempotency key scanning without silent deletion)
+     - `conversationInterpretationProposal` (inference proposals with mandatory quota consumption and uncertainty notes)
+     - `conversationAttribution` (explicit foreign link validation for twins, claims, CTAs, experiments)
+     - `conversationAggregate` (deterministic volume bucketing in workspace timezone)
+   - Handlers registered in `services/job-worker/src/worker.ts` and tested via `services/job-worker/src/loop.test.ts`.
+   - Live worker job lifecycle verified on Supabase (`claim_next_job` -> `running` -> `complete_job` -> `succeeded`).
+6. Next: Phase 5 — Official Connectors Later (or controlled Beta / private testing).
 
