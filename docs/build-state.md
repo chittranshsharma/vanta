@@ -320,19 +320,16 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - D-7: Storage bucket `workspace-assets` confirmed private (`public: false`) with 4 tenant-scoped policies active.
    - D-8: Immutability triggers verified active on `creative_twin_versions`, `model_task_runs`, `experiment_outcomes`, `post_observations`.
    - D-9: Supabase Security and Performance Advisors audited, analyzed, and classified without blind code execution.
-2. Full automated test baseline passing: 699 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (714 total tests).
+2. Full automated test baseline passing: 705 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (720 total tests).
 3. Phase 2 (Missing Backend Primitives) complete & verified live (Migration 018).
 4. Phase 3 (Conversation Intelligence Foundation) complete & verified live (Migration 019).
-5. Phase 4 (Jobs, Aggregation, and Spike Observation Worker Integration) complete & verified live:
-   - Migration `20260822000020_expand_job_types.sql` applied live to Supabase project `ujxrapbhiedkwleccvqw` (version `20260828184335`).
-   - `jobs_job_type_check` in PostgreSQL expanded to support all 10 job types.
-   - Handlers implemented in `services/job-worker/src/handlers/`:
-     - `conversationImportValidate` (batch validation & status update)
-     - `conversationDeduplicate` (idempotency key scanning without silent deletion)
-     - `conversationInterpretationProposal` (inference proposals with mandatory quota consumption and uncertainty notes)
-     - `conversationAttribution` (explicit foreign link validation for twins, claims, CTAs, experiments)
-     - `conversationAggregate` (deterministic volume bucketing in workspace timezone)
-   - Handlers registered in `services/job-worker/src/worker.ts` and tested via `services/job-worker/src/loop.test.ts`.
-   - Live worker job lifecycle verified on Supabase (`claim_next_job` -> `running` -> `complete_job` -> `succeeded`).
-6. Next: Phase 5 — Official Connectors Later (or controlled Beta / private testing).
+5. Phase 4 (Jobs, Aggregation, and Spike Observation Worker Integration) complete & verified live (Migration 020).
+6. Phase 5A (Controlled Beta Readiness, Real Worker Runtime Verification, and Connector Readiness Architecture) complete:
+   - Authored worker runtime architecture note (`docs/worker-runtime-boundary.md`).
+   - Authored worker acceptance test suite (`services/job-worker/src/workerAcceptance.test.ts`).
+   - Verified live worker smoke test on Supabase: claiming, transient retry backoff, permanent error dead-lettering, crashed-worker stale lock recovery, and cleanup.
+   - Authored connector-neutral capability matrix and event mapping review (`docs/connector-neutral-contract-review.md`).
+   - Authored official Meta/Instagram platform integration readiness checklist (`docs/meta-instagram-integration-readiness.md`).
+   - Authored private beta release checklist and operator gate (`docs/private-beta-release-checklist.md`).
+7. Next: Controlled Beta Exercise / Staged Private Testing or Phase 6 UI Polish.
 

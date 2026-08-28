@@ -67,6 +67,14 @@
   - [x] Implemented `conversation_aggregate` worker handler with workspace timezone formatting and baseline availability reporting.
   - [x] Registered all 5 handlers in `services/job-worker/src/worker.ts` and validated loop dispatch in `services/job-worker/src/loop.test.ts`.
 
+- [x] Phase 5A: Controlled Beta Readiness, Real Worker Runtime Verification, and Connector Readiness Architecture.
+  - [x] Authored worker runtime architecture note (`docs/worker-runtime-boundary.md`) detailing Node/Python dual-worker boundary, system dependencies (`ffprobe`), and zero-cost local vs. continuous hosting distinction.
+  - [x] Authored comprehensive worker acceptance suite (`services/job-worker/src/workerAcceptance.test.ts`) covering handler registry, unknown job rejection, retry exponential backoff, dead-letter state, stale lock release, sanitized logging, and graceful shutdown.
+  - [x] Executed live worker smoke test on Supabase: validated claiming, transient retry backoff, permanent error dead-lettering, crashed-worker stale lock recovery, and cleanup.
+  - [x] Authored connector-neutral capability matrix and event mapping review (`docs/connector-neutral-contract-review.md`).
+  - [x] Authored official Meta/Instagram platform integration readiness checklist (`docs/meta-instagram-integration-readiness.md`).
+  - [x] Authored private beta release checklist and operator gate (`docs/private-beta-release-checklist.md`).
+
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work
