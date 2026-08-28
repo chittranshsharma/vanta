@@ -12,7 +12,7 @@
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%7C%20RLS-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(721%2F721)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(745%2F745)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![CI](https://img.shields.io/badge/CI-lint%20%7C%20typecheck%20%7C%20test%20%7C%20build-blue?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![Build](https://img.shields.io/badge/Production%20Build-Clean-emerald?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](#)
@@ -441,7 +441,7 @@ Open `http://localhost:5173` to launch the Vanta cinematic interface.
 - [x] **Ticket 5.1 - First evidence-gated model task & proposal queue** (Quota-gated conversation interpretations enqueued, validated, and proposal-registered)
 - [x] **Ticket 7.1: Trend & Publishing Intelligence** (RSS feed refresh connector jobs and timezone-aware volume aggregation buckets)
 - [x] **Ticket 8.1: Outcome Calibration Loop** (Import batches with atomic validation, same-workspace attribution, and idempotency key checks)
-- [ ] **Ticket 5.2: Specialist Council Rollout** (11 agent personas with typed fallback matrices)
+- [x] **Ticket 5.2: Specialist Council Rollout** (11 agent personas with typed fallback matrices)
 - [ ] **Ticket 6.1: Counterfactual Simulation Lab** (Controlled variable mutation & hypothesis testing)
 - [x] **Ticket QA-1: Real-JWT Two-User E2E Isolation Suite** (Playwright multi-tenant security verification)
 

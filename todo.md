@@ -82,6 +82,14 @@
   - [x] Verified log and audit redaction with zero secret or customer PII leakage.
   - [x] All 736 automated tests passing cleanly (721 Vitest + 15 Pytest).
 
+- [x] Ticket 5.2: Specialist Council Rollout (Backend & Contracts):
+  - [x] 11 typed specialist role contracts with capability-based least privilege, prohibited actions, and audit keys (`shared/agents/graph.ts`).
+  - [x] Master Council DAG and Minimal Subgraph Planner (`planMinimalSubgraph`) with cycle detection, budget ceilings, and mandatory downstream arbiter/reviewer boundaries.
+  - [x] Deterministic Fallback Matrix (`shared/agents/fallback.ts`) for all 11 roles, preserving truthful `unknown`/`blocked` states without fabricating metrics, baseline virality, or ungrounded approvals.
+  - [x] Pre-flight Council budget and quota gating (`shared/agents/council.ts`), cross-tenant ID verification, and sanitized metadata logging.
+  - [x] Strict separation of epistemic `evidence_class` from administrative `review_decision` (human approval does not promote AI inference to empirical fact).
+  - [x] 745 Vitest + 15 Pytest = 760 automated tests passing cleanly.
+
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work

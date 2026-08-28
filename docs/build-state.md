@@ -320,7 +320,7 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - D-7: Storage bucket `workspace-assets` confirmed private (`public: false`) with 4 tenant-scoped policies active.
    - D-8: Immutability triggers verified active on `creative_twin_versions`, `model_task_runs`, `experiment_outcomes`, `post_observations`.
    - D-9: Supabase Security and Performance Advisors audited, analyzed, and classified without blind code execution.
-2. Full automated test baseline passing: 721 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (736 total tests).
+2. Full automated test baseline passing: 745 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (760 total tests).
 3. Phase 2 (Missing Backend Primitives) complete & verified live (Migration 018).
 4. Phase 3 (Conversation Intelligence Foundation) complete & verified live (Migration 019).
 5. Phase 4 (Jobs, Aggregation, and Spike Observation Worker Integration) complete & verified live (Migration 020).
@@ -329,9 +329,15 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - 20-step end-to-end integration workflow verified in `src/lib/controlledBetaWorkflow.test.ts`.
    - Live Supabase lifecycle tested: atomic scene corrections, immutability triggers on observations, append-only review events, and cascade cleanup.
    - Tenant isolation and role boundaries verified.
-   - All 736 automated tests green.
 8. Ticket QA-1 (Real-JWT Two-User E2E Isolation) complete & verified live:
    - 40/40 Playwright isolation checks passing live against Supabase with real user JWTs.
    - Proved strict multi-tenant boundaries on 35 tenant tables, updates/inserts, worker-only RPCs, token column privacy, and immutable twin versions.
-9. Next: Specialist Council Rollout or Phase 6 UI Polish.
+9. Ticket 5.2 (Specialist Council Rollout — Backend & Contracts) complete:
+   - 11 typed specialist role contracts (`shared/agents/graph.ts`) with capability-based least privilege, prohibited actions, and audit keys.
+   - Master Council DAG and Minimal Subgraph Planner (`planMinimalSubgraph`) with cycle detection, budget ceilings, and mandatory downstream arbiter/reviewer boundaries.
+   - Deterministic Fallback Matrix (`shared/agents/fallback.ts`) for all 11 roles, preserving truthful `unknown`/`blocked` states without fabricating metrics or ungrounded approvals.
+   - Pre-flight Council budget and quota gating (`shared/agents/council.ts`), cross-tenant ID verification, and sanitized metadata logging.
+   - Strict separation of epistemic `evidence_class` from administrative `review_decision` (human approval does not promote AI inference to empirical fact).
+   - 760 automated tests passing (745 Vitest + 15 Pytest).
+10. Next: Ticket 6.1 (Counterfactual Simulation Lab) or Phase 6 UI Polish.
 
