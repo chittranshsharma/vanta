@@ -443,7 +443,7 @@ Open `http://localhost:5173` to launch the Vanta cinematic interface.
 - [x] **Ticket 8.1: Outcome Calibration Loop** (Import batches with atomic validation, same-workspace attribution, and idempotency key checks)
 - [ ] **Ticket 5.2: Specialist Council Rollout** (11 agent personas with typed fallback matrices)
 - [ ] **Ticket 6.1: Counterfactual Simulation Lab** (Controlled variable mutation & hypothesis testing)
-- [ ] **Ticket QA-1: Real-JWT Two-User E2E Isolation Suite** (Playwright multi-tenant security verification)
+- [x] **Ticket QA-1: Real-JWT Two-User E2E Isolation Suite** (Playwright multi-tenant security verification)
 
 ---
 

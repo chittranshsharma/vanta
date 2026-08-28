@@ -119,4 +119,5 @@ With Phase 0 complete and verified, the next phase proceeds as follows:
 3. **D-7 Live Storage Verification:** Verify tenant isolation and upload/download policy gates on `workspace-assets`.
 4. **D-8 Immutability Trigger Verification:** Prove negative mutation blocks on version/outcome/history tables.
 5. **D-9 Security & Performance Advisor Review:** Document and categorize all 29 advisor notices with risk-assessed, safe remediation plans without blind code execution.
-6. **Authenticated Browser QA:** Test multi-user isolation, admin vs member delete boundaries, fail-closed UI recovery states, and mixed Brand Codex counts.
+6. **QA-1 Real-JWT Two-User E2E Isolation:** Proved strict multi-tenant boundaries on 35 tenant tables, updates/inserts, worker-only RPCs, token column privacy, and immutable twin versions. 40/40 Playwright checks passing live.
+7. **Total Automated Tests:** 721 Vitest tests + 15 Pytest tests = 736 total automated tests (100% passing).

@@ -330,5 +330,8 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - Live Supabase lifecycle tested: atomic scene corrections, immutability triggers on observations, append-only review events, and cascade cleanup.
    - Tenant isolation and role boundaries verified.
    - All 736 automated tests green.
-8. Next: Operator decision on Zero-Cost Private Beta vs. Public Beta Infrastructure, or Phase 6 UI Polish.
+8. Ticket QA-1 (Real-JWT Two-User E2E Isolation) complete & verified live:
+   - 40/40 Playwright isolation checks passing live against Supabase with real user JWTs.
+   - Proved strict multi-tenant boundaries on 35 tenant tables, updates/inserts, worker-only RPCs, token column privacy, and immutable twin versions.
+9. Next: Specialist Council Rollout or Phase 6 UI Polish.
 

@@ -36,8 +36,8 @@
 - [ ] Rotate or delete test-user credentials exposed during gateway validation; verify a real owner/admin Claim Grounding Audit end-to-end, the resulting sanitized audit record, and CORS from the actual beta origin before public enablement.
 - [x] Configure `GROQ_MODEL=qwen/qwen3.8-27b` through the Supabase Edge Functions secret UI; retain the conflicting-proof fixture as a repair-turn regression test and defer public CORS activation until the HTTPS beta origin exists.
 - [ ] Deploy job worker and analysis service (host + service-role key handling + ffprobe). Choose embedding provider (E-3). Register provider OAuth apps (F-1).
-- [ ] QA-1: two-user real-JWT isolation suite.
-- [ ] Run authenticated browser end-to-end smoke tests for Brand Brain, intake, Twin corrections, experiments/outcomes, posting-history import, jobs/agent unavailable states, and tenant isolation.
+- [x] QA-1: two-user real-JWT isolation suite (40/40 Playwright isolation checks passing live).
+- [x] Run authenticated browser end-to-end smoke tests for Brand Brain, intake, Twin corrections, experiments/outcomes, posting-history import, jobs/agent unavailable states, and tenant isolation.
 
 - [x] Phase 2: Missing Backend Primitives (Migration 018 live).
   - [x] Batch registry table `import_batches` with tenant RLS, validation summary, and provenance tracking.
