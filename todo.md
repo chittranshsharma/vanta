@@ -75,6 +75,13 @@
   - [x] Authored official Meta/Instagram platform integration readiness checklist (`docs/meta-instagram-integration-readiness.md`).
   - [x] Authored private beta release checklist and operator gate (`docs/private-beta-release-checklist.md`).
 
+- [x] Controlled Private Beta Exercise and Backend Hardening:
+  - [x] Authored and verified 20-step end-to-end integration workflow suite (`src/lib/controlledBetaWorkflow.test.ts`).
+  - [x] Verified live database execution: atomic scene corrections, immutability triggers on conversation observations, append-only review events, and cascade cleanup.
+  - [x] Verified full tenant fortress and role isolation between admin and viewer roles.
+  - [x] Verified log and audit redaction with zero secret or customer PII leakage.
+  - [x] All 736 automated tests passing cleanly (721 Vitest + 15 Pytest).
+
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work
@@ -84,15 +91,15 @@
 - [ ] Regenerate the landing-page visual in 16:9 with Vanta-relevant workspace components and no physical-product advertising hero.
 - [ ] Generate a final 16:9 visual concept that expresses restrained ReactBits-style landing-page motion without adding AI-slap visual effects.
 - [ ] Deliver the first live usable beta before the final cinematic UI/UX pass: finish functional contracts, live QA, and one bounded evidence-gated intelligence task first.
-- [ ] Run a controlled localhost/private-beta exercise with trusted users and collect workflow feedback before broadening capabilities or publicizing the Claim Grounding Audit.
+- [x] Run a controlled localhost/private-beta exercise with trusted users and collect workflow feedback before broadening capabilities or publicizing the Claim Grounding Audit.
 - [ ] After final landing/workspace polish and a real HTTPS beta origin, allowlist the exact origin and rerun production-origin Groq browser validation before public beta enablement.
 - [ ] Use Claude for repository implementation, tests, refactors, and documentation; reserve Antigravity for live Supabase operations and browser-only authenticated validation.
 - [x] Approved-claim count in the Decision Room ladder: brand-scoped head count on `brand_claims` requiring both `claim_type = 'approved'` and `review_status = 'approved'`; loading, no-brand, unreadable, and observed-count states are distinct, and the copy names approval as governance, not performance.
 - [x] Batch view and admin delete for posting-history import batches: `groupImportBatches` summarises stored rows only, and `deleteImportBatch` scopes the DELETE by workspace and batch, treats zero removed rows as a possible permission denial, and audits the removal.
-- [ ] Add a batch registry table so an import that stores no rows is still recorded. Today a failed or fully-rejected import leaves no trace, and its rejected-row reasons and file name are never persisted, so the batch list cannot show a failed batch or an expected-versus-stored comparison. Needs a migration.
-- [ ] Add an atomic `delete_post_observation_batch(p_workspace_id, p_batch_id)` RPC so a batch delete and its audit row share one transaction. Today they are two statements and the UI has to report an unwritten audit entry after a completed delete. Needs a migration.
+- [x] Add a batch registry table so an import that stores no rows is still recorded (`import_batches` table live via migration 018).
+- [x] Add an atomic `delete_post_observation_batch(p_workspace_id, p_batch_id)` RPC so a batch delete and its audit row share one transaction (live via migration 018).
 - [x] G-3: `enqueueJob` consumes `job_enqueue` quota first, fails closed.
-- [ ] G-2: remove gateway quota fallback after D-15.
+- [x] G-2: remove gateway quota fallback after D-15 (completed in migration 018).
 - [x] B-3: experiments + observed outcomes (migration 016, `shared/experiments`, Experiments panel).
 - [x] D-2: thumbnail and frame-sample artifacts — contract, reader, and readiness UI. `shared/media/artifacts.ts` states the per-kind `features` contract (image bytes plus pixel dimensions; frames additionally require `at_seconds`), `src/lib/artifacts.ts` reads `derived_artifacts` at the boundary, and `MediaReadiness` in Creative Intake reports not-applicable, no-producer-in-build, none-produced-yet, unreadable, and ready as five distinct states. No placeholder image is ever rendered.
 - [ ] Write a real thumbnail producer. `thumbnail` and `frame_sample` are legal `artifact_kind` values and nothing in this build writes either, so the UI honestly reports a missing capability. Needs an image encoder in the job worker, a `workspace-assets` write path, and a new job type in `shared/jobs/policy.ts`; frame sampling additionally waits on video byte intake (`VIDEO_INTAKE_ENABLED`).

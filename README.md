@@ -12,7 +12,7 @@
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%7C%20RLS-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(705%2F705)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(721%2F721)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![CI](https://img.shields.io/badge/CI-lint%20%7C%20typecheck%20%7C%20test%20%7C%20build-blue?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![Build](https://img.shields.io/badge/Production%20Build-Clean-emerald?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](#)
@@ -407,7 +407,7 @@ VITE_SUPABASE_ANON_KEY=your-publishable-anon-key
 ```
 
 ### 4. Run the Full Verification
-Lint, typecheck (web + worker), 705 Vitest and 15 Pytest tests (720 total tests) across 52 suites, then a production build:
+Lint, typecheck (web + worker), 721 Vitest and 15 Pytest tests (736 total tests) across 52 suites, then a production build:
 ```bash
 npm run verify
 ```

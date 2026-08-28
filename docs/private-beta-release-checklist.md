@@ -36,7 +36,32 @@
 
 ---
 
-## 4. Operational Runbook & Scoped Test Cleanup
+## 4. Controlled 20-Step E2E Workflow Results
+
+1. **Brand Brain & Codex:** Verified approved/unapproved claim validation and proof citability checking.
+2. **Deterministic Creative Twin:** Script parsed deterministically into scenes with exact reading burden metrics.
+3. **Hardened Scene Correction:** Atomic correction snapshotting immutable versions and audit events.
+4. **Governance vs Performance:** Decision Room approved claim counts accurately represent policy state.
+5. **Post-Variant Attribution:** Explicit foreign ID validation; cross-tenant references rejected.
+6. **Synthetic Import Batching:** Deterministic accepted/rejected counts with author pseudonymization (`anon_<sha256>`).
+7. **Worker Import Validation:** Batch validation handler updates batch status (`completed`/`partial`/`failed`).
+8. **Deduplication:** Duplicate detection without silent observation row deletion or mutation.
+9. **Attribution Linking:** Foreign reference verification against same workspace.
+10. **Interpretation Proposals:** Quota-gated (`consume_quota`), `evidence_class = 'inference'`, `review_state = 'unreviewed'`, mandatory uncertainty note.
+11. **Human Review RPC:** Atomic review state transition with append-only audit event logging.
+12. **Draft Reply Validator:** Fails closed if Brand Codex claims are missing or expired.
+13. **Spike Aggregation:** Exact observed counts in workspace timezone with truthful `baseline_status = 'unknown'`.
+14. **Baseline Comparison:** Relative volume increase reported against stored rows without virality claims.
+15. **Error & Retry Policy:** Transient exponential backoff, permanent dead-lettering, and idempotency key uniqueness.
+16. **Fail-Closed Quotas:** Quota exhaustion immediately blocks execution without calling Groq.
+17. **Role Isolation:** Viewer role prevented from executing mutations or administrative reviews.
+18. **Tenant Fortress:** Cross-workspace reads/writes blocked at database and application layers.
+19. **Log Redaction:** Zero customer text, prompts, completions, tokens, or secrets in logged output.
+20. **Scoped Cleanup:** Verified full cascade cleanup of test data without leaving orphaned rows.
+
+---
+
+## 5. Operational Runbook & Scoped Test Cleanup
 
 ### Smoke Test Execution:
 ```bash
@@ -53,3 +78,4 @@ SUPABASE_URL="https://<project-ref>.supabase.co" SUPABASE_SERVICE_ROLE_KEY="<ser
 ### Scoped Test-Data Cleanup Policy:
 - Test workspaces and disposable batch rows must be cleaned up via tenant-isolated CASCADE deletes (`DELETE FROM public.workspaces WHERE id = '<test-id>'`).
 - Never run blanket truncate or non-isolated SQL queries in production environments.
+

@@ -320,16 +320,15 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - D-7: Storage bucket `workspace-assets` confirmed private (`public: false`) with 4 tenant-scoped policies active.
    - D-8: Immutability triggers verified active on `creative_twin_versions`, `model_task_runs`, `experiment_outcomes`, `post_observations`.
    - D-9: Supabase Security and Performance Advisors audited, analyzed, and classified without blind code execution.
-2. Full automated test baseline passing: 705 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (720 total tests).
+2. Full automated test baseline passing: 721 Vitest tests, 15 Python tests, lint clean, typechecks clean, production build clean (736 total tests).
 3. Phase 2 (Missing Backend Primitives) complete & verified live (Migration 018).
 4. Phase 3 (Conversation Intelligence Foundation) complete & verified live (Migration 019).
 5. Phase 4 (Jobs, Aggregation, and Spike Observation Worker Integration) complete & verified live (Migration 020).
-6. Phase 5A (Controlled Beta Readiness, Real Worker Runtime Verification, and Connector Readiness Architecture) complete:
-   - Authored worker runtime architecture note (`docs/worker-runtime-boundary.md`).
-   - Authored worker acceptance test suite (`services/job-worker/src/workerAcceptance.test.ts`).
-   - Verified live worker smoke test on Supabase: claiming, transient retry backoff, permanent error dead-lettering, crashed-worker stale lock recovery, and cleanup.
-   - Authored connector-neutral capability matrix and event mapping review (`docs/connector-neutral-contract-review.md`).
-   - Authored official Meta/Instagram platform integration readiness checklist (`docs/meta-instagram-integration-readiness.md`).
-   - Authored private beta release checklist and operator gate (`docs/private-beta-release-checklist.md`).
-7. Next: Controlled Beta Exercise / Staged Private Testing or Phase 6 UI Polish.
+6. Phase 5A (Controlled Beta Readiness, Real Worker Runtime Verification, and Connector Readiness Architecture) complete.
+7. Controlled Private Beta & Backend Hardening complete:
+   - 20-step end-to-end integration workflow verified in `src/lib/controlledBetaWorkflow.test.ts`.
+   - Live Supabase lifecycle tested: atomic scene corrections, immutability triggers on observations, append-only review events, and cascade cleanup.
+   - Tenant isolation and role boundaries verified.
+   - All 736 automated tests green.
+8. Next: Operator decision on Zero-Cost Private Beta vs. Public Beta Infrastructure, or Phase 6 UI Polish.
 
