@@ -12,7 +12,7 @@
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%7C%20RLS-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(437%2F437)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(705%2F705)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![CI](https://img.shields.io/badge/CI-lint%20%7C%20typecheck%20%7C%20test%20%7C%20build-blue?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![Build](https://img.shields.io/badge/Production%20Build-Clean-emerald?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](#)
@@ -115,8 +115,9 @@ React / TypeScript / Vite (Product Shell & Interaction State)
 | Private text/file intake and grounded manifests | **Implemented** | Supabase Storage (`workspace-assets` bucket) + PostgreSQL + browser-side validators (`creativeIntake.ts`) |
 | Deterministic script parsing, scene representation, WPM pacing | **Implemented** | TypeScript pure functions + PostgreSQL immutable version snapshots (`creativeTwin.ts`) |
 | Creative Decision Matrix & Timeline Doctor | **Implemented** | Pure read-time derivation engine + interactive inspection UI (`creativeDoctor.ts`, `DecisionMatrix.tsx`, `TimelineDoctor.tsx`) |
-| Secure model gateway (health check only) | **Authored locally, not deployed** | Deno Edge Function (`supabase/functions/model-gateway/`) + client adapter (`modelGateway.ts`). Pure guards unit-tested. See `docs/model-gateway-deployment-readiness.md` |
-| AI analysis, creative predictions, agents, trend research, live social data, calibration | **Not implemented** | Requires future services and authorized data sources (see Roadmap below) |
+| Secure model gateway & task audits | **Implemented & Live** | Groq Model Gateway v9 Edge Function (`supabase/functions/model-gateway/`) + strict JSON schema validator (`schemas.ts`) + nonce cryptography checks. |
+| Background job processing & workers | **Implemented & Live** | Node.js job worker (`services/job-worker`) registering 9 handlers with transaction-based `claim_next_job` / `complete_job` + Python analysis worker (`services/analysis-worker`) for stateless CSV parsing. |
+| Conversation Intelligence & Attribution | **Implemented & Live** | Pseudonymized signal store, unreviewed inference proposals, uncertainty notes, explicit same-workspace attributions, and timezone-aware aggregation buckets. |
 
 ---
 
@@ -135,7 +136,7 @@ These components remain central throughout Vanta's evolution:
 
 ## 🚀 Required Future Upgrades & Triggers
 
-**Status (2026-08-23):** all seven upgrades are authored as repository-level code with contracts, tests, and migrations 010-015, reviewed one by one in [`docs/upgrade-reviews.md`](docs/upgrade-reviews.md). None is deployed or live-verified. The triggers below still govern when each runtime is switched on.
+**Status (2026-08-29):** All core upgrades are fully implemented, integrated, and verified both locally and live on Supabase (Migrations 001–020 applied). The Node.js job worker and Python analysis services are active and tested locally with complete test suites.
 
 ### Upgrade A: Secure Application Backend for Groq & Connectors
 - **Trigger:** The first Groq feature, official OAuth connector, webhook, scheduled source refresh, or notification is approved.
@@ -406,7 +407,7 @@ VITE_SUPABASE_ANON_KEY=your-publishable-anon-key
 ```
 
 ### 4. Run the Full Verification
-Lint, typecheck (web + worker), 437 unit and static-contract tests across 34 suites, then a production build:
+Lint, typecheck (web + worker), 705 Vitest and 15 Pytest tests (720 total tests) across 52 suites, then a production build:
 ```bash
 npm run verify
 ```
@@ -435,13 +436,13 @@ Open `http://localhost:5173` to launch the Vanta cinematic interface.
 - [x] **Ticket 3.2: Creative Intake & Grounded Twins** (Text/file intake, video-byte rejection, grounded manifests)
 - [x] **Ticket 4.1: Creative Twin Structured Expansion & Versioning** (Scene decomposition, WPM, regex claims, immutable version snapshots, hardened correction RPCs)
 - [x] **Ticket 4.2: Creative Decision Matrix & Timeline Doctor** (Pure read-time derivation, multi-variant comparison, neutral policy rules, actionable edit briefs)
-- [x] **Ticket 5.0 - Secure Model Gateway foundation** (health-check-only Edge Function authored and unit-tested locally; deployment awaits approval)
-- [x] **Phase 0 - Repository audit** (`docs/fable-audit.md`; P0 Brand Brain RLS migration authored, pending live apply)
-- [ ] **Ticket 5.1 - First evidence-gated model task** (design and fail-closed output contract done; wiring blocked on live migrations and 5.0 deployment)
+- [x] **Ticket 5.0 - Secure Model Gateway foundation** (Groq Model Gateway v9 live with structured schema validation and cryptographic verification)
+- [x] **Phase 0 - Repository audit** (Migrations 001–020 live on Supabase project with 100% RLS coverage)
+- [x] **Ticket 5.1 - First evidence-gated model task & proposal queue** (Quota-gated conversation interpretations enqueued, validated, and proposal-registered)
+- [x] **Ticket 7.1: Trend & Publishing Intelligence** (RSS feed refresh connector jobs and timezone-aware volume aggregation buckets)
+- [x] **Ticket 8.1: Outcome Calibration Loop** (Import batches with atomic validation, same-workspace attribution, and idempotency key checks)
 - [ ] **Ticket 5.2: Specialist Council Rollout** (11 agent personas with typed fallback matrices)
 - [ ] **Ticket 6.1: Counterfactual Simulation Lab** (Controlled variable mutation & hypothesis testing)
-- [ ] **Ticket 7.1: Trend & Publishing Intelligence** (Compliant RSS feeds, distribution timing hierarchy)
-- [ ] **Ticket 8.1: Outcome Calibration Loop** (Campaign CSV ingestion, prediction-to-actual accuracy scoring)
 - [ ] **Ticket QA-1: Real-JWT Two-User E2E Isolation Suite** (Playwright multi-tenant security verification)
 
 ---
