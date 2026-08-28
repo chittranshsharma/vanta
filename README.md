@@ -269,7 +269,7 @@ Vanta is designed so every query executes under the authenticated user's JWT con
 | **Styling & Motion** | Vanilla CSS design system + Tailwind v4 utilities layer + Framer Motion | Hand-written tokens for the shell; Tailwind utilities (no preflight) for the Twin, Matrix, and Doctor panels |
 | **Icons** | Lucide React | Consistent, lightweight vector iconography |
 | **Database & Auth** | Supabase (PostgreSQL 15 + RLS) | Row Level Security, private file storage, automated onboarding triggers |
-| **Test Runner** | Vitest 2.1 + pytest + Playwright | 437 unit and static-contract tests (34 suites), 15 pytest cases for the analysis service, 30-check QA-1 isolation suite (runs only with staging credentials) |
+| **Test Runner** | Vitest 2.1 + pytest + Playwright | 721 unit and static-contract tests (52 suites), 15 pytest cases for the analysis service, 40-check QA-1 isolation suite (runs when real staging credentials are provided) |
 | **Lint / CI** | ESLint 9 (typescript-eslint, react-hooks) + GitHub Actions | `npm run verify` = lint, typecheck, test, build; CI runs the same on push and PR |
 | **Future Gateway** | Edge Functions / Node.js | Authenticated secret-holding server boundary for Groq / OAuth |
 | **Future ML/Media** | Python (FastAPI workers) | Video processing, transcript alignment, outcome calibration |

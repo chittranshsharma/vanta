@@ -45,6 +45,16 @@ const TENANT_TABLES = [
   "derived_artifacts",
   "retrieval_embeddings",
   "workspace_quotas",
+  "experiments",
+  "experiment_outcomes",
+  "post_observations",
+  "post_variant_attributions",
+  "import_batches",
+  "connector_accounts",
+  "conversation_observations",
+  "conversation_interpretations",
+  "conversation_attributions",
+  "conversation_review_events",
 ] as const;
 
 async function signIn(email: string, password: string): Promise<{ client: SupabaseClient; userId: string; workspaceId: string }> {
