@@ -93,7 +93,7 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
 
       {/* SUBTOPBAR — Light sub-header line */}
       <aside className="subtopbar" aria-label="Quick Actions">
-        <span className="subtopbar-title">Vanta</span>
+        <span className="subtopbar-title">Decision Room</span>
         <button className="subtopbar-action" onClick={onOpenWorkspace}>
           Start a record <ChevronRight size={14} />
         </button>
@@ -243,26 +243,36 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
               <span className="dr-quadrant-title">
                 <span>3</span> Creative Twin
               </span>
-              <div className="dr-timeline-track">
-                <div className="dr-timeline-line" />
-                <div className="dr-scrub-indicator">
-                  <span className="dr-scrub-dot" />
-                  <span className="dr-scrub-label">Human correction</span>
+              <div className="dr-twin-container">
+                <div className="dr-twin-labels">
+                  <div className="dr-twin-col">
+                    <span className="dr-scene-num">Scene 01</span>
+                    <span className="dr-scene-tag">Hook</span>
+                  </div>
+                  <div className="dr-twin-col">
+                    <span className="dr-scene-num">Scene 02</span>
+                    <span className="dr-scene-tag">Demonstration</span>
+                  </div>
+                  <div className="dr-twin-col">
+                    <span className="dr-scene-num">Scene 03</span>
+                    <span className="dr-scene-tag">CTA</span>
+                  </div>
                 </div>
-                <div className="dr-timeline-step">
-                  <strong>Scene 01</strong>
-                  <span>Hook</span>
-                  <span>0:00 – 0:05</span>
+
+                <div className="dr-track-wrapper">
+                  <div className="dr-track-line" />
+                  <div className="dr-scrub-pin">
+                    <span className="dr-scrub-circle" />
+                  </div>
                 </div>
-                <div className="dr-timeline-step">
-                  <strong>Scene 02</strong>
-                  <span>Demonstration</span>
-                  <span>0:05 – 0:15</span>
-                </div>
-                <div className="dr-timeline-step">
-                  <strong>Scene 03</strong>
-                  <span>CTA</span>
-                  <span>0:15 – 0:20</span>
+
+                <div className="dr-twin-bottom">
+                  <span className="dr-twin-time">0:00 – 0:05</span>
+                  <div className="dr-twin-mid-callout">
+                    <span className="dr-twin-time">0:05 – 0:15</span>
+                    <span className="dr-callout-badge">Human correction</span>
+                  </div>
+                  <span className="dr-twin-time">0:15 – 0:20</span>
                 </div>
               </div>
             </div>

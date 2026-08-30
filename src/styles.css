@@ -659,61 +659,101 @@ a:hover { text-decoration: underline; }
   font-weight: 500;
 }
 
-.dr-timeline-track {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  margin-top: 6px;
-  padding-bottom: 18px;
-}
-.dr-timeline-step {
+/* Creative Twin Timeline — Tiered non-overlapping layout */
+.dr-twin-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  font-size: 10px;
+  gap: 8px;
+  padding: 4px 0 2px;
+}
+
+.dr-twin-labels {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;
+  align-items: end;
   text-align: center;
+}
+
+.dr-twin-col {
+  display: flex;
+  flex-direction: column;
   gap: 2px;
 }
-.dr-timeline-step strong {
-  color: var(--v-ink);
+
+.dr-scene-num {
   font-size: 11px;
+  font-weight: 700;
+  color: var(--v-ink);
+  letter-spacing: -0.01em;
 }
-.dr-timeline-step span {
+
+.dr-scene-tag {
+  font-size: 10px;
   color: var(--v-ink-muted-48);
 }
-.dr-timeline-line {
-  position: absolute;
-  top: 6px;
-  left: 15%;
-  right: 15%;
-  height: 2px;
-  background: rgba(0, 0, 0, 0.10);
-  z-index: 1;
-}
-.dr-scrub-indicator {
-  position: absolute;
-  top: 2px;
-  left: 50%;
-  transform: translateX(-50%);
+
+.dr-track-wrapper {
+  position: relative;
+  height: 14px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  z-index: 2;
+  margin: 4px 0;
 }
-.dr-scrub-dot {
-  width: 10px;
-  height: 10px;
+
+.dr-track-line {
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+}
+
+.dr-scrub-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dr-scrub-circle {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--v-primary);
   box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.25);
 }
-.dr-scrub-label {
+
+.dr-twin-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;
+  align-items: start;
+  text-align: center;
+}
+
+.dr-twin-time {
+  font-size: 10px;
+  color: var(--v-ink-muted-48);
+  font-variant-numeric: tabular-nums;
+}
+
+.dr-twin-mid-callout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dr-callout-badge {
   font-size: 9px;
   font-weight: 600;
   color: var(--v-primary);
+  background: rgba(0, 102, 204, 0.09);
+  padding: 2px 7px;
+  border-radius: 4px;
   white-space: nowrap;
-  margin-top: 14px;
+  letter-spacing: 0.02em;
 }
 
 
