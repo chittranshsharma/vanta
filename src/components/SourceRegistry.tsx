@@ -5,6 +5,7 @@ import {
   Compass,
   Database,
   ExternalLink,
+  FolderKanban,
   HelpCircle,
   Info,
   Link2,
@@ -31,8 +32,9 @@ import {
   type MetricDefinitionRow,
   type AllowedUserSourceStatus
 } from "../lib/sourceRegistry";
+import { SourceCohortsTab } from "./SourceCohortsTab";
 
-type RegistryTab = "sources" | "evidence" | "metrics";
+type RegistryTab = "sources" | "evidence" | "metrics" | "cohorts";
 
 interface SourceRegistryProps {
   workspaceId: string;
@@ -202,6 +204,13 @@ export function SourceRegistry({ workspaceId, userId, isAdmin }: SourceRegistryP
           Metric Definitions
           {metricDefs.length > 0 && <span className="bb-count">{metricDefs.length}</span>}
         </button>
+        <button
+          className={`bb-tab ${tab === "cohorts" ? "active" : ""}`}
+          onClick={() => setTab("cohorts")}
+        >
+          <FolderKanban size={13} />
+          Cohorts & Outliers
+        </button>
       </div>
 
       {/* Content */}
@@ -246,6 +255,15 @@ export function SourceRegistry({ workspaceId, userId, isAdmin }: SourceRegistryP
             showForm={showMetricForm}
             setShowForm={setShowMetricForm}
             onDefAdded={(def) => setMetricDefs((prev) => [...prev, def])}
+          />
+        )}
+
+        {tab === "cohorts" && (
+          <SourceCohortsTab
+            workspaceId={workspaceId}
+            userId={userId}
+            isAdmin={isAdmin}
+            sources={sources}
           />
         )}
       </div>

@@ -1,4 +1,4 @@
-import { CalendarRange, Trash2, Upload } from "lucide-react";
+import { CalendarRange, Trash2, Upload, BarChart3, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { accessStateFor, listConnectors, type ConnectorAccountPublic } from "../lib/connectors";
 import { analyticsProviders } from "../../shared/connectors/providers";
@@ -11,6 +11,13 @@ import { isMissingTableError } from "../lib/experiments";
 import { isRetryableRead, readFailureSummary, type ReadError } from "../lib/rows";
 import { HistoryImportModal } from "./HistoryImportModal";
 import { Modal } from "./Modal";
+import {
+  optimizePublishingSchedule,
+  SCHEDULE_OPTIMIZER_POLICY,
+  DEFAULT_MIN_OBSERVATIONS_PER_BUCKET,
+  type ObservedPublicationRecord,
+  type ScheduleOptimizerResult,
+} from "../../shared/publishing/scheduleOptimizer";
 
 const MIN_OBSERVATIONS = 30;
 
@@ -106,6 +113,29 @@ export function PublishingPlanner({ workspaceId, userId, isAdmin }: { workspaceI
     );
     setReloadToken((t) => t + 1);
   }
+
+  const pubRecords: ObservedPublicationRecord[] = (current?.history ?? []).map((row) => ({
+    id: row.id,
+    sourceId: row.source_id,
+    evidenceClass: "observed",
+    metricKey: row.metric_key,
+    unit: "count",
+    calculationMethod: "sum",
+    value: row.value,
+    publishedAt: row.published_at,
+    citability: row.source_citability === "verified" ? "verified" : "citable_unverified",
+  }));
+
+  const scheduleOptimizerResult: ScheduleOptimizerResult | null = current && pubRecords.length > 0
+    ? optimizePublishingSchedule(pubRecords, {
+        workspaceId,
+        timeZone,
+        expectedMetricKey: "impressions",
+        expectedUnit: "count",
+        expectedCalculationMethod: "sum",
+        bucketResolution: "hour_of_day",
+      })
+    : null;
 
   return (
     <section className="vp-panel" aria-labelledby="publishing-heading">
@@ -219,6 +249,105 @@ export function PublishingPlanner({ workspaceId, userId, isAdmin }: { workspaceI
             different absolute time in summer than in winter. Viewing from another zone regroups the buckets, so a window
             is a claim about your posting clock, not about your audience&apos;s.
           </p>
+
+          {/* Descriptive Schedule Optimizer Summary Section */}
+          {scheduleOptimizerResult && (
+            <section className="mt-8 border border-zinc-800 rounded-xl p-5 bg-zinc-950/80 space-y-4" aria-labelledby="schedule-optimizer-heading">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 id="schedule-optimizer-heading" className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                    <BarChart3 size={16} className="text-emerald-400" /> Historical Schedule Optimizer
+                  </h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Pure historical observation summary across configured time buckets. Strictly descriptive — never a predictive best-time forecast.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                    scheduleOptimizerResult.status === "success"
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                  }`}>
+                    Status: {scheduleOptimizerResult.status}
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
+                    Policy: {scheduleOptimizerResult.status === "success" ? scheduleOptimizerResult.statistics.policy : SCHEDULE_OPTIMIZER_POLICY}
+                  </span>
+                </div>
+              </div>
+
+              {/* Sample Gate & Timezone Notice */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg bg-zinc-900/80 border border-zinc-800 text-xs">
+                  <span className="text-zinc-500 block text-[10px] uppercase">Sample Sufficiency</span>
+                  <span className="font-mono font-semibold text-zinc-200">
+                    {scheduleOptimizerResult.status === "success"
+                      ? `${scheduleOptimizerResult.statistics.totalAcceptedObservations} total observations (${scheduleOptimizerResult.statistics.eligibleBucketsCount} eligible buckets)`
+                      : `${scheduleOptimizerResult.validObservationCount} of ${scheduleOptimizerResult.requiredMinimum} required`}
+                  </span>
+                </div>
+                <div className="p-3 rounded-lg bg-zinc-900/80 border border-zinc-800 text-xs">
+                  <span className="text-zinc-500 block text-[10px] uppercase">Timezone / Clock</span>
+                  <span className="font-mono text-zinc-200">{scheduleOptimizerResult.timeZone}</span>
+                </div>
+                <div className="p-3 rounded-lg bg-zinc-900/80 border border-zinc-800 text-xs">
+                  <span className="text-zinc-500 block text-[10px] uppercase">Per-Bucket Gate</span>
+                  <span className="font-mono text-zinc-200">
+                    Min {DEFAULT_MIN_OBSERVATIONS_PER_BUCKET} observations/bucket
+                  </span>
+                </div>
+              </div>
+
+              {/* Top Performing Historical Buckets */}
+              {scheduleOptimizerResult.status === "success" && (
+                <div className="space-y-3 pt-2">
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+                      Strongest Historical Buckets ({scheduleOptimizerResult.highestObservedBuckets.length})
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {scheduleOptimizerResult.highestObservedBuckets.map((bucket) => (
+                        <div key={bucket.bucketKey} className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-900/30 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-medium text-zinc-100">{bucket.bucketKey}</span>
+                            <span className="text-[10px] text-zinc-500 ml-2">({bucket.observationCount} observations)</span>
+                          </div>
+                          <span className="font-mono text-emerald-300 font-semibold">{bucket.medianValue.toFixed(1)} median</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {scheduleOptimizerResult.comparisonNote && (
+                    <p className="text-xs text-zinc-400 italic">{scheduleOptimizerResult.comparisonNote}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Insufficient Evidence Warning Banner */}
+              {scheduleOptimizerResult.status === "insufficient_evidence" && (
+                <div className="p-3 rounded-lg bg-amber-950/30 border border-amber-800/40 text-xs text-amber-300 flex items-start gap-2">
+                  <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+                  <div>
+                    <strong>Insufficient Historical Evidence:</strong> {scheduleOptimizerResult.reason}
+                  </div>
+                </div>
+              )}
+
+              {/* Limitations / Known Gaps */}
+              {scheduleOptimizerResult.knownGaps && scheduleOptimizerResult.knownGaps.length > 0 && (
+                <div className="space-y-1 pt-2 border-t border-zinc-800/80">
+                  <h5 className="text-[10px] uppercase font-semibold text-zinc-500 tracking-wider">Declared Limitations</h5>
+                  <ul className="text-[11px] text-zinc-400 list-disc list-inside space-y-0.5">
+                    {scheduleOptimizerResult.knownGaps.map((lim, idx) => (
+                      <li key={idx}>{lim}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+          )}
 
           <section aria-labelledby="history-batches-heading">
             <h3 id="history-batches-heading" className="vp-subhead">Imported history batches</h3>
