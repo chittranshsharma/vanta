@@ -148,3 +148,9 @@
 - [ ] Widen `evaluateReadiness`'s `metricDefined: boolean` in `shared/experiments/model.ts` to a tri-state so a single experiment row can say "metric registry unread" instead of the panel suppressing the whole list. The current panel-level treatment is correct but coarse, and the change touches the shared model and its contract tests.
 - [ ] Surface the per-kind quota budgets that have a UI consumer beyond `job_enqueue` (`model_call` on the gateway probe path, `media_probe` in Creative Intake). `fetchQuotas` already returns every kind; only the jobs panel reads one today.
 - [ ] Decide whether retrieval coverage deserves a live read. `fetchRetrievalCoverage` now resolves six states and nothing calls it, because no feature is grounded by a vector search — the honest static readiness row covers the current truth. Wire it when E-3 picks a provider and something indexes.
+
+- [ ] Design a unified Evidence-Backed Content Intelligence layer combining outlier research, controlled variant comparison, source-grounded analysis, simulation, and real outcome calibration.
+- [ ] Audit whether Vanta already covers source cohorts/watchlists, observed outlier queries, transcript provenance, research projects, and comparative simulation before adding duplicate contracts.
+- [ ] Define safe platform/context assumptions, persona hypotheses, and behavioral dimensions as simulation inputs only; never expose pseudo-user votes or synthetic engagement as observed metrics.
+- [ ] Define a provider-neutral ingestion and attribution path for permitted public-source data before any official social-platform connector.
+- [ ] Create a staged execution roadmap for the combined product: backend contracts, live validation, connector readiness, real outcome calibration, then UI integration.
