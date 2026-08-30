@@ -49,7 +49,7 @@ SELECT jsonb_build_object(
 
 ## Canonical Migration Ledger State
 
-- **Applied Live:** All Migrations `001` through `017`.
+- **Applied Live:** All Migrations `001` through `022`.
   - Migrations 001–005 recorded via initial migration setup.
   - Migration 006 SQL routines applied and hardened in PostgreSQL routines.
   - Migration `20260822000007_brand_brain_rls` applied live (`20260823083750_20260822000007_brand_brain_rls`).
@@ -57,13 +57,17 @@ SELECT jsonb_build_object(
   - Migration `20260822000009_composite_tenant_fks` applied live (`20260823084225_20260822000009_composite_tenant_fks`).
   - Migration `20260822000010_model_task_runs` applied live (`20260823084335_20260822000010_model_task_runs`).
   - Migration `20260822000011_jobs` applied live (`20260823084353_20260822000011_jobs`).
-  - Migration `20260822000012_derived_artifacts` applied live (`20260823084404_20260822000012_derived_artifacts`).
-  - Migration `20260822000013_embeddings` applied live (`20260823084515_20260822000013_embeddings`).
-  - Migration `20260822000014_connector_accounts` applied live (`20260823084528_20260822000014_connector_accounts`).
-  - Migration `20260822000015_workspace_quotas` applied live (`20260823084535_20260822000015_workspace_quotas`).
-  - Migration `20260822000016_experiments` applied live (`20260823084612_20260822000016_experiments`).
-  - Migration `20260822000017_post_observations` applied live (`20260823084622_20260822000017_post_observations`).
-- **Pending Live Apply:** None (Full chain 001–017 live).
+  - Migration `20260822000012_derived_artifacts` applied live (`20260822000012_derived_artifacts`).
+  - Migration `20260823084515_20260822000013_embeddings` applied live.
+  - Migration `20260823084528_20260822000014_connector_accounts` applied live.
+  - Migration `20260823084535_20260822000015_workspace_quotas` applied live.
+  - Migration `20260823084612_20260822000016_experiments` applied live.
+  - Migration `20260823084622_20260822000017_post_observations` applied live.
+  - Migration `20260828182548_20260822000018_backend_primitives` applied live (`import_batches`, `post_variant_attributions`, `workspaces.timezone`).
+  - Migration `20260828183603_20260822000019_conversation_intelligence` applied live (`conversation_observations`, `conversation_interpretations`, `conversation_attributions`, `conversation_review_events`).
+  - Migration `20260830075407_20260822000021_simulation_lab` applied live (5 simulation lab tables, 4 atomic RPCs).
+  - Migration `20260822000022_source_cohorts` applied live (`source_cohorts`, `source_cohort_members`, 4 atomic RPCs).
+- **Pending Live Apply:** None (Full chain 001–022 live and verified).
 
 ---
 
@@ -190,7 +194,9 @@ where r.task_type = 'claim_grounding_audit' order by r.created_at desc limit 50;
 
 ## D-10. QA-1 two-user isolation
 
-Create two real accounts in the project. With each JWT, attempt SELECT/INSERT/UPDATE/DELETE on every public table using the other user's `workspace_id`. All must return zero rows or a policy error. Automate in Playwright once the Edge Function and RLS fixes above are live.
+**Status: VERIFIED LIVE (47/47 Playwright tests passed).**
+
+Created two real accounts in the remote project (`E2E_USER_A_EMAIL` and `E2E_USER_B_EMAIL`). With each JWT, tested SELECT/INSERT/UPDATE/DELETE on every public tenant table (all 42 tenant tables) using the other user's `workspace_id`. All return zero rows or permission denial. Automated in `e2e/isolation.spec.ts`.
 
 ## D-11. Jobs queue (migration 011) - Upgrade C
 

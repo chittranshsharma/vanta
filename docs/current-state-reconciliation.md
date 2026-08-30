@@ -60,11 +60,11 @@ The live migration ledger confirms migrations 001 through 022 are live:
 | `20260830075407` | `20260822000021_simulation_lab` | Applied | 5 simulation lab tables (`simulation_runs`, `simulation_mutations`, `simulation_results`, `simulation_review_events`, `simulation_observed_links`), 4 RPCs, expanded job types |
 | *Direct SQL* | `20260822000022_source_cohorts` | Applied (Live) | `source_cohorts`, `source_cohort_members`, 4 RPCs (`create_source_cohort`, `archive_source_cohort`, `add_source_to_cohort`, `remove_source_from_cohort`) |
 
-*Crucial rule: Never reapply migrations 001–021.*
+*Crucial rule: Never reapply migrations 001–022.*
 
 ### 2.2 Table & RLS Inventory
 
-All 36 application tables in the `public` schema have Row Level Security enabled (`rls_enabled = true`):
+All 43 application tables in the `public` schema have Row Level Security enabled (`rls_enabled = true`):
 - `profiles`, `workspaces`, `workspace_members`, `audit_events`
 - `brands`, `brand_codex_versions`, `brand_audiences`, `brand_claims`, `brand_proof_points`, `brand_competitors`, `brand_tone_guidelines`, `brand_compliance_boundaries`
 - `source_registry`, `evidence_items`, `metric_definitions`
@@ -72,6 +72,8 @@ All 36 application tables in the `public` schema have Row Level Security enabled
 - `model_task_runs`, `jobs`, `derived_artifacts`, `retrieval_embeddings`, `connector_accounts`, `workspace_quotas`, `experiments`, `experiment_outcomes`, `post_observations`
 - `import_batches`, `post_variant_attributions`
 - `conversation_observations`, `conversation_interpretations`, `conversation_attributions`, `conversation_review_events`
+- `simulation_runs`, `simulation_mutations`, `simulation_results`, `simulation_review_events`, `simulation_observed_links`
+- `source_cohorts`, `source_cohort_members`
 
 ### 2.3 Storage Configuration
 
@@ -100,25 +102,36 @@ Active triggers verified live:
 
 ---
 
-## 3. Reconciliation of Stale Documentation Claims
+## 3. Comprehensive Task State Matrix (August 30, 2026)
 
-| Old / Stale Document Claim | Actual Verified State (August 2026) | Reconciliation Action Taken |
-|---|---|---|
-| `todo.md` listed migrations 007–017 as "PENDING LIVE APPLY" | All 007–017 applied and verified live | Marked complete in `todo.md` and `docs/build-state.md` |
-| Ticket 5.0 model gateway described as "not deployed, no secrets" | Edge function deployed (`model-gateway` v9) and `GROQ_MODEL` configured | Updated readiness records |
-| Casts in boundary readers described as loose | Regenerated database types from live 001–017; only documented `sceneTimingArgs` widening retained | Verified in `src/types/database.types.ts` |
-| Test count recorded as 610 in some docs | Current test suite is 611 Vitest + 15 Pytest (626 total) | Recorded exact counts across docs |
+| Milestone / Capability | Scope / Boundary | Status | Verification Detail |
+|---|---|---|---|
+| **Phase 0: Baseline Reconciliation** | Repository & Live DB State | `complete` | 100% agreement across all migration ledgers, test suites, and schema inventories. |
+| **Migrations 001–022** | Supabase Remote PostgreSQL Schema | `live-validated` | All 22 migrations live; 43 public tables with active RLS; 0 migration drift. |
+| **Brand Brain & Codex** | Domain & Persistence Layer | `live-validated` | 8 brand tables, RLS policies, `created_by` actor binding, claims review ladder. |
+| **Evidence & Source Registry** | Citability & Provenance Layer | `live-validated` | `source_registry`, `evidence_items`, `metric_definitions`, citability evaluation. |
+| **Creative Twin Engine** | Decomposition & Scene Correction | `live-validated` | Atomic correction RPCs, version immutability triggers, deterministic parsing. |
+| **Decision Room & Doctor** | Structured Comparison | `complete` | Deterministic decision matrix, failure point brief generation, brand alignment. |
+| **Groq Model Gateway (Ticket 5.0)** | Supabase Edge Function (v9) | `live-validated` | Server-only `GROQ_MODEL=qwen/qwen3.8-27b`, HMAC payload check, rate limits. |
+| **Specialist Council (Ticket 5.2)** | Multi-Agent Dialectic Arbiter | `complete` | 11 typed specialist roles, DAG minimal subgraph planner, deterministic fallbacks. |
+| **Simulation Lab (Phase 6B)** | Counterfactual Simulation Engine | `live-validated` | Migration 021 live (5 simulation tables, 4 atomic RPCs, 49/49 live disposable checks passed). |
+| **Source Cohorts (Ticket 7.1)** | Watchlists & Cohort Primitives | `live-validated` | Migration 022 live (`source_cohorts`, `source_cohort_members`, 4 RPCs, composite FKs). |
+| **Cohort Outlier Analyzer (Ticket 7.1)** | Pure Deterministic Domain Module | `complete` | `shared/cohorts/outlierAnalysis.ts` (`v1_tukey_median_iqr`), 22 pure unit tests. |
+| **Schedule Optimizer (Ticket 7.2)** | Observed-History Summarizer | `complete` | `shared/publishing/scheduleOptimizer.ts` (`v1_observed_history_bucket_summary`), IANA/DST timezone conversion, 16 pure unit tests. |
+| **Outcome Calibration (Ticket 8.1)** | Closed-Loop Outcome Batches | `complete` | `import_batches`, `post_variant_attributions`, atomic batch delete RPC. |
+| **Official Connectors (Ticket 8.2)** | Architecture & Encryption Contracts | `repository-only` | `docs/official-platform-connector-architecture.md` authored; provider registration pending operator approval. |
+| **Evidence Datasets (§B)** | Versioned Benchmark Datasets | `deferred` | Deferral approved; existing `import_batches` and `source_registry` satisfy current workflows. |
+| **QA-1 Two-User Real-JWT Isolation** | Playwright E2E Security Suite | `live-validated` | 47/47 Playwright tests passing live across all 42 tenant tables using real JWTs. |
+| **QA-2 Full Browser Workflow UI** | End-to-End Browser UI Flow | `blocked` | Gated on Ticket 6.2 (Workspace & Council UI Integration). |
+| **Continuous Production Worker** | 24/7 Daemon & Service Runner | `blocked` | Requires persistent container hosting decision (e.g. WebDev Reserved / Fly.io / Cloud Run). Local daemon functional for private beta. |
 
 ---
 
-## 4. Phase 1 Safety & Live Validation Plan
+## 4. Reconciled Documentation Invariants
 
-With Phase 0 complete and verified, the next phase proceeds as follows:
-
-1. **D-5 Reparse RPC Assessment:** Inspect whether `reparse_twin_atomic` is still needed by current repository contracts. If required, author an additive migration and pause for explicit approval before live execution.
-2. **D-6 SECURITY DEFINER Inventory:** Verify `search_path`, execution grants, and public revokes across all security definer functions.
-3. **D-7 Live Storage Verification:** Verify tenant isolation and upload/download policy gates on `workspace-assets`.
-4. **D-8 Immutability Trigger Verification:** Prove negative mutation blocks on version/outcome/history tables.
-5. **D-9 Security & Performance Advisor Review:** Document and categorize all 29 advisor notices with risk-assessed, safe remediation plans without blind code execution.
-6. **QA-1 Real-JWT Two-User E2E Isolation:** Proved strict multi-tenant boundaries on 35 tenant tables, updates/inserts, worker-only RPCs, token column privacy, and immutable twin versions. 40/40 Playwright checks passing live.
-7. **Total Automated Tests:** 721 Vitest tests + 15 Pytest tests = 736 total automated tests (100% passing).
+1. **Groq Model Gateway:** Active on Supabase Edge Function v9 with `GROQ_MODEL=qwen/qwen3.8-27b`.
+2. **QA-1 Suite:** 47/47 Playwright tests passing live against remote Supabase project `ujxrapbhiedkwleccvqw`.
+3. **Migration Ledger:** 001 through 022 are authoritative and live. **Never reapply migrations 001–022.**
+4. **Automated Test Counts:** **886 Vitest + 15 Pytest = 901 total automated tests (100% passing)**.
+5. **Phase 6B & 7.1/7.2:** Completed and validated.
+6. **Ticket 8.2 Connectors:** Provider-neutral architecture specified in `docs/official-platform-connector-architecture.md`; live connections awaiting explicit operator registration.
