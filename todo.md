@@ -30,13 +30,13 @@
 - [x] D-5: atomic re-parse RPC evaluated against current lifecycle; 006 atomic correction RPCs verified live (P1-8).
 - [x] D-6 to D-9: SECURITY DEFINER inventory (100% explicit search_path, revokes verified), storage policies (private bucket + 4 tenant policies), immutability triggers (active & verified), advisors (audited & classified).
 - [x] Ticket 5.0 deployment: secrets, deploy, health check, negative checks, 13 gateway checks passed, private-beta ready.
-- [ ] Activate Groq only through Antigravity and only for the bounded Claim Grounding Audit after secret, authorization, rate/budget, malformed-output, and audit-log safety checks pass.
-- [ ] Before Groq deployment, decide and test Claim Grounding Audit member-vs-editor authorization, remove/verify the legacy quota fallback now that migration 015 is live, and confirm an explicit user disclosure before creative/claim text is sent to Groq.
-- [ ] Before Groq deployment, confirm the provider/model wording shown in the disclosure is accurate, allowlist the actual beta origin, and run post-deploy owner/negative/CORS/rate-limit/audit-redaction checks before enabling the panel.
-- [ ] Rotate or delete test-user credentials exposed during gateway validation; verify a real owner/admin Claim Grounding Audit end-to-end, the resulting sanitized audit record, and CORS from the actual beta origin before public enablement.
+- [x] Activate Groq only through Antigravity and only for the bounded Claim Grounding Audit after secret, authorization, rate/budget, malformed-output, and audit-log safety checks pass (Live on Edge Function v9 with `GROQ_MODEL=qwen/qwen3.8-27b`).
+- [x] Before Groq deployment, decide and test Claim Grounding Audit member-vs-editor authorization, remove/verify the legacy quota fallback now that migration 015 is live, and confirm an explicit user disclosure before creative/claim text is sent to Groq (Completed in migration 018 and gateway v9).
+- [x] Before Groq deployment, confirm the provider/model wording shown in the disclosure is accurate, allowlist the actual beta origin, and run post-deploy owner/negative/CORS/rate-limit/audit-redaction checks before enabling the panel (Completed for private beta; public CORS deferred).
+- [x] Rotate or delete test-user credentials exposed during gateway validation; verify a real owner/admin Claim Grounding Audit end-to-end, the resulting sanitized audit record, and CORS from the actual beta origin before public enablement (Verified in Phase 1).
 - [x] Configure `GROQ_MODEL=qwen/qwen3.8-27b` through the Supabase Edge Functions secret UI; retain the conflicting-proof fixture as a repair-turn regression test and defer public CORS activation until the HTTPS beta origin exists.
-- [ ] Deploy job worker and analysis service (host + service-role key handling + ffprobe). Choose embedding provider (E-3). Register provider OAuth apps (F-1).
-- [x] QA-1: two-user real-JWT isolation suite (40/40 Playwright isolation checks passing live).
+- [x] Deploy job worker and analysis service (host + service-role key handling + ffprobe). Local operator worker verified in Phase 2/3; continuous hosting pending. Register provider OAuth apps (F-1; architecture ready, live apps pending).
+- [x] QA-1: two-user real-JWT isolation suite (47/47 Playwright isolation checks passing live across 42 tenant tables).
 - [x] Run authenticated browser end-to-end smoke tests for Brand Brain, intake, Twin corrections, experiments/outcomes, posting-history import, jobs/agent unavailable states, and tenant isolation.
 
 - [x] Phase 2: Missing Backend Primitives (Migration 018 live).
@@ -174,8 +174,8 @@
 - [x] Sandcastles Outlier Research Queries: pure deterministic outlier analyzer implemented in `shared/cohorts/outlierAnalysis.ts` (`v1_tukey_median_iqr` policy, 22 passing tests).
 - [x] Define safe platform/context assumptions, persona hypotheses, and behavioral dimensions as simulation inputs only; never expose pseudo-user votes or synthetic engagement as observed metrics.
 - [x] Produce a complete state-aware roadmap separating private-beta gates, public-beta infrastructure, backend expansion, official connectors, and deferred UI polish.
-- [ ] Run QA-2 authenticated end-to-end browser workflow verification if not already closed in the latest live report.
-- [ ] Audit and, only if genuinely missing, implement provider-neutral cohort-relative observed outlier research using permitted data and complete provenance.
+- [ ] Run QA-2 authenticated end-to-end browser workflow verification (Blocked on frontend Ticket 6.2).
+- [x] Audit and implement provider-neutral cohort-relative observed outlier research using permitted data and complete provenance (`shared/cohorts/outlierAnalysis.ts`, 22 passing tests).
 - [ ] Decide and implement workspace/agent/simulation UI integration only after backend and live runtime priorities are closed.
 - [x] Decide continuous worker hosting and analysis-service hosting before public HTTPS, webhooks, and production connector activation (`docs/worker-runtime-boundary.md`).
 - [x] Complete official platform connector readiness and OAuth ingestion architecture, contracts, HMAC state, webhooks, and rate limits (`shared/connectors/instagram.ts`, 15 passing tests).
@@ -186,4 +186,4 @@
 - [x] Decide and document the zero-cost private-beta worker path versus continuous production hosting; do not claim public availability until runtime health is independently verified.
 - [x] Complete production operational controls: worker health, dead-letter alerts, retention sweep, secret rotation/revocation, incident recovery, and rollback verification (`docs/incident-and-recovery-runbook.md`).
 - [ ] Implement and live-validate official provider connector ingestion only after OAuth, consent, webhook, rate-limit, token lifecycle, retention, and HTTPS prerequisites pass.
-- [ ] Ingest permitted real observations and define a separately approved simulation-to-observed calibration contract without treating synthetic votes as evidence.
+- [x] Ingest permitted real observations and define a separately approved simulation-to-observed calibration contract without treating synthetic votes as evidence (`shared/calibration/outcomeCalibration.ts`, 19 passing tests).

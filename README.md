@@ -12,7 +12,7 @@
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%7C%20RLS-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(901%2F901)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(920%2F920)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Pytest](https://img.shields.io/badge/Pytest-Passing%20(15%2F15)-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)](https://pytest.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-E2E%20(47%2F47)-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev/)
 [![CI](https://img.shields.io/badge/CI-lint%20%7C%20typecheck%20%7C%20test%20%7C%20build-blue?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
@@ -475,7 +475,7 @@ Vanta’s architectural roadmap uses a structured **`[Phase].[Ticket]`** coordin
 - [x] **Ticket 7.2: Publishing Schedule Optimizer** (Observed-history time bucket summarizer, pure deterministic domain module `shared/publishing/scheduleOptimizer.ts`, IANA/DST wall-clock timezone conversion, fail-closed sample size gates, 16 pure unit tests)
 
 #### **Phase 8: Outcome Calibration & Closed-Loop Learning**
-- [x] **Ticket 8.1: Outcome Calibration Loop** (Import batches with atomic validation, same-workspace attribution, idempotency key checks)
+- [x] **Ticket 8.1: Outcome Calibration Loop** (Import batches with atomic validation, same-workspace attribution, idempotency key checks, pure descriptive calibration domain contracts in `shared/calibration/outcomeCalibration.ts` with 19 passing tests)
 - [ ] **Ticket 8.2: Official Platform OAuth Connector Ingestion** (Architecture specification complete at `docs/official-platform-connector-architecture.md`; official Meta/Instagram, YouTube Analytics, and TikTok Business OAuth sync contracts defined)
 
 #### **Phase QA: Isolation & Security Verifications**

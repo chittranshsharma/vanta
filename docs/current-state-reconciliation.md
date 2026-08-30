@@ -15,10 +15,10 @@ A complete, read-only audit of the local repository, build pipeline, test suites
 | **Lint** | `npm run lint` (ESLint flat config) | **PASSED** | 0 errors |
 | **Web Typecheck** | `npm run typecheck` (`tsc -b --noEmit`) | **PASSED** | 0 type errors |
 | **Worker Typecheck** | `npm run typecheck:worker` | **PASSED** | 0 type errors across `services/job-worker` |
-| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 886 passed across 63 test files |
+| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 920 passed across 65 test files |
 | **Python Service Tests** | `python -m pytest services/analysis-worker/tests` | **PASSED** | 15 passed across 2 test modules |
 | **Production Build** | `npm run build` (`vite build`) | **PASSED** | Built cleanly, code-split chunks, total client bundle healthy |
-| **Total Automated Tests** | Vitest + Pytest | **901 tests** | 100% passing rate |
+| **Total Automated Tests** | Vitest + Pytest | **935 tests** | 100% passing rate |
 
 ---
 
@@ -118,7 +118,7 @@ Active triggers verified live:
 | **Source Cohorts (Ticket 7.1)** | Watchlists & Cohort Primitives | `live-validated` | Migration 022 live (`source_cohorts`, `source_cohort_members`, 4 RPCs, composite FKs). |
 | **Cohort Outlier Analyzer (Ticket 7.1)** | Pure Deterministic Domain Module | `complete` | `shared/cohorts/outlierAnalysis.ts` (`v1_tukey_median_iqr`), 22 pure unit tests. |
 | **Schedule Optimizer (Ticket 7.2)** | Observed-History Summarizer | `complete` | `shared/publishing/scheduleOptimizer.ts` (`v1_observed_history_bucket_summary`), IANA/DST timezone conversion, 16 pure unit tests. |
-| **Outcome Calibration (Ticket 8.1)** | Closed-Loop Outcome Batches | `complete` | `import_batches`, `post_variant_attributions`, atomic batch delete RPC. |
+| **Outcome Calibration (Ticket 8.1)** | Closed-Loop Outcome Batches & Traceability | `complete` | `import_batches`, `post_variant_attributions`, atomic batch delete RPC, `shared/calibration/outcomeCalibration.ts` (`v1_observed_outcome_traceability_calibration`), 19 pure tests. |
 | **Official Connectors (Ticket 8.2)** | Architecture & Encryption Contracts | `repository-only` | `docs/official-platform-connector-architecture.md` authored; provider registration pending operator approval. |
 | **Evidence Datasets (§B)** | Versioned Benchmark Datasets | `deferred` | Deferral approved; existing `import_batches` and `source_registry` satisfy current workflows. |
 | **QA-1 Two-User Real-JWT Isolation** | Playwright E2E Security Suite | `live-validated` | 47/47 Playwright tests passing live across all 42 tenant tables using real JWTs. |
@@ -132,6 +132,6 @@ Active triggers verified live:
 1. **Groq Model Gateway:** Active on Supabase Edge Function v9 with `GROQ_MODEL=qwen/qwen3.8-27b`.
 2. **QA-1 Suite:** 47/47 Playwright tests passing live against remote Supabase project `ujxrapbhiedkwleccvqw`.
 3. **Migration Ledger:** 001 through 022 are authoritative and live. **Never reapply migrations 001–022.**
-4. **Automated Test Counts:** **886 Vitest + 15 Pytest = 901 total automated tests (100% passing)**.
-5. **Phase 6B & 7.1/7.2:** Completed and validated.
+4. **Automated Test Counts:** **920 Vitest + 15 Pytest = 935 total automated tests (100% passing)**.
+5. **Phase 6B, 7.1/7.2, & 8.1:** Completed and validated.
 6. **Ticket 8.2 Connectors:** Provider-neutral architecture specified in `docs/official-platform-connector-architecture.md`; live connections awaiting explicit operator registration.

@@ -3,8 +3,7 @@
 **Status:** Phase 5A Preparation & Architectural Checklist  
 **Date:** 2026-08-29  
 **Scope:** Technical and Compliance Prerequisites for Future Official Instagram Integration
-
----
+**Note:** Endpoint fields, permissions, token lifetime, and metrics are provider/API-version/account-dependent until verified during live implementation.
 
 ## 1. Official Platform Prerequisites & Account Eligibility
 
@@ -33,6 +32,7 @@ Per [Comment Moderation Documentation](https://developers.facebook.com/documenta
 
 Per [Instagram Insights Documentation](https://developers.facebook.com/documentation/instagram-platform/insights):
 - Metrics are queried for media owned by the authorized account (`impressions`, `reach`, `saved`, `video_views`, `shares`).
+- **Note:** Do not claim all insight metrics work for every Instagram Business/Creator account. Availability depends on the specific account type and API version.
 - Metrics must be stored as **observed facts** in `experiment_outcomes` and `post_observations`.
 - Ambiguous dates and timezone differences must be explicitly normalized against `workspaces.timezone`.
 - When baselines are absent, Vanta reports `baseline_status = 'unknown'` and never projects guaranteed future reach or algorithm scores.

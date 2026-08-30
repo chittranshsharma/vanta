@@ -13,7 +13,7 @@ Vanta models external platform integration through explicit, decoupled capabilit
 | Capability | Scope / Domain | Current State | Backing Data Contract | Guardrail / Boundary Rule |
 |---|---|---|---|---|
 | **Account Metadata** | Identity, Account ID, Handle, Verification Status | `ready` | `connector_accounts` | Tenant-isolated, encrypted access tokens (`tokenCrypto.ts`), manual connection only. |
-| **Comments / Observations** | Audience comments, feedback text, timestamps | `ready` (CSV / manual only) | `conversation_observations` | Strict `evidence_class = 'observed'`, pseudonymized `author_ref`, immutable source trigger. |
+| **Comments / Observations** | Audience Comments — observed comment metadata; sentiment/intent/emotion are inference outputs only. | `ready` (CSV / manual only) | `conversation_observations` | Strict `evidence_class = 'observed'`, pseudonymized `author_ref`, immutable source trigger. |
 | **Inbound Webhooks** | Real-time event ingestion | `not implemented` | Future webhook receiver | Deferred. Requires verified HTTPS public endpoint, HMAC signature check, and idempotency keying. |
 | **Insights / Outcomes** | Post engagement, impressions, reach | `ready` (CSV / manual only) | `experiment_outcomes`, `post_observations` | Exact observed metrics; ambiguous dates flagged; missing baseline returns `unknown`. |
 | **Private Replies** | 1-to-1 reply drafts to comments | `blocked` / `not implemented` | `shared/conversations/replyDrafts.ts` | Draft validation only. Fails closed if Brand Codex claims/proofs are missing. **No automated sending.** |
