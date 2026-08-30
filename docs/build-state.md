@@ -572,3 +572,9 @@ Live verification deferred: the `denied` branch against a real non-member sessio
     - Enforces strict canonical evidence taxonomy: `evidence_class = 'simulation'` and `observed_validation = 'unknown'` by default; human review decisions recorded as administrative governance without mutating evidence class or fabricating empirical truth.
     - Deterministic structural deltas rendered only (duration, WPM, scene count, claim count, hook/CTA changed flags, warnings); zero virality, reach, or performance predictions.
     - 946 Vitest tests + 15 Pytest tests passing cleanly; 0 lint errors, 0 typecheck errors, clean Vite production build.
+18. Ticket 6.2 Slice C (Conversation Intelligence Review Surface UI) complete:
+    - `ConversationIntelligence.tsx` built and verified against `src/lib/conversationReview.ts`, `src/lib/sourceRegistry.ts`, `shared/conversations/spikeAggregation.ts`, and `shared/conversations/replyDrafts.ts`.
+    - Implemented strict Privacy Gate: raw comment text is masked by default (`[Masked audience comment text]`); revealed only on intentional user toggle when authenticated, source is connected/citable, and retention window is active; purged/expired and disconnected sources show explicit fail-closed redactions. Zero comment text in URLs, console logs, or telemetry.
+    - Observation reviews (`reviewConversationObservation`) strictly separate from interpretation reviews (`reviewConversationInterpretation`).
+    - Preserves canonical evidence taxonomy: observations carry `evidence_class = 'observed'`, model interpretations/drafts strictly carry `evidence_class = 'inference'` with uncertainty disclosures. Human approval records administrative review and never promotes inference to observed fact.
+    - 952 Vitest tests + 15 Pytest tests passing cleanly; 0 lint errors, 0 typecheck errors, clean Vite production build.
