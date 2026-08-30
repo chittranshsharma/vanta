@@ -135,3 +135,4 @@ Active triggers verified live:
 4. **Automated Test Counts:** **920 Vitest + 15 Pytest = 935 total automated tests (100% passing)**.
 5. **Phase 6B, 7.1/7.2, & 8.1:** Completed and validated.
 6. **Ticket 8.2 Connectors:** Provider-neutral architecture specified in `docs/official-platform-connector-architecture.md`; live connections awaiting explicit operator registration.
+7. **Evidence Taxonomy Invariant:** The canonical taxonomy contains strictly 5 classes: `observed`, `sourced`, `inference`, `simulation`, and `unknown`. `linked` is an operational relationship status (`observed_validation = 'linked'`), never an evidence class.
