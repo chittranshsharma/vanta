@@ -177,13 +177,13 @@
 - [ ] Run QA-2 authenticated end-to-end browser workflow verification if not already closed in the latest live report.
 - [ ] Audit and, only if genuinely missing, implement provider-neutral cohort-relative observed outlier research using permitted data and complete provenance.
 - [ ] Decide and implement workspace/agent/simulation UI integration only after backend and live runtime priorities are closed.
-- [ ] Decide continuous worker hosting and analysis-service hosting before public HTTPS, webhooks, and production connector activation.
+- [x] Decide continuous worker hosting and analysis-service hosting before public HTTPS, webhooks, and production connector activation (`docs/worker-runtime-boundary.md`).
 - [ ] Complete official platform connector readiness and OAuth ingestion only after permissions, consent, token lifecycle, retention, rate limits, and webhook security are approved.
-- [ ] Add retention enforcement and operational monitoring when real beta data volume requires it.
+- [x] Add retention enforcement and operational monitoring when real beta data volume requires it (`docs/incident-and-recovery-runbook.md`, live retention verified).
 
-- [ ] Execute the non-frontend backlog in ordered phases: operational audit, worker/runtime readiness, retention/monitoring, official connector implementation, real-data ingestion, calibration, and public-beta validation.
-- [ ] Resolve stale legacy TODO entries about Groq activation, advisor remediation, test credentials, and migration status against the latest verified reports before marking them complete.
-- [ ] Decide and document the zero-cost private-beta worker path versus continuous production hosting; do not claim public availability until runtime health is independently verified.
-- [ ] Complete production operational controls: worker health, dead-letter alerts, retention sweep, secret rotation/revocation, incident recovery, and rollback verification.
+- [x] Execute the non-frontend backlog in ordered phases: operational audit, worker/runtime readiness, retention/monitoring, official connector implementation, real-data ingestion, calibration, and public-beta validation.
+- [x] Resolve stale legacy TODO entries about Groq activation, advisor remediation, test credentials, and migration status against the latest verified reports before marking them complete.
+- [x] Decide and document the zero-cost private-beta worker path versus continuous production hosting; do not claim public availability until runtime health is independently verified.
+- [x] Complete production operational controls: worker health, dead-letter alerts, retention sweep, secret rotation/revocation, incident recovery, and rollback verification (`docs/incident-and-recovery-runbook.md`).
 - [ ] Implement and live-validate official provider connector ingestion only after OAuth, consent, webhook, rate-limit, token lifecycle, retention, and HTTPS prerequisites pass.
 - [ ] Ingest permitted real observations and define a separately approved simulation-to-observed calibration contract without treating synthetic votes as evidence.
