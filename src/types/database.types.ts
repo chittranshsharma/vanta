@@ -2396,6 +2396,314 @@ export type Database = {
         }
         Relationships: []
       }
+      simulation_mutations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          mutation_type: string
+          payload: Json
+          rationale: string
+          sequence_order: number
+          simulation_run_id: string
+          target_scene_index: number
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mutation_type: string
+          payload?: Json
+          rationale: string
+          sequence_order: number
+          simulation_run_id: string
+          target_scene_index: number
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mutation_type?: string
+          payload?: Json
+          rationale?: string
+          sequence_order?: number
+          simulation_run_id?: string
+          target_scene_index?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_mutations_simulation_run_id_workspace_id_fkey"
+            columns: ["simulation_run_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "simulation_mutations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_observed_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          experiment_outcome_id: string
+          id: string
+          metadata: Json
+          note: string | null
+          simulation_run_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          experiment_outcome_id: string
+          id?: string
+          metadata?: Json
+          note?: string | null
+          simulation_run_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          experiment_outcome_id?: string
+          id?: string
+          metadata?: Json
+          note?: string | null
+          simulation_run_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_observed_links_experiment_outcome_id_workspace_id_fkey"
+            columns: ["experiment_outcome_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "experiment_outcomes"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "simulation_observed_links_simulation_run_id_workspace_id_fkey"
+            columns: ["simulation_run_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "simulation_observed_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_results: {
+        Row: {
+          council_execution: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          simulated_scenes: Json
+          simulation_run_id: string
+          structural_delta: Json
+          warnings: Json
+          workspace_id: string
+        }
+        Insert: {
+          council_execution?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          simulated_scenes?: Json
+          simulation_run_id: string
+          structural_delta?: Json
+          warnings?: Json
+          workspace_id: string
+        }
+        Update: {
+          council_execution?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          simulated_scenes?: Json
+          simulation_run_id?: string
+          structural_delta?: Json
+          warnings?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_results_simulation_run_id_workspace_id_fkey"
+            columns: ["simulation_run_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "simulation_results_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_review_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_kind: string
+          id: string
+          metadata: Json
+          new_decision: string
+          previous_decision: string | null
+          rationale: string | null
+          simulation_run_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_kind: string
+          id?: string
+          metadata?: Json
+          new_decision: string
+          previous_decision?: string | null
+          rationale?: string | null
+          simulation_run_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_kind?: string
+          id?: string
+          metadata?: Json
+          new_decision?: string
+          previous_decision?: string | null
+          rationale?: string | null
+          simulation_run_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_review_events_simulation_run_id_workspace_id_fkey"
+            columns: ["simulation_run_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "simulation_review_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_runs: {
+        Row: {
+          assumptions: Json
+          completed_at: string | null
+          controls: Json
+          created_at: string
+          created_by: string | null
+          evidence_class: string
+          hypothesis: string
+          id: string
+          idempotency_key: string
+          limitations: Json
+          observed_validation: string
+          provenance: Json
+          review_decision: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          twin_id: string
+          twin_version: number
+          twin_version_id: string
+          uncertainty_note: string
+          workspace_id: string
+        }
+        Insert: {
+          assumptions?: Json
+          completed_at?: string | null
+          controls?: Json
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          hypothesis: string
+          id?: string
+          idempotency_key: string
+          limitations?: Json
+          observed_validation?: string
+          provenance?: Json
+          review_decision?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          twin_id: string
+          twin_version: number
+          twin_version_id: string
+          uncertainty_note: string
+          workspace_id: string
+        }
+        Update: {
+          assumptions?: Json
+          completed_at?: string | null
+          controls?: Json
+          created_at?: string
+          created_by?: string | null
+          evidence_class?: string
+          hypothesis?: string
+          id?: string
+          idempotency_key?: string
+          limitations?: Json
+          observed_validation?: string
+          provenance?: Json
+          review_decision?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          twin_id?: string
+          twin_version?: number
+          twin_version_id?: string
+          uncertainty_note?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_runs_twin_id_workspace_id_fkey"
+            columns: ["twin_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twins"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "simulation_runs_twin_version_id_workspace_id_fkey"
+            columns: ["twin_version_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "creative_twin_versions"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "simulation_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       connector_accounts_public: {
@@ -2768,6 +3076,53 @@ export type Database = {
         Returns: Json
       }
       storage_workspace_id: { Args: { object_name: string }; Returns: string }
+      create_simulation_run_atomic: {
+        Args: {
+          p_assumptions?: Json
+          p_controls?: Json
+          p_hypothesis: string
+          p_idempotency_key?: string | null
+          p_limitations?: Json
+          p_mutations: Json
+          p_provenance?: Json
+          p_results: Json
+          p_twin_id: string
+          p_twin_version: number
+          p_twin_version_id: string
+          p_uncertainty_note?: string
+          p_workspace_id: string
+        }
+        Returns: Json
+      }
+      link_simulation_observed_outcome_atomic: {
+        Args: {
+          p_experiment_outcome_id: string
+          p_metadata?: Json
+          p_note?: string | null
+          p_simulation_run_id: string
+          p_workspace_id: string
+        }
+        Returns: Json
+      }
+      review_simulation_run_atomic: {
+        Args: {
+          p_decision: string
+          p_metadata?: Json
+          p_rationale?: string | null
+          p_simulation_run_id: string
+          p_workspace_id: string
+        }
+        Returns: Json
+      }
+      transition_simulation_run_status_atomic: {
+        Args: {
+          p_reason?: string | null
+          p_simulation_run_id: string
+          p_target_status: string
+          p_workspace_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

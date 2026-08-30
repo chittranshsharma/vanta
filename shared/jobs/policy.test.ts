@@ -118,7 +118,7 @@ describe("approval gate", () => {
   });
 
   it("every job type is known", () => {
-    expect(JOB_TYPES).toHaveLength(10);
+    expect(JOB_TYPES).toHaveLength(14);
   });
 });
 

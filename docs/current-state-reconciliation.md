@@ -12,13 +12,13 @@ A complete, read-only audit of the local repository, build pipeline, test suites
 
 | Check | Tool / Command | Result | Details |
 |---|---|---|---|
-| **Lint** | `npm run lint` (ESLint flat config) | **PASSED** | 0 errors, 0 warnings |
+| **Lint** | `npm run lint` (ESLint flat config) | **PASSED** | 0 errors |
 | **Web Typecheck** | `npm run typecheck` (`tsc -b --noEmit`) | **PASSED** | 0 type errors |
 | **Worker Typecheck** | `npm run typecheck:worker` | **PASSED** | 0 type errors across `services/job-worker` |
-| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 763 passed across 58 test files |
+| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 816 passed across 60 test files |
 | **Python Service Tests** | `python -m pytest services/analysis-worker/tests` | **PASSED** | 15 passed across 2 test modules |
-| **Production Build** | `npm run build` (`vite build`) | **PASSED** | Built in 1.83s, clean code-split chunks, total client bundle healthy |
-| **Total Automated Tests** | Vitest + Pytest | **778 tests** | 100% passing rate |
+| **Production Build** | `npm run build` (`vite build`) | **PASSED** | Built cleanly, code-split chunks, total client bundle healthy |
+| **Total Automated Tests** | Vitest + Pytest | **831 tests** | 100% passing rate |
 
 ---
 
@@ -34,7 +34,7 @@ A complete, read-only audit of the local repository, build pipeline, test suites
 
 ### 2.1 Applied Migration Chain (Live Verification)
 
-The live migration ledger (`supabase_migrations.schema_migrations`) confirms all migrations 001 through 017 are live and applied:
+The live migration ledger confirms migrations 001 through 020 are live, with Migration 021 authored and statically validated:
 
 | Version | Migration Name | Live Status | Scope / Tables |
 |---|---|---|---|
@@ -49,7 +49,7 @@ The live migration ledger (`supabase_migrations.schema_migrations`) confirms all
 | `20260823084225` | `20260822000009_composite_tenant_fks` | Applied | Validated composite FKs on twins, runs, metrics |
 | `20260823084335` | `20260822000010_model_task_runs` | Applied | `model_task_runs` append-only store |
 | `20260823084353` | `20260822000011_jobs` | Applied | `jobs` queue + claiming/approval RPCs |
-| `20260823084404` | `20260822000012_derived_artifacts` | Applied | `derived_artifacts` lineage + purge routine |
+| `20260822000012` | `20260822000012_derived_artifacts` | Applied | `derived_artifacts` lineage + purge routine |
 | `20260823084515` | `20260822000013_embeddings` | Applied | `retrieval_embeddings` pgvector store |
 | `20260823084528` | `20260822000014_connector_accounts` | Applied | `connector_accounts` + secure public view |
 | `20260823084535` | `20260822000015_workspace_quotas` | Applied | Daily quotas + `consume_quota` RPC |
@@ -57,9 +57,9 @@ The live migration ledger (`supabase_migrations.schema_migrations`) confirms all
 | `20260823084622` | `20260822000017_post_observations` | Applied | `post_observations` observed history store |
 | `20260828182548` | `20260822000018_backend_primitives` | Applied | `import_batches`, `post_variant_attributions`, `workspaces.timezone`, `delete_post_observation_batch` RPC |
 | `20260828183603` | `20260822000019_conversation_intelligence` | Applied | `conversation_observations`, `conversation_interpretations`, `conversation_attributions`, `conversation_review_events`, review RPCs |
-| `20260828184335` | `20260822000020_expand_job_types` | Applied | Expanded `jobs_job_type_check` with 5 conversation job types |
+| `20260830075407` | `20260822000021_simulation_lab` | Applied | 5 simulation lab tables (`simulation_runs`, `simulation_mutations`, `simulation_results`, `simulation_review_events`, `simulation_observed_links`), 4 RPCs, expanded job types |
 
-*Crucial rule: Never reapply migrations 001–020.*
+*Crucial rule: Never reapply migrations 001–021.*
 
 ### 2.2 Table & RLS Inventory
 

@@ -12,7 +12,7 @@ import type {
   SceneSnapshot,
   SimulatedVariant,
   StructuralDelta,
-} from "./types";
+} from "./types.js";
 
 export interface ApprovedBrandClaimContext {
   id: string;
@@ -79,13 +79,13 @@ export function applyCounterfactualMutations(
   }
 
   // Deep clone scenes to guarantee baseline immutability
-  const clonedScenes: SceneSnapshot[] = baseline.scenes.map((s) => ({
+  const clonedScenes: SceneSnapshot[] = baseline.scenes.map((s: SceneSnapshot) => ({
     sceneIndex: s.sceneIndex,
     text: s.text,
     onScreenText: s.onScreenText ?? null,
     durationSeconds: s.durationSeconds,
     wpm: s.wpm,
-    claims: s.claims.map((c) => ({ ...c })),
+    claims: s.claims.map((c: { claimText: string; brandClaimId?: string }) => ({ ...c })),
   }));
 
   let hasHookChanged = false;
@@ -158,7 +158,7 @@ export function applyCounterfactualMutations(
         }
 
         // Reorder scenes
-        const reordered = order.map((originalIdx, newIdx) => ({
+        const reordered = order.map((originalIdx: number, newIdx: number) => ({
           ...clonedScenes[originalIdx],
           sceneIndex: newIdx,
         }));
@@ -225,7 +225,7 @@ export function applyCounterfactualMutations(
 
         const scene = clonedScenes[mut.targetSceneIndex];
         // Replace original claim in scene
-        scene.claims = scene.claims.filter((c) => c.claimText !== mut.originalClaimText);
+        scene.claims = scene.claims.filter((c: { claimText: string; brandClaimId?: string }) => c.claimText !== mut.originalClaimText);
         scene.claims.push({
           claimText: mut.substituteBrandClaimText,
           brandClaimId: mut.substituteBrandClaimId,
@@ -256,7 +256,7 @@ export function applyCounterfactualMutations(
   }
 
   // Calculate total simulated duration
-  const totalSimulatedDuration = clonedScenes.reduce((sum, s) => sum + s.durationSeconds, 0);
+  const totalSimulatedDuration = clonedScenes.reduce((sum: number, s: SceneSnapshot) => sum + s.durationSeconds, 0);
   if (totalSimulatedDuration < 5.0 || totalSimulatedDuration > 600.0) {
     errors.push(
       `Total simulated duration (${totalSimulatedDuration.toFixed(1)}s) is outside allowed creative limits [5.0s, 600.0s].`
@@ -273,8 +273,8 @@ export function applyCounterfactualMutations(
 
   // Calculate structural delta
   const simulatedAverageWpm = calculateAverageWpm(clonedScenes);
-  const baselineClaimCount = baseline.scenes.reduce((sum, s) => sum + s.claims.length, 0);
-  const simulatedClaimCount = clonedScenes.reduce((sum, s) => sum + s.claims.length, 0);
+  const baselineClaimCount = baseline.scenes.reduce((sum: number, s: SceneSnapshot) => sum + s.claims.length, 0);
+  const simulatedClaimCount = clonedScenes.reduce((sum: number, s: SceneSnapshot) => sum + s.claims.length, 0);
 
   const structuralDelta: StructuralDelta = {
     baselineDurationSeconds: baseline.totalDurationSeconds,

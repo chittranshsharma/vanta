@@ -10,11 +10,11 @@
  * simulation to observed empirical truth.
  */
 
-import type { AgentRole } from "../agents/graph";
-import type { ReviewDecision } from "../agents/council";
-import { applyCounterfactualMutations } from "./mutations";
-import { validateSimulationRunRequest, type SimulationRunRequest } from "./validator";
-import type { SimulationRun } from "./types";
+import type { AgentRole } from "../agents/graph.js";
+import type { ReviewDecision } from "../agents/council.js";
+import { applyCounterfactualMutations } from "./mutations.js";
+import { validateSimulationRunRequest, type SimulationRunRequest } from "./validator.js";
+import type { SimulationRun } from "./types.js";
 
 export interface SimulationExecutionResult {
   success: boolean;

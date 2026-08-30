@@ -9,8 +9,8 @@
  * or variance/lift against observed outcomes.
  */
 
-import type { AgentRole } from "../agents/graph";
-import type { ReviewDecision } from "../agents/council";
+import type { AgentRole } from "../agents/graph.js";
+import type { ReviewDecision } from "../agents/council.js";
 
 export type SimulationStatus =
   | "draft"

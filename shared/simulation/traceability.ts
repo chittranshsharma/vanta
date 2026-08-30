@@ -7,7 +7,7 @@
  * Invariant: Preserves the simulation run's evidence_class = 'simulation'.
  */
 
-import type { SimulationObservedTrace, SimulationRun } from "./types";
+import type { SimulationObservedTrace, SimulationRun } from "./types.js";
 
 export interface CreateTraceLinkRequest {
   simulationRun: SimulationRun;

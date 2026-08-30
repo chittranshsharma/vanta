@@ -24,6 +24,12 @@ import { makeConversationDeduplicateHandler } from "./handlers/conversationDedup
 import { makeConversationInterpretationProposalHandler } from "./handlers/conversationInterpretationProposal.js";
 import { makeConversationAttributionHandler } from "./handlers/conversationAttribution.js";
 import { makeConversationAggregateHandler } from "./handlers/conversationAggregate.js";
+import {
+  makeSimulationValidateHandler,
+  makeSimulationExecuteHandler,
+  makeSimulationReviewReadyHandler,
+  makeSimulationObservedLinkHandler,
+} from "./handlers/simulationHandlers.js";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -46,6 +52,10 @@ const handlers: Partial<Record<JobType, JobHandler>> = {
   conversation_interpretation_proposal: makeConversationInterpretationProposalHandler(supabase),
   conversation_attribution: makeConversationAttributionHandler(supabase),
   conversation_aggregate: makeConversationAggregateHandler(supabase),
+  simulation_validate: makeSimulationValidateHandler(supabase),
+  simulation_execute: makeSimulationExecuteHandler(supabase),
+  simulation_review_ready: makeSimulationReviewReadyHandler(supabase),
+  simulation_observed_link: makeSimulationObservedLinkHandler(supabase),
 };
 
 const deps: WorkerDeps = {

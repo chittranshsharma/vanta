@@ -12,7 +12,7 @@
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%7C%20RLS-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(763%2F763)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-Passing%20(816%2F816)-729B1B?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![CI](https://img.shields.io/badge/CI-lint%20%7C%20typecheck%20%7C%20test%20%7C%20build-blue?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![Build](https://img.shields.io/badge/Production%20Build-Clean-emerald?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](#)
@@ -465,6 +465,7 @@ Vanta’s architectural roadmap uses a structured **`[Phase].[Ticket]`** coordin
 
 #### **Phase 6: Counterfactual Simulation Lab & Cinematic UI Polish**
 - [x] **Ticket 6.1: Counterfactual Simulation Lab Engine** (7 bounded mutations, 6-role analysis subgraph, mandatory human review gate, traceability-only linkage)
+- [x] **Phase 6B: Counterfactual Simulation Lab Persistence & Productization** (Migration 021 live on Supabase, 5 simulation tables, 4 atomic RPCs, 49/49 live disposable checks passed, 45/45 Playwright isolation checks passed)
 - [ ] **Ticket 6.2: Workspace & Council UI Integration** (Connecting Specialist Council & Simulation Lab to the user interface with restrained ReactBits motion)
 
 #### **Phase 7: Trend & Publishing Intelligence**
@@ -476,7 +477,7 @@ Vanta’s architectural roadmap uses a structured **`[Phase].[Ticket]`** coordin
 - [ ] **Ticket 8.2: Official Platform OAuth Connector Ingestion** (Official Meta/Instagram Graph API, YouTube Analytics, and TikTok Business OAuth sync)
 
 #### **Phase QA: Isolation & Security Verifications**
-- [x] **Ticket QA-1: Real-JWT Two-User E2E Isolation Suite** (40/40 Playwright multi-tenant security verification tests passing live against Supabase)
+- [x] **Ticket QA-1: Real-JWT Two-User E2E Isolation Suite** (45/45 Playwright multi-tenant security verification tests passing live against Supabase across all 40 tenant tables)
 - [ ] **Ticket QA-2: End-to-End Browser Workflow Verification** (Authenticated full-lifecycle browser testing of intake, council, and simulation workflows)
 
 ---

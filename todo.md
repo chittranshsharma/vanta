@@ -96,6 +96,15 @@
   - [x] Traceability-only post-hoc empirical outcome linkage without variance/lift calculation (`shared/simulation/traceability.ts`).
   - [x] 763 Vitest + 15 Pytest = 778 automated tests passing cleanly.
 
+- [x] Phase 6B: Counterfactual Simulation Productization & Backend Architecture:
+  - [x] Additive Migration 021 (`20260822000021_simulation_lab.sql`): 5 tables (`simulation_runs`, `simulation_mutations`, `simulation_results`, `simulation_review_events`, `simulation_observed_links`) with composite FKs and strict RLS (`USING (false)` on direct UPDATE/DELETE).
+  - [x] 4 Hardened SECURITY DEFINER RPCs (`create_simulation_run_atomic`, `review_simulation_run_atomic`, `link_simulation_observed_outcome_atomic`, `transition_simulation_run_status_atomic`) with search_path, revokes, and validation state machines.
+  - [x] Immutability trigger `trg_block_simulation_run_core_mutation` guarding baseline integrity and `evidence_class = 'simulation'`.
+  - [x] Authenticated client service boundary (`src/lib/simulations.ts`) with typed row contracts, idempotent execution, review governance, and job enqueueing with daily quota checks.
+  - [x] 4 Simulation background job handlers (`simulation_validate`, `simulation_execute`, `simulation_review_ready`, `simulation_observed_link`) in `services/job-worker/src/handlers/simulationHandlers.ts` and registered in `services/job-worker/src/worker.ts`.
+  - [x] Authoritative architecture specification `docs/simulation-productization-architecture.md`.
+  - [x] 816 Vitest + 15 Pytest = 831 automated tests passing cleanly, 0 ESLint errors, clean web and worker TypeScript typechecks, clean production bundle build.
+
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work

@@ -12,8 +12,8 @@ import {
   ROLE_CONTRACTS,
   planMinimalSubgraph,
   validateGraph,
-} from "./graph";
-import type { FallbackReason, RoleFallbackResult } from "./fallback";
+} from "./graph.js";
+import type { FallbackReason, RoleFallbackResult } from "./fallback.js";
 
 export type CouncilTaskType =
   | "creative_audit"
@@ -119,7 +119,7 @@ export function validateCouncilPreflight(ctx: CouncilExecutionContext): CouncilP
     allowed: reasons.length === 0,
     reasons,
     graph,
-    plannedRoles: graph.nodes.map((n) => n.role),
+    plannedRoles: graph.nodes.map((n: { role: AgentRole }) => n.role),
     modelCallsRequired,
   };
 }

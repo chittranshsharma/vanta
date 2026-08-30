@@ -98,6 +98,7 @@ describe("migration files", () => {
       "20260822000018_backend_primitives.sql",
       "20260822000019_conversation_intelligence.sql",
       "20260822000020_expand_job_types.sql",
+      "20260822000021_simulation_lab.sql",
     ]);
   });
 
@@ -113,6 +114,7 @@ describe("migration files", () => {
     "20260822000015_workspace_quotas.sql",
     "20260822000016_experiments.sql",
     "20260822000017_post_observations.sql",
+    "20260822000021_simulation_lab.sql",
   ])("marks unapplied migration %s as PENDING LIVE APPLY in a header comment", (file) => {
     expect(sqlByFile[file]).toMatch(/PENDING LIVE APPLY/);
   });
@@ -123,8 +125,8 @@ describe("row level security coverage", () => {
   const enabled = rlsEnabledTables(code);
   const policies = policiesByTable(code);
 
-  it("creates the 36 tenant tables the product documents", () => {
-    expect(tables).toHaveLength(36);
+  it("creates the 41 tenant tables the product documents", () => {
+    expect(tables).toHaveLength(41);
   });
 
   it.each(tables)("enables RLS on public.%s", (table) => {
@@ -158,6 +160,11 @@ describe("row level security coverage", () => {
     "model_task_runs",
     "experiment_outcomes",
     "conversation_review_events",
+    "simulation_runs",
+    "simulation_mutations",
+    "simulation_results",
+    "simulation_review_events",
+    "simulation_observed_links",
   ])(
     "denies UPDATE and DELETE on snapshot table public.%s at policy level",
     (table) => {
@@ -196,6 +203,11 @@ describe("row level security coverage", () => {
     ["conversation_interpretations", "created_by"],
     ["conversation_attributions", "created_by"],
     ["conversation_review_events", "created_by"],
+    ["simulation_runs", "created_by"],
+    ["simulation_mutations", "created_by"],
+    ["simulation_results", "created_by"],
+    ["simulation_review_events", "created_by"],
+    ["simulation_observed_links", "created_by"],
   ];
 
   it.each(actorBoundTables)(
@@ -377,6 +389,11 @@ describe("privileged SQL", () => {
       "block_conversation_observation_core_mutation",
       "review_conversation_observation_atomic",
       "review_conversation_interpretation_atomic",
+      "block_simulation_run_core_mutation",
+      "create_simulation_run_atomic",
+      "review_simulation_run_atomic",
+      "link_simulation_observed_outcome_atomic",
+      "transition_simulation_run_status_atomic",
     ]) {
       expect(names.has(expected), `missing SECURITY DEFINER function ${expected}`).toBe(true);
     }
@@ -532,6 +549,60 @@ describe("expand job types (migration 020)", () => {
     expect(sql).toMatch(/conversation_interpretation_proposal/i);
     expect(sql).toMatch(/conversation_attribution/i);
     expect(sql).toMatch(/conversation_aggregate/i);
+  });
+});
+
+describe("counterfactual simulation lab persistence (migration 021)", () => {
+  const sql = sqlByFile["20260822000021_simulation_lab.sql"];
+
+  it("creates simulation_runs with evidence_class = simulation and review state checks", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.simulation_runs/i);
+    expect(sql).toMatch(/evidence_class\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'simulation'\s+CHECK\s*\(\s*evidence_class\s*=\s*'simulation'\s*\)/i);
+    expect(sql).toMatch(/observed_validation\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'unknown'\s+CHECK\s*\(\s*observed_validation\s+IN\s*\(\s*'unknown',\s*'linked'\s*\)\s*\)/i);
+    expect(sql).toMatch(/review_decision\s+IN\s*\(\s*'unreviewed',\s*'needs_human',\s*'accepted',\s*'rejected',\s*'corrected'\s*\)/i);
+    expect(sql).toMatch(/UNIQUE\s*\(\s*workspace_id,\s*idempotency_key\s*\)/i);
+  });
+
+  it("creates simulation_mutations with bounded mutation type checks", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.simulation_mutations/i);
+    expect(sql).toMatch(/mutation_type\s+IN\s*\([\s\S]*?'hook_replacement'[\s\S]*?'cta_replacement'[\s\S]*?'scene_reorder'[\s\S]*?'scene_duration_adjust'[\s\S]*?'on_screen_text_change'[\s\S]*?'claim_substitution'[\s\S]*?'tone_guideline_adaptation'[\s\S]*?\)/i);
+    expect(sql).toMatch(/REFERENCES\s+public\.simulation_runs\(id,\s*workspace_id\)\s*\n?\s*ON\s+DELETE\s+CASCADE/i);
+  });
+
+  it("creates simulation_results with structural delta and council execution fields", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.simulation_results/i);
+    expect(sql).toMatch(/simulated_scenes\s+JSONB\s+NOT\s+NULL\s+DEFAULT\s+'\[\]'::jsonb/i);
+    expect(sql).toMatch(/structural_delta\s+JSONB\s+NOT\s+NULL\s+DEFAULT\s+'\{\}'::jsonb/i);
+    expect(sql).toMatch(/council_execution\s+JSONB\s+NOT\s+NULL\s+DEFAULT\s+'\{\}'::jsonb/i);
+  });
+
+  it("creates append-only simulation_review_events (denies update and delete)", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.simulation_review_events/i);
+    expect(sql).toMatch(/simulation_review_events_no_update[\s\S]*?USING\s*\(\s*false\s*\)/i);
+    expect(sql).toMatch(/simulation_review_events_no_delete[\s\S]*?USING\s*\(\s*false\s*\)/i);
+  });
+
+  it("creates simulation_observed_links with composite FK to experiment_outcomes", () => {
+    expect(sql).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+public\.simulation_observed_links/i);
+    expect(sql).toMatch(/REFERENCES\s+public\.experiment_outcomes\(id,\s*workspace_id\)\s*\n?\s*ON\s+DELETE\s+RESTRICT/i);
+    expect(sql).toMatch(/simulation_observed_links_no_update[\s\S]*?USING\s*\(\s*false\s*\)/i);
+    expect(sql).toMatch(/simulation_observed_links_no_delete[\s\S]*?USING\s*\(\s*false\s*\)/i);
+  });
+
+  it("provides hardened simulation RPCs with search path and execution revokes", () => {
+    expect(sql).toMatch(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.create_simulation_run_atomic/i);
+    expect(sql).toMatch(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.review_simulation_run_atomic/i);
+    expect(sql).toMatch(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.link_simulation_observed_outcome_atomic/i);
+    expect(sql).toMatch(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.transition_simulation_run_status_atomic/i);
+    expect(sql).toMatch(/REVOKE\s+ALL\s+ON\s+FUNCTION\s+public\.create_simulation_run_atomic/i);
+    expect(sql).toMatch(/GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+public\.create_simulation_run_atomic[\s\S]*?TO\s+authenticated/i);
+  });
+
+  it("expands jobs_job_type_check with all 14 job types including simulation jobs", () => {
+    expect(sql).toMatch(/simulation_validate/i);
+    expect(sql).toMatch(/simulation_execute/i);
+    expect(sql).toMatch(/simulation_review_ready/i);
+    expect(sql).toMatch(/simulation_observed_link/i);
   });
 });
 

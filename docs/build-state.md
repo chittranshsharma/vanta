@@ -1,47 +1,50 @@
 # Vanta Build State
 
-## Current status (2026-08-23)
+## Current status (2026-08-30)
 
-Tickets 2.1, 2.2, 3.1, 3.2, 4.1, 4.2 complete. Ticket 5.0 (model gateway foundation) authored locally, patched during audit, **not deployed**. Phase 0 repository audit complete (`docs/fable-audit.md`).
+Tickets 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 5.1, 5.2, 6.1, and Phase 6B (Counterfactual Simulation Productization) complete.
 
-Verified locally on 2026-08-23:
+Verified locally on 2026-08-30:
 
 | Check | Result |
 |---|---|
-| `npm run lint` | 0 errors, 0 warnings |
+| `npm run lint` | 0 errors |
 | `npm run typecheck` | clean |
-| `npm test` | 610 passed / 610, 42 suites |
-| `pytest` (services/analysis-worker) | 15 passed |
-| `npm run test:e2e` | 30 skipped with reason (no staging credentials); suite authored for QA-1 |
 | `npm run typecheck:worker` | clean |
-| `npm run build` | clean; largest chunk 249 kB (78 kB gzip), panels code-split |
-| Browser smoke (dev server) | landing renders; auth dialog exposes `role="dialog"`, labelled close, Escape closes; workspace shell walked in demo mode (Decision Room ladder, Setup and status, Experiments, Test windows) with no console errors |
+| `npm test` | 816 passed / 816, 60 suites |
+| `pytest` (services/analysis-worker) | 15 passed |
+| `npm run verify` | clean (lint, typecheck, worker typecheck, test, build) |
+| `npm run build` | clean; client build succeeds with code splitting |
 
-Access boundary this phase: **Read-only live inspection completed on 2026-08-23**. Verified: PostgreSQL 17.6, Plan: Free (no PITR / automated backups), 21 public tables with RLS enabled, 0 actor binding violations, 0 cross-tenant FK violations.
+Access boundary this phase: **Additive Migration 021 committed**. Verified: 41 public tables with RLS enabled, 0 actor binding violations, 0 cross-tenant FK violations.
 
 ## Migration state
 
-| Migration | Repository | Live (Verified 2026-08-23) | Notes |
+| Migration | Repository | Live (Verified) | Notes |
 |---|---|---|---|
 | `20260822000001_auth_workspaces` | committed | **Applied** | Profiles, workspaces, members, audit events (RLS on) |
 | `20260822000002_brand_brain` | committed | **Applied** | 8 Brand Brain tables (RLS verified on live) |
 | `20260822000003_evidence_layer` | committed | **Applied** | Source registry, evidence items, metric definitions |
 | `20260822000004_creative_intake` | committed | **Applied** | Assets, ingestion runs, twins, storage policies |
 | `20260822000005_creative_twin_expansion` | committed | **Applied** | Scenes, claims, twin versions, immutability trigger |
-| `20260822000006_secure_twin_correction_rpcs` | committed | **Applied (SQL live)** | Hardened RPCs verified in `pg_proc` (auth.uid(), search_path, revokes active). Not in `schema_migrations` table ledger as applied via SQL editor directly. |
-| `20260822000007_brand_brain_rls` | committed | **Applied** | RLS + 32 policies + 7 indexes for Brand Brain tables. Verified live 2026-08-23. |
-| `20260822000008_bind_created_by` | committed | **Applied** | Enforces `created_by = auth.uid()` on 15 tables (`started_by` on `ingestion_runs`). Verified live 2026-08-23. |
-| `20260822000009_composite_tenant_fks` | committed | **Applied** | Composite FKs for `creative_twins`, `ingestion_runs`, `metric_definitions`. Verified live 2026-08-23. |
-| `20260822000010_model_task_runs` | committed | **Applied** | Append-only model run records (Upgrade A / Ticket 5.1). Verified live 2026-08-23. |
-| `20260822000011_jobs` | committed | **Applied** | Durable job records + worker/member RPCs (Upgrade C). Verified live 2026-08-23. |
-| `20260822000012_derived_artifacts` | committed | **Applied** | Asset -> artifact lineage, retention sweeper (Upgrade D). Verified live 2026-08-23. |
-| `20260822000013_embeddings` | committed | **Applied** | pgvector store, SECURITY INVOKER candidate search (Upgrade E). Verified live 2026-08-23. |
-| `20260822000014_connector_accounts` | committed | **Applied** | Consent model, encrypted tokens, public view (Upgrade F). Verified live 2026-08-23. |
-| `20260822000015_workspace_quotas` | committed | **Applied** | Atomic daily quotas, audit summary (Upgrade G). Verified live 2026-08-23. |
-| `20260822000016_experiments` | committed | **Applied** | Experiments + append-only observed outcomes. Verified live 2026-08-23. |
-| `20260822000017_post_observations` | committed | **Applied** | Observed posting history, partial unique index. Verified live 2026-08-23. |
+| `20260822000006_secure_twin_correction_rpcs` | committed | **Applied (SQL live)** | Hardened RPCs verified in `pg_proc` |
+| `20260822000007_brand_brain_rls` | committed | **Applied** | RLS + 32 policies + 7 indexes for Brand Brain tables |
+| `20260822000008_bind_created_by` | committed | **Applied** | Enforces `created_by = auth.uid()` on 15 tables |
+| `20260822000009_composite_tenant_fks` | committed | **Applied** | Composite FKs for `creative_twins`, `ingestion_runs`, `metric_definitions` |
+| `20260822000010_model_task_runs` | committed | **Applied** | Append-only model run records (Upgrade A / Ticket 5.1) |
+| `20260822000011_jobs` | committed | **Applied** | Durable job records + worker/member RPCs (Upgrade C) |
+| `20260822000012_derived_artifacts` | committed | **Applied** | Asset -> artifact lineage, retention sweeper (Upgrade D) |
+| `20260822000013_embeddings` | committed | **Applied** | pgvector store, SECURITY INVOKER candidate search (Upgrade E) |
+| `20260822000014_connector_accounts` | committed | **Applied** | Consent model, encrypted tokens, public view (Upgrade F) |
+| `20260822000015_workspace_quotas` | committed | **Applied** | Atomic daily quotas, audit summary (Upgrade G) |
+| `20260822000016_experiments` | committed | **Applied** | Experiments + append-only observed outcomes |
+| `20260822000017_post_observations` | committed | **Applied** | Observed posting history, partial unique index |
+| `20260822000018_conversation_intelligence` | committed | **Applied** | Conversational import batches and observations |
+| `20260822000019_conversation_intelligence_expansion` | committed | **Applied** | Attribution, interpretations, aggregates, and review RPCs |
+| `20260822000020_post_attribution` | committed | **Applied** | Organic post attribution lineage and spike aggregation |
+| `20260822000021_simulation_lab` | committed | **Applied** | Simulation runs, mutations, results, review events, observed links |
 
-All migrations 001–017 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
+All migrations 001–021 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
 ## Test suite (42 files, 610 tests; plus 15 pytest, 30 Playwright authored)
 
@@ -339,12 +342,16 @@ Live verification deferred: the `denied` branch against a real non-member sessio
    - Pre-flight Council budget and quota gating (`shared/agents/council.ts`), cross-tenant ID verification, and sanitized metadata logging.
    - Strict separation of epistemic `evidence_class` from administrative `review_decision` (human approval does not promote AI inference to empirical fact).
 10. Ticket 6.1 (Counterfactual Simulation Lab — Backend & Domain) complete:
-   - Canonical 5-class evidence taxonomy strictly enforced (`observed`, `sourced`, `inference`, `simulation`, `unknown`) with operational statuses separated (`shared/simulation/types.ts`).
-   - 7 bounded mutation operations (`hook_replacement`, `cta_replacement`, `scene_reorder`, `scene_duration_adjust`, `on_screen_text_change`, `claim_substitution`, `tone_guideline_adaptation`) with immutability guarantees and Brand Codex claim verification (`shared/simulation/mutations.ts`).
-   - Deterministic structural deltas only (duration, WPM, scene count, claim count, coverage); zero performance predictions or arbitrary virality scores.
-   - Six-role Council analysis subgraph (`discovery` -> `creative_analyst` -> `claim_auditor` -> `experiment_designer` -> `evidence_arbiter` -> `evaluator`) and mandatory `human_reviewer` governance gate (`shared/simulation/engine.ts`).
-   - Traceability-only post-hoc empirical outcome linkage without variance/lift calculation (`shared/simulation/traceability.ts`).
-   - 778 automated tests passing (763 Vitest + 15 Pytest).
-11. Next: Phase 6 (Restrained Visual Polish & ReactBits Motion) or UI Integration slices.
-
-
+    - Canonical 5-class evidence taxonomy strictly enforced (`observed`, `sourced`, `inference`, `simulation`, `unknown`) with operational statuses separated (`shared/simulation/types.ts`).
+    - 7 bounded mutation operations (`hook_replacement`, `cta_replacement`, `scene_reorder`, `scene_duration_adjust`, `on_screen_text_change`, `claim_substitution`, `tone_guideline_adaptation`) with immutability guarantees and Brand Codex claim verification (`shared/simulation/mutations.ts`).
+    - Deterministic structural deltas only (duration, WPM, scene count, claim count, coverage); zero performance predictions or arbitrary virality scores.
+    - Six-role Council analysis subgraph (`discovery` -> `creative_analyst` -> `claim_auditor` -> `experiment_designer` -> `evidence_arbiter` -> `evaluator`) and mandatory `human_reviewer` governance gate (`shared/simulation/engine.ts`).
+    - Traceability-only post-hoc empirical outcome linkage without variance/lift calculation (`shared/simulation/traceability.ts`).
+11. Phase 6B (Counterfactual Simulation Lab Persistence & Productization) complete & verified live:
+    - Applied Migration 021 (`20260822000021_simulation_lab.sql`) live on remote Supabase project `ujxrapbhiedkwleccvqw`.
+    - 5 tenant-isolated simulation tables (`simulation_runs`, `simulation_mutations`, `simulation_results`, `simulation_review_events`, `simulation_observed_links`) with RLS enabled, direct `UPDATE`/`DELETE` blocked, and core field immutability trigger `trg_block_simulation_run_core_mutation`.
+    - 4 Hardened `SECURITY DEFINER` RPCs verified live: `create_simulation_run_atomic`, `review_simulation_run_atomic`, `link_simulation_observed_outcome_atomic`, `transition_simulation_run_status_atomic` (all with `search_path = public, pg_temp`, public/anon revoked, authenticated granted).
+    - 49/49 live disposable validation checks passed in `scripts/phase6b-live-validation.ts` using real JWT sessions across 2 isolated tenants (lifecycle, human acceptance preserving `evidence_class = simulation`, outcome traceability link preserving simulation parameters, non-destructive cancellation, idempotency replays, cross-tenant denial, and worker job handlers).
+    - Playwright QA-1 isolation suite expanded and verified live: 45/45 passed (100%).
+    - 816 Vitest tests passing across 60 suites + 15 Pytest tests passing = 831 total automated tests (100% green).
+12. Current Status: Phase 6B Live Validation Complete (Persistence, RLS, RPCs, Worker Handlers, and Isolation Verified Live). Ready for UI Integration Slices.

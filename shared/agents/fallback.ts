@@ -9,7 +9,7 @@
  * 'blocked', 'needs_human', etc. are operational status values, not evidence classes.
  */
 
-import type { AgentRole, EvidenceClass } from "./graph";
+import type { AgentRole, EvidenceClass } from "./graph.js";
 
 export type FallbackStatus =
   | "unknown"

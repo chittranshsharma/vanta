@@ -13,7 +13,11 @@ export type JobType =
   | "conversation_deduplicate"
   | "conversation_interpretation_proposal"
   | "conversation_attribution"
-  | "conversation_aggregate";
+  | "conversation_aggregate"
+  | "simulation_validate"
+  | "simulation_execute"
+  | "simulation_review_ready"
+  | "simulation_observed_link";
 
 export type JobStatus =
   | "awaiting_approval"
@@ -35,6 +39,10 @@ export const JOB_TYPES: readonly JobType[] = [
   "conversation_interpretation_proposal",
   "conversation_attribution",
   "conversation_aggregate",
+  "simulation_validate",
+  "simulation_execute",
+  "simulation_review_ready",
+  "simulation_observed_link",
 ] as const;
 
 /**

@@ -5,8 +5,8 @@
  * and quota availability before any execution or model invocation.
  */
 
-import type { CounterfactualMutation, CreativeTwinVersionSnapshot } from "./types";
-import type { ApprovedBrandClaimContext } from "./mutations";
+import type { CounterfactualMutation, CreativeTwinVersionSnapshot } from "./types.js";
+import type { ApprovedBrandClaimContext } from "./mutations.js";
 
 export interface SimulationRunRequest {
   workspaceId: string;

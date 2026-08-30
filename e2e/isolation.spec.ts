@@ -55,6 +55,11 @@ const TENANT_TABLES = [
   "conversation_interpretations",
   "conversation_attributions",
   "conversation_review_events",
+  "simulation_runs",
+  "simulation_mutations",
+  "simulation_results",
+  "simulation_review_events",
+  "simulation_observed_links",
 ] as const;
 
 async function signIn(email: string, password: string): Promise<{ client: SupabaseClient; userId: string; workspaceId: string }> {
