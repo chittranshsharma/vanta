@@ -2,7 +2,7 @@
 
 ## Current status (2026-08-30)
 
-Tickets 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 5.1, 5.2, 6.1, Phase 6B, and Ticket 7.1 (Source Cohorts & Descriptive Outlier Analyzer) complete.
+Tickets 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 5.1, 5.2, 6.1, Phase 6B, Ticket 7.1, and Ticket 7.2 (Publishing Schedule Optimizer) complete.
 
 Verified locally on 2026-08-30:
 
@@ -11,7 +11,7 @@ Verified locally on 2026-08-30:
 | `npm run lint` | 0 errors |
 | `npm run typecheck` | clean |
 | `npm run typecheck:worker` | clean |
-| `npm test` | 870 passed / 870, 62 suites |
+| `npm test` | 886 passed / 886, 63 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run verify` | clean (lint, typecheck, worker typecheck, test, build) |
 | `npm run build` | clean; client build succeeds with code splitting |

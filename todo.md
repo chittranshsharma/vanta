@@ -114,8 +114,17 @@
   - [x] 48 comprehensive unit/contract tests across `sourceCohorts.test.ts` (26 tests) and `outlierAnalysis.test.ts` (22 tests).
   - [x] 11 disposable live validation tests passed on Supabase project `ujxrapbhiedkwleccvqw` with zero residual test data.
   - [x] Evidence Datasets (§B) deferred: existing `import_batches`, `evidence_items`, and source provenance satisfy benchmark grouping until a distinct versioned benchmark collection workflow is validated.
-  - [x] Total automated tests: 870 Vitest + 15 Pytest = 885 passing cleanly.
   - [x] Architecture specification authored at `docs/source-cohorts-architecture.md`.
+
+- [x] Ticket 7.2: Publishing Schedule Optimizer (Observed-History Summarizer):
+  - [x] Pure deterministic domain module `shared/publishing/scheduleOptimizer.ts` (policy `v1_observed_history_bucket_summary`).
+  - [x] IANA timezone support via `Intl.DateTimeFormat` with full historical and DST awareness (e.g. EDT vs EST).
+  - [x] Multiple resolution strategies (`hour_of_day`, `weekday_and_hour`, `day_of_week`).
+  - [x] Descriptive per-bucket statistics (count, median, Q1, Q3, IQR, min, max, earliest/latest timestamps).
+  - [x] Comparative evaluation with ties detection, single-eligible bucket handling, and fail-closed missing sample gates (min total 20, min per bucket 3).
+  - [x] 16 pure unit tests in `shared/publishing/scheduleOptimizer.test.ts` covering DST, ties, sparse distributions, filters, citability, retention, and non-finite values.
+  - [x] 100% disposable live database validation passed on Supabase project `ujxrapbhiedkwleccvqw`.
+  - [x] Total automated tests: 886 Vitest + 15 Pytest = 901 passing cleanly.
 
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 

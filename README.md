@@ -470,7 +470,7 @@ Vanta’s architectural roadmap uses a structured **`[Phase].[Ticket]`** coordin
 
 #### **Phase 7: Trend & Publishing Intelligence**
 - [x] **Ticket 7.1: Source Cohorts & Publishing Intelligence Foundation** (Migration 022 live on Supabase, `source_cohorts` & `source_cohort_members`, 4 hardened RPCs, fail-closed client, composite tenant FKs, RSS refresh connector jobs, timezone-aware volume aggregation buckets)
-- [ ] **Ticket 7.2: Publishing Schedule Optimizer** (Variant release schedule optimizer based on verified historical observation windows)
+- [x] **Ticket 7.2: Publishing Schedule Optimizer** (Observed-history time bucket summarizer, pure deterministic domain module `shared/publishing/scheduleOptimizer.ts`, IANA/DST wall-clock timezone conversion, fail-closed sample size gates, 16 pure unit tests)
 
 #### **Phase 8: Outcome Calibration & Closed-Loop Learning**
 - [x] **Ticket 8.1: Outcome Calibration Loop** (Import batches with atomic validation, same-workspace attribution, idempotency key checks)
