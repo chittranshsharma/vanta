@@ -2,9 +2,10 @@ import type { User as AuthUser } from "@supabase/supabase-js";
 import { motion } from "framer-motion";
 import {
   ArrowUpRight,
+  Check,
   CheckCircle2,
   ChevronRight,
-  CircleDotDashed,
+  Circle,
   Compass,
   FileCheck,
   LockKeyhole,
@@ -46,17 +47,25 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
   return (
     <main className="page-shell">
       <div className="noise" aria-hidden="true" />
-      <nav className="topbar container" aria-label="Main Navigation">
-        <button className="wordmark" onClick={onGoHome} aria-label="Vanta home">
-          <span className="wordmark-mark" />
-          Vanta
-        </button>
-        <div className={`nav-links ${navOpen ? "is-open" : ""}`}>
-          <a href="#method" onClick={() => setNavOpen(false)}>Method</a>
-          <a href="#twin" onClick={() => setNavOpen(false)}>Creative Twin</a>
-          <a href="#trust" onClick={() => setNavOpen(false)}>Evidence</a>
-          <a href="#workflow" onClick={() => setNavOpen(false)}>Workflow</a>
+
+      {/* TOPBAR — Deep cinematic black banner */}
+      <nav className="topbar" aria-label="Main Navigation">
+        <div className="wordmark-group">
+          <button className="wordmark" onClick={onGoHome} aria-label="Vanta home">
+            V A N T A
+          </button>
+          <span className="wordmark-subtitle">
+            Creative intelligence, grounded in evidence.
+          </span>
         </div>
+
+        <div className={`nav-links ${navOpen ? "is-open" : ""}`}>
+          <a href="#decision-room" onClick={() => setNavOpen(false)}>Product</a>
+          <a href="#method" onClick={() => setNavOpen(false)}>Method</a>
+          <a href="#trust" onClick={() => setNavOpen(false)}>Evidence</a>
+          <a href="#twin" onClick={() => setNavOpen(false)}>Decision Room</a>
+        </div>
+
         <div className="nav-actions">
           {sessionUser ? (
             <button className="ghost-button" onClick={onGoWorkspace}>
@@ -69,7 +78,7 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
             </button>
           )}
           <button className="primary-button-nav" onClick={onOpenWorkspace}>
-            Enter Vanta <ArrowUpRight size={14} />
+            Enter workspace
           </button>
           <button
             className="menu-button"
@@ -82,83 +91,228 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
         </div>
       </nav>
 
-      {/* HERO SECTION — Pristine light canvas */}
-      <section className="hero container">
+      {/* SUBTOPBAR — Light sub-header line */}
+      <aside className="subtopbar" aria-label="Quick Actions">
+        <span className="subtopbar-title">Vanta</span>
+        <button className="subtopbar-action" onClick={onOpenWorkspace}>
+          Start a record <ChevronRight size={14} />
+        </button>
+      </aside>
+
+      {/* HERO SECTION — Inspired directly by the canonical specification */}
+      <section className="hero container" id="decision-room">
         <div className="hero-copy">
           <motion.p
-            className="eyebrow"
+            className="hero-eyebrow-accent"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.35 }}
           >
-            Creative intelligence, grounded in evidence
+            The Evidence Layer for Creative
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.05 }}
+            transition={{ duration: 0.45, delay: 0.05 }}
           >
-            Make the next
-            <span>creative move</span>
-            with conviction.
+            Make creative
+            <span>decisions you</span>
+            <span>can defend.</span>
           </motion.h1>
           <motion.p
             className="hero-description"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.12 }}
+            transition={{ duration: 0.4, delay: 0.12 }}
           >
-            Vanta turns brand context, creative analysis, trend evidence, and real outcomes into decisions
-            your team can inspect, challenge, and improve.
+            Brand truth, source provenance, creative structure, and observed outcomes in one clear record.
           </motion.p>
           <motion.div
-            className="hero-actions"
+            className="hero-cta-group"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.18 }}
+            transition={{ duration: 0.35, delay: 0.18 }}
           >
             <button className="primary-button" onClick={onOpenWorkspace}>
-              Enter Vanta <ArrowUpRight size={17} />
+              Enter Vanta <ArrowUpRight size={15} />
             </button>
-            <a className="text-button" href="#twin">
-              Inspect Creative Twin <ChevronRight size={16} />
+            <button className="action-link" onClick={onOpenWorkspace}>
+              Explore Vanta <ChevronRight size={15} />
+            </button>
+            <a className="action-link" href="#method">
+              See the method <ChevronRight size={15} />
             </a>
           </motion.div>
-          <div className="trust-line">
-            <LockKeyhole size={14} /> No fabricated metrics. No private-algorithm claims. Ever.
-          </div>
+          <p className="hero-footnote" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <LockKeyhole size={13} style={{ color: "var(--v-ink-muted-48)" }} /> Built for unknowns, not invented certainty.
+          </p>
         </div>
 
+        {/* HERO GRAPHIC — The Canonically Modeled Decision Room Product Tile */}
         <motion.div
-          className="hero-orbit"
-          initial={{ opacity: 0, scale: 0.96 }}
+          className="decision-room-card"
+          initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.08 }}
+          transition={{ duration: 0.55, delay: 0.1 }}
+          aria-label="Decision Room Interactive Overview"
         >
-          <div className="orbital-grid" />
-          <div className="orbit orbit-one" />
-          <div className="orbit orbit-two" />
-          <div className="orbit orbit-three" />
-          <div className="signal-core">
-            <span className="signal-iris" />
-            <span className="signal-dot" />
+          <div className="dr-header">
+            <span className="dr-title">Decision Room</span>
+            <div className="dr-legend">
+              <span className="dr-legend-item">
+                <span className="dr-legend-dot dot-observed" /> Observed
+              </span>
+              <span className="dr-legend-item">
+                <span className="dr-legend-dot dot-sourced" /> Sourced claim
+              </span>
+              <span className="dr-legend-item">
+                <span className="dr-legend-dot dot-inference" /> Inference
+              </span>
+              <span className="dr-legend-item">
+                <span className="dr-legend-dot dot-unknown" /> Unknown
+              </span>
+            </div>
           </div>
-          <div className="float-card card-source">
-            <span className="status-dot green" /> Brand Brain <strong>Codex v2.4 Active</strong>
+
+          <div className="dr-grid">
+            {/* Panel 1: Brand Brain */}
+            <div className="dr-quadrant">
+              <span className="dr-quadrant-title">
+                <span>1</span> Brand Brain
+              </span>
+              <ul className="dr-list">
+                <li className="dr-list-item">
+                  <Check size={14} color="#16a34a" /> Approved claims
+                </li>
+                <li className="dr-list-item">
+                  <Check size={14} color="#16a34a" /> Proof points
+                </li>
+                <li className="dr-list-item">
+                  <Check size={14} color="#16a34a" /> Boundaries
+                </li>
+              </ul>
+            </div>
+
+            {/* Panel 2: Source Registry */}
+            <div className="dr-quadrant">
+              <span className="dr-quadrant-title">
+                <span>2</span> Source Registry
+              </span>
+              <table className="dr-table">
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th style={{ textAlign: "center" }}>Freshness</th>
+                    <th style={{ textAlign: "center" }}>Coverage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Product proof</td>
+                    <td style={{ textAlign: "center" }}>
+                      <span className="status-dot green" style={{ margin: 0 }} />
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <Circle size={10} color="#16a34a" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Customer interview</td>
+                    <td style={{ textAlign: "center" }}>
+                      <span className="status-dot green" style={{ margin: 0 }} />
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <Circle size={10} color="#16a34a" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Campaign brief</td>
+                    <td style={{ textAlign: "center" }}>
+                      <span className="status-dot blue" style={{ margin: 0 }} />
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <Circle size={10} color="#7c3aed" strokeDasharray="2 2" />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Panel 3: Creative Twin */}
+            <div className="dr-quadrant">
+              <span className="dr-quadrant-title">
+                <span>3</span> Creative Twin
+              </span>
+              <div className="dr-timeline-track">
+                <div className="dr-timeline-line" />
+                <div className="dr-scrub-indicator">
+                  <span className="dr-scrub-dot" />
+                  <span className="dr-scrub-label">Human correction</span>
+                </div>
+                <div className="dr-timeline-step">
+                  <strong>Scene 01</strong>
+                  <span>Hook</span>
+                  <span>0:00 – 0:05</span>
+                </div>
+                <div className="dr-timeline-step">
+                  <strong>Scene 02</strong>
+                  <span>Demonstration</span>
+                  <span>0:05 – 0:15</span>
+                </div>
+                <div className="dr-timeline-step">
+                  <strong>Scene 03</strong>
+                  <span>CTA</span>
+                  <span>0:15 – 0:20</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Panel 4: Known Gaps */}
+            <div className="dr-quadrant">
+              <span className="dr-quadrant-title">
+                <span>4</span> Known Gaps
+              </span>
+              <ul className="dr-list">
+                <li className="dr-list-item" style={{ color: "var(--v-ink-muted-80)" }}>
+                  <Circle size={12} color="#9ca3af" /> Observed outcome not yet available
+                </li>
+                <li className="dr-list-item" style={{ color: "var(--v-ink-muted-80)" }}>
+                  <Circle size={12} color="#9ca3af" /> Claim requires source
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className="float-card card-council">
-            <span className="status-dot blue" /> Creative Twin <strong>4 Scenes · 138 WPM</strong>
-          </div>
-          <div className="float-card card-simulation">
-            <span className="status-dot amber" /> Simulation Lab <strong>Δ Structural Delta</strong>
-          </div>
-          <div className="float-card card-outcome">
-            <span className="status-dot muted" /> Outcome Calibration <strong>Awaiting Data</strong>
-          </div>
-          <p className="orbital-caption">
-            <CircleDotDashed size={15} /> Confidence is earned, not generated.
-          </p>
         </motion.div>
+      </section>
+
+      {/* THREE PILLAR STRIP — DIRECTLY BELOW HERO */}
+      <section className="pillar-strip" aria-label="Core Value Pillars">
+        <div className="container pillar-grid">
+          <div className="pillar-card">
+            <span className="pillar-number">01</span>
+            <h2 className="pillar-title">Evidence before confidence</h2>
+            <p className="pillar-desc">Ground every decision in verifiable inputs.</p>
+          </div>
+          <div className="pillar-card">
+            <span className="pillar-number">02</span>
+            <h2 className="pillar-title">Structure before speculation</h2>
+            <p className="pillar-desc">Organize ideas into testable, shared structure.</p>
+          </div>
+          <div className="pillar-card">
+            <span className="pillar-number">03</span>
+            <h2 className="pillar-title">Outcomes before claims</h2>
+            <p className="pillar-desc">Let observed outcomes refine what's true.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* CINEMATIC BLACK QUOTE BANNER */}
+      <section className="cinematic-quote-banner" aria-label="Cinematic Philosophy">
+        <div className="container">
+          <h2 className="cinematic-quote-text">
+            See the work before you trust the answer.
+          </h2>
+        </div>
       </section>
 
       {/* METHOD SECTION — Systematic 4-stage process */}
@@ -338,4 +492,5 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
     </main>
   );
 }
+
 
