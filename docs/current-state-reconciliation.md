@@ -15,10 +15,10 @@ A complete, read-only audit of the local repository, build pipeline, test suites
 | **Lint** | `npm run lint` (ESLint flat config) | **PASSED** | 0 errors |
 | **Web Typecheck** | `npm run typecheck` (`tsc -b --noEmit`) | **PASSED** | 0 type errors |
 | **Worker Typecheck** | `npm run typecheck:worker` | **PASSED** | 0 type errors across `services/job-worker` |
-| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 848 passed across 61 test files |
+| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 870 passed across 62 test files |
 | **Python Service Tests** | `python -m pytest services/analysis-worker/tests` | **PASSED** | 15 passed across 2 test modules |
 | **Production Build** | `npm run build` (`vite build`) | **PASSED** | Built cleanly, code-split chunks, total client bundle healthy |
-| **Total Automated Tests** | Vitest + Pytest | **863 tests** | 100% passing rate |
+| **Total Automated Tests** | Vitest + Pytest | **885 tests** | 100% passing rate |
 
 ---
 

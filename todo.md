@@ -105,15 +105,16 @@
   - [x] Authoritative architecture specification `docs/simulation-productization-architecture.md`.
   - [x] 816 Vitest + 15 Pytest = 831 automated tests passing cleanly, 0 ESLint errors, clean web and worker TypeScript typechecks, clean production bundle build.
 
-- [x] Ticket 7.1: Source Cohorts Backend Foundation (Migration 022 live on Supabase):
+- [x] Ticket 7.1: Source Cohorts & Descriptive Outlier Analyzer (Backend Foundation):
   - [x] Additive Migration 022 (`20260822000022_source_cohorts.sql`): `source_cohorts` and `source_cohort_members` with composite tenant FKs `(cohort_id, workspace_id)` and `(source_id, workspace_id)` to enforce tenant isolation structurally.
   - [x] Direct DML explicitly denied at policy layer (`USING (false)` / `WITH CHECK (false)`); workspace members have SELECT policy.
   - [x] 4 Hardened SECURITY DEFINER RPCs: `create_source_cohort`, `archive_source_cohort`, `add_source_to_cohort`, `remove_source_from_cohort` with explicit search_path and revokes.
   - [x] Authenticated fail-closed TypeScript client `src/lib/sourceCohorts.ts` with `ReadResult<T>` error classifications.
-  - [x] 26 comprehensive unit/contract tests (`src/lib/sourceCohorts.test.ts`) covering all 14 mandatory test dimensions.
+  - [x] Pure deterministic outlier analyzer `shared/cohorts/outlierAnalysis.ts` (policy `v1_tukey_median_iqr`, median, Q1, Q3, IQR, threshold = median + 1.5*IQR, zero-IQR handling, strict fail-closed missing evidence guards, exact provenance reporting).
+  - [x] 48 comprehensive unit/contract tests across `sourceCohorts.test.ts` (26 tests) and `outlierAnalysis.test.ts` (22 tests).
   - [x] 11 disposable live validation tests passed on Supabase project `ujxrapbhiedkwleccvqw` with zero residual test data.
   - [x] Evidence Datasets (§B) deferred: existing `import_batches`, `evidence_items`, and source provenance satisfy benchmark grouping until a distinct versioned benchmark collection workflow is validated.
-  - [x] Total automated tests: 848 Vitest + 15 Pytest = 863 passing cleanly.
+  - [x] Total automated tests: 870 Vitest + 15 Pytest = 885 passing cleanly.
   - [x] Architecture specification authored at `docs/source-cohorts-architecture.md`.
 
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
@@ -166,3 +167,11 @@
 - [ ] Sandcastles Outlier Research Queries: later slice; must only rank permitted observed records with explicit metric, denominator, time window, source, sample size, and provenance; missing inputs must return `unknown`/`insufficient_evidence` (no "viral" label or algorithm claims).
 - [ ] Define safe platform/context assumptions, persona hypotheses, and behavioral dimensions as simulation inputs only; never expose pseudo-user votes or synthetic engagement as observed metrics.
 - [ ] Define a provider-neutral ingestion and attribution path for permitted public-source data before any official social-platform connector.
+
+- [ ] Produce a complete state-aware roadmap separating private-beta gates, public-beta infrastructure, backend expansion, official connectors, and deferred UI polish.
+- [ ] Run QA-2 authenticated end-to-end browser workflow verification if not already closed in the latest live report.
+- [ ] Audit and, only if genuinely missing, implement provider-neutral cohort-relative observed outlier research using permitted data and complete provenance.
+- [ ] Decide and implement workspace/agent/simulation UI integration only after backend and live runtime priorities are closed.
+- [ ] Decide continuous worker hosting and analysis-service hosting before public HTTPS, webhooks, and production connector activation.
+- [ ] Complete official platform connector readiness and OAuth ingestion only after permissions, consent, token lifecycle, retention, rate limits, and webhook security are approved.
+- [ ] Add retention enforcement and operational monitoring when real beta data volume requires it.
