@@ -578,3 +578,16 @@ Live verification deferred: the `denied` branch against a real non-member sessio
     - Observation reviews (`reviewConversationObservation`) strictly separate from interpretation reviews (`reviewConversationInterpretation`).
     - Preserves canonical evidence taxonomy: observations carry `evidence_class = 'observed'`, model interpretations/drafts strictly carry `evidence_class = 'inference'` with uncertainty disclosures. Human approval records administrative review and never promotes inference to observed fact.
     - 952 Vitest tests + 15 Pytest tests passing cleanly; 0 lint errors, 0 typecheck errors, clean Vite production build.
+19. Ticket 6.2 Slice D (Workspace Navigation & Lazy Loading Integration) complete:
+    - Connected `SimulationLab` and `ConversationIntelligence` to the central `Workspace.tsx` navigation sidebar with landmark semantics, accessible labels (`aria-current`), keyboard navigation, and tab switching.
+    - Configured clean Vite code-splitting and dynamic `React.lazy` loading for both heavy panels (`SimulationLab-*.js` and `ConversationIntelligence-*.js`), ensuring zero impact on initial page bundle size and load latency.
+    - Unit tests in `WorkspaceNavigation.test.ts` verifying panel registration, role-based boundary preservation, and canonical taxonomy enforcement.
+    - 956 Vitest tests + 15 Pytest tests passing cleanly (100% green).
+20. Ticket QA-2 (Real-JWT End-to-End Multi-Tenant Workflow Verification) complete & verified live:
+    - Executed comprehensive live test suite (`scripts/qa2-live-validation.ts` and `e2e/qa2-workflow.spec.ts`) against the remote Supabase project `ujxrapbhiedkwleccvqw` using two distinct authenticated users across two isolated workspaces.
+    - 44/44 live checks passed cleanly across the full workspace lifecycle: Brand Brain (codex claims), Source Registry (citability), Source Cohorts & Outlier Analysis (`v1_tukey_median_iqr`), Publishing Schedule Optimizer (`v1_observed_history_bucket_summary` with IANA/DST timezone), Creative Intake & Twin generation, Simulation Lab (7 bounded mutations, structural delta, atomic governance review), Conversation Intelligence (privacy gate, masked comments, review states, grounded reply drafts, spike aggregation).
+    - Verified strict cross-tenant RLS isolation: Tenant B cannot read or mutate Tenant A's brand claims, twins, simulation runs, or conversation records (0 rows returned, RPC denied).
+    - Verified strict Epistemic Invariants: `simulation` never appears as `observed`, `inference` drafts remain `inference` after human review, `unknown` baselines are honestly reported, and forbidden prediction claims (`predictedReach`, `viralityScore`, `conversionRateForecast`, `winnerBadge`) are 100% absent.
+    - Clean disposable teardown verified: 100% of test observations, cohorts, and resources cleanly purged with 0 residual test records.
+    - 53/53 Playwright E2E tests passing live.
+
