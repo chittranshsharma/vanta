@@ -136,3 +136,48 @@ export async function listConversationReviewEvents(
   };
 }
 
+export async function listConversationInterpretations(
+  workspaceId: string,
+  observationId?: string
+): Promise<Result<ConversationInterpretationRow[]>> {
+  if (!isSupabaseConfigured) return { data: null, error: NOT_CONFIGURED };
+
+  let q = supabase
+    .from("conversation_interpretations")
+    .select("*")
+    .eq("workspace_id", workspaceId);
+
+  if (observationId) q = q.eq("observation_id", observationId);
+
+  const { data, error } = await q.order("created_at", { ascending: false }).limit(200);
+  if (error) return { data: null, error: error.message };
+
+  return {
+    data: (data ?? []) as ConversationInterpretationRow[],
+    error: null,
+  };
+}
+
+export async function listConversationAttributions(
+  workspaceId: string,
+  observationId?: string
+): Promise<Result<ConversationAttributionRow[]>> {
+  if (!isSupabaseConfigured) return { data: null, error: NOT_CONFIGURED };
+
+  let q = supabase
+    .from("conversation_attributions")
+    .select("*")
+    .eq("workspace_id", workspaceId);
+
+  if (observationId) q = q.eq("observation_id", observationId);
+
+  const { data, error } = await q.order("created_at", { ascending: false }).limit(200);
+  if (error) return { data: null, error: error.message };
+
+  return {
+    data: (data ?? []) as ConversationAttributionRow[],
+    error: null,
+  };
+}
+
+
