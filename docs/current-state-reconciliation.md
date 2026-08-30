@@ -15,10 +15,10 @@ A complete, read-only audit of the local repository, build pipeline, test suites
 | **Lint** | `npm run lint` (ESLint flat config) | **PASSED** | 0 errors |
 | **Web Typecheck** | `npm run typecheck` (`tsc -b --noEmit`) | **PASSED** | 0 type errors |
 | **Worker Typecheck** | `npm run typecheck:worker` | **PASSED** | 0 type errors across `services/job-worker` |
-| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 816 passed across 60 test files |
+| **Node / Web Tests** | `npm test` (`vitest run`) | **PASSED** | 848 passed across 61 test files |
 | **Python Service Tests** | `python -m pytest services/analysis-worker/tests` | **PASSED** | 15 passed across 2 test modules |
 | **Production Build** | `npm run build` (`vite build`) | **PASSED** | Built cleanly, code-split chunks, total client bundle healthy |
-| **Total Automated Tests** | Vitest + Pytest | **831 tests** | 100% passing rate |
+| **Total Automated Tests** | Vitest + Pytest | **863 tests** | 100% passing rate |
 
 ---
 
@@ -34,7 +34,7 @@ A complete, read-only audit of the local repository, build pipeline, test suites
 
 ### 2.1 Applied Migration Chain (Live Verification)
 
-The live migration ledger confirms migrations 001 through 020 are live, with Migration 021 authored and statically validated:
+The live migration ledger confirms migrations 001 through 022 are live:
 
 | Version | Migration Name | Live Status | Scope / Tables |
 |---|---|---|---|
@@ -58,6 +58,7 @@ The live migration ledger confirms migrations 001 through 020 are live, with Mig
 | `20260828182548` | `20260822000018_backend_primitives` | Applied | `import_batches`, `post_variant_attributions`, `workspaces.timezone`, `delete_post_observation_batch` RPC |
 | `20260828183603` | `20260822000019_conversation_intelligence` | Applied | `conversation_observations`, `conversation_interpretations`, `conversation_attributions`, `conversation_review_events`, review RPCs |
 | `20260830075407` | `20260822000021_simulation_lab` | Applied | 5 simulation lab tables (`simulation_runs`, `simulation_mutations`, `simulation_results`, `simulation_review_events`, `simulation_observed_links`), 4 RPCs, expanded job types |
+| *Direct SQL* | `20260822000022_source_cohorts` | Applied (Live) | `source_cohorts`, `source_cohort_members`, 4 RPCs (`create_source_cohort`, `archive_source_cohort`, `add_source_to_cohort`, `remove_source_from_cohort`) |
 
 *Crucial rule: Never reapply migrations 001–021.*
 

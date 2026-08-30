@@ -2237,6 +2237,92 @@ export type Database = {
           },
         ]
       }
+      source_cohort_members: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          cohort_id: string
+          id: string
+          source_id: string
+          workspace_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          cohort_id: string
+          id?: string
+          source_id: string
+          workspace_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          cohort_id?: string
+          id?: string
+          source_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_cohort_members_cohort_id_workspace_id_fkey"
+            columns: ["cohort_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "source_cohorts"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "source_cohort_members_source_id_workspace_id_fkey"
+            columns: ["source_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "source_registry"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
+      source_cohorts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          status: string
+          tags: string[]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          tags?: string[]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_cohorts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       source_registry: {
         Row: {
           created_at: string
@@ -2779,6 +2865,27 @@ export type Database = {
       }
     }
     Functions: {
+      add_source_to_cohort: {
+        Args: { p_workspace_id: string; p_cohort_id: string; p_source_id: string }
+        Returns: Json
+      }
+      archive_source_cohort: {
+        Args: { p_workspace_id: string; p_cohort_id: string }
+        Returns: Json
+      }
+      create_source_cohort: {
+        Args: {
+          p_workspace_id: string
+          p_name: string
+          p_description?: string | null
+          p_tags?: string[]
+        }
+        Returns: Json
+      }
+      remove_source_from_cohort: {
+        Args: { p_workspace_id: string; p_cohort_id: string; p_source_id: string }
+        Returns: Json
+      }
       approve_job: {
         Args: { p_job_id: string; p_workspace_id: string }
         Returns: {

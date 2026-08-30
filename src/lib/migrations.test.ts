@@ -99,6 +99,7 @@ describe("migration files", () => {
       "20260822000019_conversation_intelligence.sql",
       "20260822000020_expand_job_types.sql",
       "20260822000021_simulation_lab.sql",
+      "20260822000022_source_cohorts.sql",
     ]);
   });
 
@@ -125,8 +126,8 @@ describe("row level security coverage", () => {
   const enabled = rlsEnabledTables(code);
   const policies = policiesByTable(code);
 
-  it("creates the 41 tenant tables the product documents", () => {
-    expect(tables).toHaveLength(41);
+  it("creates the 43 tenant tables the product documents", () => {
+    expect(tables).toHaveLength(43);
   });
 
   it.each(tables)("enables RLS on public.%s", (table) => {

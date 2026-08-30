@@ -2,7 +2,7 @@
 
 ## Current status (2026-08-30)
 
-Tickets 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 5.1, 5.2, 6.1, and Phase 6B (Counterfactual Simulation Productization) complete.
+Tickets 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 5.1, 5.2, 6.1, Phase 6B, and Ticket 7.1 (Source Cohorts) complete.
 
 Verified locally on 2026-08-30:
 
@@ -11,12 +11,12 @@ Verified locally on 2026-08-30:
 | `npm run lint` | 0 errors |
 | `npm run typecheck` | clean |
 | `npm run typecheck:worker` | clean |
-| `npm test` | 816 passed / 816, 60 suites |
+| `npm test` | 848 passed / 848, 61 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run verify` | clean (lint, typecheck, worker typecheck, test, build) |
 | `npm run build` | clean; client build succeeds with code splitting |
 
-Access boundary this phase: **Additive Migration 021 committed**. Verified: 41 public tables with RLS enabled, 0 actor binding violations, 0 cross-tenant FK violations.
+Access boundary this phase: **Additive Migration 022 committed and verified live**. Verified: 43 public tables with RLS enabled, 0 actor binding violations, 0 cross-tenant FK violations.
 
 ## Migration state
 
@@ -43,8 +43,9 @@ Access boundary this phase: **Additive Migration 021 committed**. Verified: 41 p
 | `20260822000019_conversation_intelligence_expansion` | committed | **Applied** | Attribution, interpretations, aggregates, and review RPCs |
 | `20260822000020_post_attribution` | committed | **Applied** | Organic post attribution lineage and spike aggregation |
 | `20260822000021_simulation_lab` | committed | **Applied** | Simulation runs, mutations, results, review events, observed links |
+| `20260822000022_source_cohorts` | committed | **Applied** | Source cohorts, cohort members, 4 RPCs, composite tenant FKs |
 
-All migrations 001–021 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
+All migrations 001–022 applied and verified live on Supabase project `ujxrapbhiedkwleccvqw`.
 
 ## Test suite (42 files, 610 tests; plus 15 pytest, 30 Playwright authored)
 

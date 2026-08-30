@@ -469,7 +469,7 @@ Vanta’s architectural roadmap uses a structured **`[Phase].[Ticket]`** coordin
 - [ ] **Ticket 6.2: Workspace & Council UI Integration** (Connecting Specialist Council & Simulation Lab to the user interface with restrained ReactBits motion)
 
 #### **Phase 7: Trend & Publishing Intelligence**
-- [x] **Ticket 7.1: Trend & Publishing Intelligence Foundation** (RSS feed refresh connector jobs, timezone-aware volume aggregation buckets)
+- [x] **Ticket 7.1: Source Cohorts & Publishing Intelligence Foundation** (Migration 022 live on Supabase, `source_cohorts` & `source_cohort_members`, 4 hardened RPCs, fail-closed client, composite tenant FKs, RSS refresh connector jobs, timezone-aware volume aggregation buckets)
 - [ ] **Ticket 7.2: Publishing Schedule Optimizer** (Variant release schedule optimizer based on verified historical observation windows)
 
 #### **Phase 8: Outcome Calibration & Closed-Loop Learning**

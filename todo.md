@@ -105,6 +105,17 @@
   - [x] Authoritative architecture specification `docs/simulation-productization-architecture.md`.
   - [x] 816 Vitest + 15 Pytest = 831 automated tests passing cleanly, 0 ESLint errors, clean web and worker TypeScript typechecks, clean production bundle build.
 
+- [x] Ticket 7.1: Source Cohorts Backend Foundation (Migration 022 live on Supabase):
+  - [x] Additive Migration 022 (`20260822000022_source_cohorts.sql`): `source_cohorts` and `source_cohort_members` with composite tenant FKs `(cohort_id, workspace_id)` and `(source_id, workspace_id)` to enforce tenant isolation structurally.
+  - [x] Direct DML explicitly denied at policy layer (`USING (false)` / `WITH CHECK (false)`); workspace members have SELECT policy.
+  - [x] 4 Hardened SECURITY DEFINER RPCs: `create_source_cohort`, `archive_source_cohort`, `add_source_to_cohort`, `remove_source_from_cohort` with explicit search_path and revokes.
+  - [x] Authenticated fail-closed TypeScript client `src/lib/sourceCohorts.ts` with `ReadResult<T>` error classifications.
+  - [x] 26 comprehensive unit/contract tests (`src/lib/sourceCohorts.test.ts`) covering all 14 mandatory test dimensions.
+  - [x] 11 disposable live validation tests passed on Supabase project `ujxrapbhiedkwleccvqw` with zero residual test data.
+  - [x] Evidence Datasets (§B) deferred: existing `import_batches`, `evidence_items`, and source provenance satisfy benchmark grouping until a distinct versioned benchmark collection workflow is validated.
+  - [x] Total automated tests: 848 Vitest + 15 Pytest = 863 passing cleanly.
+  - [x] Architecture specification authored at `docs/source-cohorts-architecture.md`.
+
 - [x] Configure git identity (user.name / user.email) so slices can be committed locally.
 
 ## Next repository-only work
@@ -149,8 +160,9 @@
 - [ ] Surface the per-kind quota budgets that have a UI consumer beyond `job_enqueue` (`model_call` on the gateway probe path, `media_probe` in Creative Intake). `fetchQuotas` already returns every kind; only the jobs panel reads one today.
 - [ ] Decide whether retrieval coverage deserves a live read. `fetchRetrievalCoverage` now resolves six states and nothing calls it, because no feature is grounded by a vector search — the honest static readiness row covers the current truth. Wire it when E-3 picks a provider and something indexes.
 
-- [ ] Design a unified Evidence-Backed Content Intelligence layer combining outlier research, controlled variant comparison, source-grounded analysis, simulation, and real outcome calibration.
-- [ ] Audit whether Vanta already covers source cohorts/watchlists, observed outlier queries, transcript provenance, research projects, and comparative simulation before adding duplicate contracts.
+- [x] Content Intelligence Gap Audit completed: identified Source Cohorts as primary backend gap; all other core capabilities (transcripts, mutations, council, experiments, attribution) already exist in Vanta.
+- [x] Ticket 7.1 Source Cohorts implemented and live validated (Migration 022, `source_cohorts`, `source_cohort_members`, 4 RPCs).
+- [ ] Evidence Datasets (§B): deferred to a future ticket; existing `import_batches` + `evidence_items` + source provenance currently satisfy benchmark grouping until a distinct versioned benchmark collection workflow is validated.
+- [ ] Sandcastles Outlier Research Queries: later slice; must only rank permitted observed records with explicit metric, denominator, time window, source, sample size, and provenance; missing inputs must return `unknown`/`insufficient_evidence` (no "viral" label or algorithm claims).
 - [ ] Define safe platform/context assumptions, persona hypotheses, and behavioral dimensions as simulation inputs only; never expose pseudo-user votes or synthetic engagement as observed metrics.
 - [ ] Define a provider-neutral ingestion and attribution path for permitted public-source data before any official social-platform connector.
-- [ ] Create a staged execution roadmap for the combined product: backend contracts, live validation, connector readiness, real outcome calibration, then UI integration.
