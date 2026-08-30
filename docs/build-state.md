@@ -561,3 +561,8 @@ Live verification deferred: the `denied` branch against a real non-member sessio
 15. Non-Frontend Public-Beta Gap Matrix authored at `docs/public-beta-gap-matrix.md`.
     - Release status: `private-beta ready with operator-only worker`
     - Recommended path: Zero-Cost Private Beta (Path A) while proceeding with Frontend Ticket 6.2.
+16. Ticket 6.2 Slice A (Source Cohorts, Outlier Analysis & Publishing Schedule historical summaries) complete:
+    - `SourceCohortsTab.tsx` connected in `SourceRegistry.tsx`, consuming `listSourceCohorts`, `createSourceCohort`, `archiveSourceCohort`, `listCohortMembers`, `addSourceToCohort`, `removeSourceFromCohort`, and `analyzeCohortOutliers` (`v1_tukey_median_iqr`).
+    - `PublishingPlanner.tsx` updated with `optimizePublishingSchedule` (`v1_observed_history_bucket_summary`) computing descriptive historical bucket distributions with IANA timezone and DST offsets.
+    - Strict sample gate rendering from backend contracts: `OUTLIER_POLICY_VERSION = "v1_tukey_median_iqr"`, `DEFAULT_MIN_COMPARABLE_OBSERVATIONS = 15`; `SCHEDULE_OPTIMIZER_POLICY = "v1_observed_history_bucket_summary"`, `DEFAULT_MIN_TOTAL_OBSERVATIONS = 20`, `DEFAULT_MIN_OBSERVATIONS_PER_BUCKET = 3`. Zero synthetic claims, virality scores, or "best time" forecasts.
+    - 940 Vitest tests + 15 Pytest tests passing cleanly; 0 lint errors, 0 typecheck errors, clean Vite production build.
