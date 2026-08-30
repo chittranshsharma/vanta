@@ -1,5 +1,5 @@
 import type { User as AuthUser } from "@supabase/supabase-js";
-import { Bot, CalendarRange, ChevronRight, Columns3, Compass, Film, FlaskConical, Layers3, Link2, ListChecks, LogOut, Plus, SlidersHorizontal, Sparkles, WandSparkles } from "lucide-react";
+import { Bot, CalendarRange, ChevronRight, Columns3, Compass, Film, FlaskConical, Layers3, Link2, ListChecks, LogOut, MessageSquare, Plus, SlidersHorizontal, Sparkles, WandSparkles } from "lucide-react";
 import { isFlagOn } from "../lib/flags";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { deriveEvidenceState } from "../lib/evidence";
@@ -29,10 +29,26 @@ const ConnectorsPanel = lazy(() => import("./ConnectorsPanel").then((m) => ({ de
 const PublishingPlanner = lazy(() => import("./PublishingPlanner").then((m) => ({ default: m.PublishingPlanner })));
 const ExperimentsPanel = lazy(() => import("./ExperimentsPanel").then((m) => ({ default: m.ExperimentsPanel })));
 const AgentWorkflowPanel = lazy(() => import("./AgentWorkflowPanel").then((m) => ({ default: m.AgentWorkflowPanel })));
+const SimulationLab = lazy(() => import("./SimulationLab").then((m) => ({ default: m.SimulationLab })));
+const ConversationIntelligence = lazy(() => import("./ConversationIntelligence").then((m) => ({ default: m.ConversationIntelligence })));
 const JobsPanel = lazy(() => import("./JobsPanel").then((m) => ({ default: m.JobsPanel })));
 const SetupStatus = lazy(() => import("./SetupStatus").then((m) => ({ default: m.SetupStatus })));
 
-export type PanelId = "decision" | "brand" | "sources" | "intake" | "twin" | "matrix" | "connectors" | "publishing" | "experiments" | "agents" | "jobs" | "status";
+export type PanelId =
+  | "decision"
+  | "brand"
+  | "sources"
+  | "intake"
+  | "twin"
+  | "matrix"
+  | "simulations"
+  | "conversations"
+  | "connectors"
+  | "publishing"
+  | "experiments"
+  | "agents"
+  | "jobs"
+  | "status";
 
 const PANEL_TITLES: Record<PanelId, string> = {
   decision: "Start with what you can prove.",
@@ -40,6 +56,8 @@ const PANEL_TITLES: Record<PanelId, string> = {
   intake: "Creative Intake",
   twin: "Structured Creative Twin",
   matrix: "Creative Decision Matrix",
+  simulations: "Counterfactual Simulation Lab",
+  conversations: "Conversation Intelligence & Review",
   sources: "Source Registry",
   connectors: "Source connectors",
   publishing: "Test-window planning",
@@ -342,6 +360,12 @@ export function Workspace({
           <button className={`side-link ${activePanel === "experiments" ? "active" : ""}`} aria-current={activePanel === "experiments" ? "page" : undefined} onClick={() => setActivePanel("experiments")}>
             <FlaskConical size={17} /> Experiments
           </button>
+          <button className={`side-link ${activePanel === "simulations" ? "active" : ""}`} aria-current={activePanel === "simulations" ? "page" : undefined} onClick={() => setActivePanel("simulations")}>
+            <FlaskConical size={17} /> Simulation Lab
+          </button>
+          <button className={`side-link ${activePanel === "conversations" ? "active" : ""}`} aria-current={activePanel === "conversations" ? "page" : undefined} onClick={() => setActivePanel("conversations")}>
+            <MessageSquare size={17} /> Conversations
+          </button>
           <button className={`side-link ${activePanel === "publishing" ? "active" : ""}`} aria-current={activePanel === "publishing" ? "page" : undefined} onClick={() => setActivePanel("publishing")}>
             <CalendarRange size={17} /> Test windows
           </button>
@@ -482,6 +506,25 @@ export function Workspace({
           <ConnectorsPanel key={activeWorkspace.id} workspaceId={activeWorkspace.id} isAdmin={activeWorkspace.role === "owner" || activeWorkspace.role === "admin"} />
         ) : activePanel === "experiments" && activeWorkspace && user ? (
           <ExperimentsPanel key={activeWorkspace.id} workspaceId={activeWorkspace.id} userId={user.id} />
+        ) : activePanel === "simulations" && activeWorkspace && user ? (
+          <div style={{ marginTop: 32 }}>
+            <SimulationLab
+              key={activeWorkspace.id}
+              workspaceId={activeWorkspace.id}
+              userId={user.id}
+              userRole={activeWorkspace.role}
+            />
+          </div>
+        ) : activePanel === "conversations" && activeWorkspace && user ? (
+          <div style={{ marginTop: 32 }}>
+            <ConversationIntelligence
+              key={activeWorkspace.id}
+              workspaceId={activeWorkspace.id}
+              userId={user.id}
+              userRole={activeWorkspace.role}
+              timeZone={activeWorkspace.timezone || "UTC"}
+            />
+          </div>
         ) : activePanel === "publishing" && activeWorkspace && user ? (
           <PublishingPlanner
             key={activeWorkspace.id}
