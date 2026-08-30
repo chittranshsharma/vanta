@@ -60,6 +60,8 @@ const TENANT_TABLES = [
   "simulation_results",
   "simulation_review_events",
   "simulation_observed_links",
+  "source_cohorts",
+  "source_cohort_members",
 ] as const;
 
 async function signIn(email: string, password: string): Promise<{ client: SupabaseClient; userId: string; workspaceId: string }> {
