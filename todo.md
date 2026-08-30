@@ -178,7 +178,7 @@
 - [ ] Audit and, only if genuinely missing, implement provider-neutral cohort-relative observed outlier research using permitted data and complete provenance.
 - [ ] Decide and implement workspace/agent/simulation UI integration only after backend and live runtime priorities are closed.
 - [x] Decide continuous worker hosting and analysis-service hosting before public HTTPS, webhooks, and production connector activation (`docs/worker-runtime-boundary.md`).
-- [ ] Complete official platform connector readiness and OAuth ingestion only after permissions, consent, token lifecycle, retention, rate limits, and webhook security are approved.
+- [x] Complete official platform connector readiness and OAuth ingestion architecture, contracts, HMAC state, webhooks, and rate limits (`shared/connectors/instagram.ts`, 15 passing tests).
 - [x] Add retention enforcement and operational monitoring when real beta data volume requires it (`docs/incident-and-recovery-runbook.md`, live retention verified).
 
 - [x] Execute the non-frontend backlog in ordered phases: operational audit, worker/runtime readiness, retention/monitoring, official connector implementation, real-data ingestion, calibration, and public-beta validation.

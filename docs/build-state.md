@@ -11,7 +11,7 @@ Verified locally on 2026-08-30:
 | `npm run lint` | 0 errors |
 | `npm run typecheck` | clean |
 | `npm run typecheck:worker` | clean |
-| `npm test` | 886 passed / 886, 63 suites |
+| `npm test` | 901 passed / 901, 64 suites |
 | `pytest` (services/analysis-worker) | 15 passed |
 | `npm run verify` | clean (lint, typecheck, worker typecheck, test, build) |
 | `npm run build` | clean; client build succeeds with code splitting |
