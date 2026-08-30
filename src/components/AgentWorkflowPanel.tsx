@@ -4,6 +4,7 @@ import { listJobs } from "../lib/jobs";
 import { countModelRuns, modelRunSummary, type ModelRunCount } from "../lib/modelRuns";
 import { isMissingTableError } from "../lib/experiments";
 import { CREATIVE_COUNCIL_GRAPH, DEFAULT_RETRY_POLICY, ROLE_CONTRACTS, gateRuntime, validateGraph, type RuntimeCapabilities } from "../../shared/agents/graph";
+import { ApiKeySettings } from "./ApiKeySettings";
 
 /**
  * Agent workflow foundation. Shows the task graph, the role contracts, the
@@ -99,6 +100,10 @@ export function AgentWorkflowPanel({ workspaceId, gatewayState }: { workspaceId:
       <p className="vp-note">
         Retry policy: at most {DEFAULT_RETRY_POLICY.maxAttemptsPerNode} attempts per node, {DEFAULT_RETRY_POLICY.maxArbiterRepairs} arbiter-guided repair, then the run fails closed with no partial output. Every run will be recorded in model_task_runs and jobs with its correlation id.
       </p>
+
+      <div style={{ marginTop: 24 }}>
+        <ApiKeySettings workspaceId={workspaceId} />
+      </div>
     </section>
   );
 }

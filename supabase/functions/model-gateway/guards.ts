@@ -15,7 +15,7 @@ export const AUDIT_ACTION = "model_gateway.invocation";
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type RequestValidation =
-  | { ok: true; workspaceId: string; taskType: TaskType; twinId: string | null }
+  | { ok: true; workspaceId: string; taskType: TaskType; twinId: string | null; userGroqApiKey: string | null }
   | { ok: false; error: string; message: string };
 
 /** Extra fields each task may carry. Anything else is rejected. */
@@ -55,7 +55,7 @@ export function validateRequestBody(rawText: string): RequestValidation {
     typeof taskTypeRaw === "string" && ALLOWLISTED_TASKS.includes(taskTypeRaw as TaskType)
       ? TASK_EXTRA_FIELDS[taskTypeRaw as TaskType]
       : [];
-  const allowedKeys = new Set(["workspace_id", "task_type", ...taskExtras]);
+  const allowedKeys = new Set(["workspace_id", "task_type", "user_groq_api_key", ...taskExtras]);
   const disallowed = Object.keys(obj).filter((k) => !allowedKeys.has(k));
   if (disallowed.length > 0) {
     return {
@@ -92,7 +92,19 @@ export function validateRequestBody(rawText: string): RequestValidation {
     twinId = raw;
   }
 
-  return { ok: true, workspaceId, taskType: taskType as TaskType, twinId };
+  let userGroqApiKey: string | null = null;
+  if (obj.user_groq_api_key !== undefined && obj.user_groq_api_key !== null) {
+    if (typeof obj.user_groq_api_key !== "string") {
+      return { ok: false, error: "invalid_user_key", message: "Supplied user_groq_api_key must be a string." };
+    }
+    const trimmed = obj.user_groq_api_key.trim();
+    if (!trimmed.startsWith("gsk_") || trimmed.length < 20 || !/^gsk_[A-Za-z0-9_-]+$/.test(trimmed)) {
+      return { ok: false, error: "invalid_user_key", message: "Supplied user Groq API key format is invalid. Keys must start with 'gsk_'." };
+    }
+    userGroqApiKey = trimmed;
+  }
+
+  return { ok: true, workspaceId, taskType: taskType as TaskType, twinId, userGroqApiKey };
 }
 
 export type RateLimitDecision =

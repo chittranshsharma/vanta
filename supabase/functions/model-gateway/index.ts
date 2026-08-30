@@ -75,7 +75,7 @@ Deno.serve(async (req: Request) => {
     if (!validation.ok) {
       return fail(validation.error === "payload_too_large" ? 413 : 400, validation.error, validation.message);
     }
-    const { workspaceId, taskType, twinId } = validation;
+    const { workspaceId, taskType, twinId, userGroqApiKey } = validation;
 
     // Task must be enabled by operator configuration, never by the request.
     if (!isTaskEnabled(taskType, Deno.env.get("ENABLED_TASKS"))) {
@@ -119,10 +119,27 @@ Deno.serve(async (req: Request) => {
       return fail(403, "forbidden", "Only workspace owners and administrators may invoke model gateway tasks.");
     }
 
-    // 6. Provider configuration
-    const groqApiKey = Deno.env.get("GROQ_API_KEY");
-    if (!groqApiKey) {
-      return fail(503, "gateway_not_configured", "Server model inference provider credentials are not configured.");
+    // 6. Provider configuration (BYOK support: prioritizes user-supplied key, falls back to server env)
+    const headerUserKey = req.headers.get("x-user-groq-key");
+    const candidateUserKey = (userGroqApiKey || headerUserKey || "").trim();
+
+    let activeGroqApiKey: string | null = null;
+    let keySource: "user" | "server" = "server";
+
+    if (candidateUserKey) {
+      if (!candidateUserKey.startsWith("gsk_") || candidateUserKey.length < 20 || !/^gsk_[A-Za-z0-9_-]+$/.test(candidateUserKey)) {
+        return fail(400, "invalid_user_key", "Supplied user Groq API key format is invalid. Keys must start with 'gsk_'.");
+      }
+      activeGroqApiKey = candidateUserKey;
+      keySource = "user";
+    } else {
+      const serverKey = Deno.env.get("GROQ_API_KEY");
+      if (serverKey) {
+        activeGroqApiKey = serverKey;
+        keySource = "server";
+      } else {
+        return fail(503, "custom_key_required", "No Groq API key configured. Please enter your personal Groq API key in Settings.");
+      }
     }
     const groqModel = Deno.env.get("GROQ_MODEL") || "qwen/qwen3.8-27b";
 
@@ -158,7 +175,7 @@ Deno.serve(async (req: Request) => {
         { role: "user", content: `Perform gateway probe for nonce: ${nonce}` },
       ];
       const result = await runStructuredCompletion(
-        { apiKey: groqApiKey, model: groqModel, messages, maxTokens: 100 },
+        { apiKey: activeGroqApiKey, model: groqModel, messages, maxTokens: 100 },
         fetchImpl
       );
       const latencyMs = Date.now() - startTime;
@@ -226,7 +243,10 @@ Deno.serve(async (req: Request) => {
         200,
         {
           success: true,
-          data: validationResult.data,
+          data: {
+            ...validationResult.data,
+            key_source: keySource,
+          },
           latency_ms: latencyMs,
           model: groqModel,
           correlation_id: correlationId,
@@ -256,7 +276,7 @@ Deno.serve(async (req: Request) => {
         messages: buildGroundingMessages(built.payload),
         call: (messages) =>
           runStructuredCompletion(
-            { apiKey: groqApiKey, model: groqModel, messages, jsonSchema: schema, maxTokens: 4000 },
+            { apiKey: activeGroqApiKey, model: groqModel, messages, jsonSchema: schema, maxTokens: 4000 },
             fetchImpl
           ),
         validate: (parsed) => validateClaimGroundingOutput(parsed, built.ctx),

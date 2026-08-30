@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { AlertTriangle, ShieldAlert } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { AlertTriangle, ShieldAlert, Key, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   invokeClaimGroundingAudit,
   type ClaimGroundingResult,
   type ClaimGroundingVerdict,
 } from '../lib/modelGateway';
+import { getStoredUserGroqKey, GROQ_KEY_CHANGE_EVENT } from '../lib/apiKeyStorage';
+import { ApiKeySettings } from './ApiKeySettings';
 import type { CreativeClaimRow } from '../lib/creativeTwin';
 import type { BrandClaim } from '../lib/brandBrain';
 
@@ -39,6 +41,21 @@ const VERDICT_CLASS: Record<ClaimGroundingVerdict['verdict'], string> = {
 export function ClaimGroundingPanel({ workspaceId, twinId, claims, brandClaims, userRole }: ClaimGroundingPanelProps) {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<ClaimGroundingResult | null>(null);
+  const [hasUserKey, setHasUserKey] = useState<boolean>(() => Boolean(getStoredUserGroqKey(workspaceId)));
+  const [showKeySettings, setShowKeySettings] = useState(false);
+
+  useEffect(() => {
+    const handleKeyChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ workspaceId?: string; hasKey: boolean }>;
+      if (!customEvent.detail.workspaceId || customEvent.detail.workspaceId === workspaceId) {
+        setHasUserKey(Boolean(getStoredUserGroqKey(workspaceId)));
+      }
+    };
+    window.addEventListener(GROQ_KEY_CHANGE_EVENT, handleKeyChange);
+    return () => {
+      window.removeEventListener(GROQ_KEY_CHANGE_EVENT, handleKeyChange);
+    };
+  }, [workspaceId]);
 
   const isAuthorized = !userRole || ['owner', 'admin'].includes(userRole);
 
@@ -49,6 +66,9 @@ export function ClaimGroundingPanel({ workspaceId, twinId, claims, brandClaims, 
     const res = await invokeClaimGroundingAudit(workspaceId, twinId);
     setResult(res);
     setRunning(false);
+    if (!res.success && (res.error === 'custom_key_required' || res.error === 'gateway_not_configured')) {
+      setShowKeySettings(true);
+    }
   };
 
   const claimText = (id: string) => claims.find((c) => c.id === id)?.claim_text ?? id;
@@ -66,15 +86,32 @@ export function ClaimGroundingPanel({ workspaceId, twinId, claims, brandClaims, 
             outputs are never shown. Every verdict needs human review and does not change the claim.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={run}
-          disabled={running || claims.length === 0 || !isAuthorized}
-          className="px-3 py-2 text-xs font-semibold rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-100"
-        >
-          {running ? 'Running…' : 'Run audit'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowKeySettings((prev) => !prev)}
+            className="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors flex items-center gap-1.5"
+          >
+            <Key size={13} className={hasUserKey ? 'text-emerald-400' : 'text-amber-400'} />
+            {hasUserKey ? 'Groq Key (BYOK)' : 'Set Groq Key'}
+            {showKeySettings ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
+          <button
+            type="button"
+            onClick={run}
+            disabled={running || claims.length === 0 || !isAuthorized}
+            className="px-3 py-2 text-xs font-semibold rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-100"
+          >
+            {running ? 'Running…' : 'Run audit'}
+          </button>
+        </div>
       </div>
+
+      {showKeySettings && (
+        <div className="pt-2 pb-1">
+          <ApiKeySettings workspaceId={workspaceId} userRole={userRole} onKeyStatusChange={setHasUserKey} />
+        </div>
+      )}
 
       <div className="text-[11px] text-zinc-400 bg-zinc-950/70 border border-zinc-800/80 rounded-lg p-2.5 space-y-1">
         <div className="text-zinc-300 font-medium">Provider disclosure before dispatch:</div>
@@ -99,6 +136,8 @@ export function ClaimGroundingPanel({ workspaceId, twinId, claims, brandClaims, 
                 ? 'This task is not enabled on the deployment. An operator must set ENABLED_TASKS.'
                 : result.error === 'brand_codex_empty'
                 ? 'No approved brand claims exist; configure Brand Brain first.'
+                : result.error === 'custom_key_required' || result.error === 'gateway_not_configured'
+                ? 'A personal Groq API key is required. Please configure your key in settings above.'
                 : result.message || result.error}
             </div>
             {result.validationErrors && result.validationErrors.length > 0 && (

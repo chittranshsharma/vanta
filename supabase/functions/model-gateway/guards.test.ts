@@ -15,12 +15,12 @@ const WS = "11111111-2222-3333-4444-555555555555";
 describe("validateRequestBody", () => {
   it("accepts exactly workspace_id and an allowlisted task_type", () => {
     const res = validateRequestBody(JSON.stringify({ workspace_id: WS, task_type: "gateway_health_check" }));
-    expect(res).toEqual({ ok: true, workspaceId: WS, taskType: "gateway_health_check", twinId: null });
+    expect(res).toEqual({ ok: true, workspaceId: WS, taskType: "gateway_health_check", twinId: null, userGroqApiKey: null });
   });
 
   it("accepts twin_id only for claim_grounding_audit and requires it there", () => {
     const withTwin = validateRequestBody(JSON.stringify({ workspace_id: WS, task_type: "claim_grounding_audit", twin_id: WS }));
-    expect(withTwin).toEqual({ ok: true, workspaceId: WS, taskType: "claim_grounding_audit", twinId: WS });
+    expect(withTwin).toEqual({ ok: true, workspaceId: WS, taskType: "claim_grounding_audit", twinId: WS, userGroqApiKey: null });
 
     const missing = validateRequestBody(JSON.stringify({ workspace_id: WS, task_type: "claim_grounding_audit" }));
     expect(missing.ok).toBe(false);
@@ -29,6 +29,20 @@ describe("validateRequestBody", () => {
     const onHealth = validateRequestBody(JSON.stringify({ workspace_id: WS, task_type: "gateway_health_check", twin_id: WS }));
     expect(onHealth.ok).toBe(false);
     if (!onHealth.ok) expect(onHealth.error).toBe("invalid_request");
+  });
+
+  it("accepts valid user_groq_api_key and validates format", () => {
+    const validKey = "gsk_1234567890abcdef1234567890";
+    const res = validateRequestBody(
+      JSON.stringify({ workspace_id: WS, task_type: "gateway_health_check", user_groq_api_key: validKey })
+    );
+    expect(res).toEqual({ ok: true, workspaceId: WS, taskType: "gateway_health_check", twinId: null, userGroqApiKey: validKey });
+
+    const badKey = validateRequestBody(
+      JSON.stringify({ workspace_id: WS, task_type: "gateway_health_check", user_groq_api_key: "bad-key" })
+    );
+    expect(badKey.ok).toBe(false);
+    if (!badKey.ok) expect(badKey.error).toBe("invalid_user_key");
   });
 
   it("rejects bodies above the byte limit before parsing, regardless of Content-Length", () => {

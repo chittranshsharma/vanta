@@ -4,6 +4,7 @@ import { deriveConfigStatus, gatewayItemFromProbe, type ReadinessItem, type Read
 import { isFlagOn, ALL_CLIENT_FLAGS, type ClientFlag } from "../lib/flags";
 import { invokeGatewayHealthCheck } from "../lib/modelGateway";
 import { isSupabaseConfigured } from "../lib/supabase";
+import { ApiKeySettings } from "./ApiKeySettings";
 
 const STATE_LABEL: Record<ReadinessState, string> = {
   configured: "Configured",
@@ -83,6 +84,12 @@ export function SetupStatus({ workspaceId, canProbe, onGatewayProbe }: { workspa
           </li>
         ))}
       </ul>
+
+      {workspaceId && (
+        <div style={{ marginTop: 24 }}>
+          <ApiKeySettings workspaceId={workspaceId} />
+        </div>
+      )}
     </section>
   );
 }

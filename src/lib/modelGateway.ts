@@ -1,14 +1,15 @@
 /**
- * Client-Side Model Gateway Adapter
+ * Client-Side Model Gateway Adapter (with BYOK - Bring Your Own Key Support)
  *
  * Strict Security & Interface Invariants:
- * 1. Sends ONLY { workspace_id, task_type } plus the task's declared id fields.
+ * 1. Sends { workspace_id, task_type } plus the task's declared id fields.
  * 2. Never accepts or sends client-supplied prompts, schemas, models, or raw text.
- * 3. Never holds, transmits, or logs GROQ_API_KEY.
+ * 3. Supports user-supplied Groq API keys (BYOK) via local client storage or explicit parameters.
  * 4. Fails closed with typed error structures.
  */
 
 import { supabase } from './supabase';
+import { getStoredUserGroqKey } from './apiKeyStorage';
 
 export type AllowlistedTaskType = 'gateway_health_check' | 'claim_grounding_audit';
 
@@ -21,6 +22,7 @@ export interface GatewayHealthCheckData {
   status: 'healthy';
   service: 'vanta-model-gateway';
   echo_nonce: string;
+  key_source?: 'user' | 'server';
 }
 
 export type GroundingVerdictKind =
@@ -81,9 +83,15 @@ interface GatewayBody {
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function invokeTask<T>(body: Record<string, string>): Promise<GatewayResult<T>> {
+async function invokeTask<T>(body: Record<string, string>, userKeyOverride?: string): Promise<GatewayResult<T>> {
   try {
-    const { data, error } = await supabase.functions.invoke('model-gateway', { body });
+    const payload = { ...body };
+    const userKey = userKeyOverride || getStoredUserGroqKey(body.workspace_id);
+    if (userKey && userKey.trim().startsWith('gsk_')) {
+      payload.user_groq_api_key = userKey.trim();
+    }
+
+    const { data, error } = await supabase.functions.invoke('model-gateway', { body: payload });
 
     if (error) {
       const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
@@ -146,8 +154,9 @@ async function invokeTask<T>(body: Record<string, string>): Promise<GatewayResul
 /**
  * Invokes the server-side model gateway health probe.
  * Restricted to workspace owners and administrators.
+ * Optionally tests a user-provided Groq API key.
  */
-export async function invokeGatewayHealthCheck(workspaceId: string): Promise<GatewayHealthResult> {
+export async function invokeGatewayHealthCheck(workspaceId: string, userKeyOverride?: string): Promise<GatewayHealthResult> {
   if (!workspaceId || typeof workspaceId !== 'string' || !UUID_REGEX.test(workspaceId)) {
     return {
       success: false,
@@ -155,7 +164,10 @@ export async function invokeGatewayHealthCheck(workspaceId: string): Promise<Gat
       message: 'A valid workspace UUID is required to invoke the gateway health probe.',
     };
   }
-  return invokeTask<GatewayHealthCheckData>({ workspace_id: workspaceId, task_type: 'gateway_health_check' });
+  return invokeTask<GatewayHealthCheckData>(
+    { workspace_id: workspaceId, task_type: 'gateway_health_check' },
+    userKeyOverride
+  );
 }
 
 /**
@@ -163,13 +175,20 @@ export async function invokeGatewayHealthCheck(workspaceId: string): Promise<Gat
  * every row through the caller's RLS context; the browser sends ids only.
  * Results are model inference and always require human review.
  */
-export async function invokeClaimGroundingAudit(workspaceId: string, twinId: string): Promise<ClaimGroundingResult> {
+export async function invokeClaimGroundingAudit(
+  workspaceId: string,
+  twinId: string,
+  userKeyOverride?: string
+): Promise<ClaimGroundingResult> {
   if (!UUID_REGEX.test(workspaceId ?? '') || !UUID_REGEX.test(twinId ?? '')) {
     return { success: false, error: 'invalid_request', message: 'Valid workspace and twin UUIDs are required.' };
   }
-  return invokeTask<ClaimGroundingData>({
-    workspace_id: workspaceId,
-    task_type: 'claim_grounding_audit',
-    twin_id: twinId,
-  });
+  return invokeTask<ClaimGroundingData>(
+    {
+      workspace_id: workspaceId,
+      task_type: 'claim_grounding_audit',
+      twin_id: twinId,
+    },
+    userKeyOverride
+  );
 }

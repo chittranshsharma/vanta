@@ -227,5 +227,31 @@ describe('Model Gateway Client Adapter & Security Invariants', () => {
       expect(goodRes.success).toBe(true);
       expect(goodRes.data?.needs_human_review).toBe(true);
     });
+
+    it('attaches user_groq_api_key when userKeyOverride or stored key is present', async () => {
+      const userKey = 'gsk_test_user_key_12345678901234567890';
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            status: 'healthy',
+            service: 'vanta-model-gateway',
+            echo_nonce: 'nonce-user',
+            key_source: 'user',
+          },
+        },
+        error: null,
+      });
+
+      const res = await invokeGatewayHealthCheck(validWorkspaceId, userKey);
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('model-gateway', {
+        body: {
+          workspace_id: validWorkspaceId,
+          task_type: 'gateway_health_check',
+          user_groq_api_key: userKey,
+        },
+      });
+      expect(res.success).toBe(true);
+    });
   });
 });
