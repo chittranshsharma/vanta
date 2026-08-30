@@ -566,3 +566,9 @@ Live verification deferred: the `denied` branch against a real non-member sessio
     - `PublishingPlanner.tsx` updated with `optimizePublishingSchedule` (`v1_observed_history_bucket_summary`) computing descriptive historical bucket distributions with IANA timezone and DST offsets.
     - Strict sample gate rendering from backend contracts: `OUTLIER_POLICY_VERSION = "v1_tukey_median_iqr"`, `DEFAULT_MIN_COMPARABLE_OBSERVATIONS = 15`; `SCHEDULE_OPTIMIZER_POLICY = "v1_observed_history_bucket_summary"`, `DEFAULT_MIN_TOTAL_OBSERVATIONS = 20`, `DEFAULT_MIN_OBSERVATIONS_PER_BUCKET = 3`. Zero synthetic claims, virality scores, or "best time" forecasts.
     - 940 Vitest tests + 15 Pytest tests passing cleanly; 0 lint errors, 0 typecheck errors, clean Vite production build.
+17. Ticket 6.2 Slice B (Counterfactual Simulation Lab UI) complete:
+    - `SimulationLab.tsx` built and verified against `src/lib/simulations.ts` client boundaries (`createPersistentSimulationRun`, `fetchSimulationRunDetails`, `listSimulationRuns`, `reviewSimulationRun`, `transitionSimulationRunStatus`, `linkSimulationObservedOutcome`).
+    - Connects all 7 bounded mutation operators (`hook_replacement`, `cta_replacement`, `scene_reorder`, `scene_duration_adjust`, `on_screen_text_change`, `claim_substitution`, `tone_guideline_adaptation`) with input validation and Brand Codex claim grounding.
+    - Enforces strict canonical evidence taxonomy: `evidence_class = 'simulation'` and `observed_validation = 'unknown'` by default; human review decisions recorded as administrative governance without mutating evidence class or fabricating empirical truth.
+    - Deterministic structural deltas rendered only (duration, WPM, scene count, claim count, hook/CTA changed flags, warnings); zero virality, reach, or performance predictions.
+    - 946 Vitest tests + 15 Pytest tests passing cleanly; 0 lint errors, 0 typecheck errors, clean Vite production build.
