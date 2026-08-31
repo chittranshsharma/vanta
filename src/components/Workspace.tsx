@@ -1,5 +1,5 @@
 import type { User as AuthUser } from "@supabase/supabase-js";
-import { Bot, CalendarRange, ChevronRight, Columns3, Compass, Film, FlaskConical, Layers3, Link2, ListChecks, LogOut, MessageSquare, Plus, SlidersHorizontal, Sparkles, WandSparkles } from "lucide-react";
+import { Bot, CalendarRange, ChevronRight, Columns3, Compass, Film, FlaskConical, Layers3, Link2, ListChecks, LogOut, Menu, MessageSquare, Plus, SlidersHorizontal, Sparkles, WandSparkles, X } from "lucide-react";
 import { isFlagOn } from "../lib/flags";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { deriveEvidenceState } from "../lib/evidence";
@@ -137,6 +137,7 @@ export function Workspace({
   const { sources, brand, assets } = overview;
   const [activePanel, setActivePanel] = useState<PanelId>("decision");
   const [selectedTwinId, setSelectedTwinId] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // Matrix data is keyed by workspace + open count so "loading" is derived rather than set in an effect.
   const [matrixRefreshToken, setMatrixRefreshToken] = useState(0);
   const [matrixResult, setMatrixResult] = useState<{
@@ -162,6 +163,18 @@ export function Workspace({
   const [newWsName, setNewWsName] = useState("");
   const [creatingWs, setCreatingWs] = useState(false);
   const [wsError, setWsError] = useState<string | null>(null);
+
+  // Close mobile navigation on Escape key
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileNavOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileNavOpen]);
 
   useEffect(() => {
     if (activePanel !== "matrix" || !activeWorkspace || !matrixKey) return;
@@ -277,13 +290,60 @@ export function Workspace({
     }
   };
 
+  const handleSelectPanel = (panel: PanelId) => {
+    setActivePanel(panel);
+    setMobileNavOpen(false);
+  };
+
   return (
     <main className="workspace-shell">
-      <aside className="sidebar">
+      {/* Mobile Sticky Topbar */}
+      <div className="workspace-mobile-bar" role="banner">
+        <button className="wordmark" onClick={onExit} aria-label="Return to Vanta home">
+          <span className="wordmark-mark" /> Vanta
+        </button>
+        <div className="workspace-mobile-title">
+          <span>{PANEL_TITLES[activePanel]}</span>
+        </div>
+        <button
+          type="button"
+          className="menu-button"
+          onClick={() => setMobileNavOpen((open) => !open)}
+          aria-expanded={mobileNavOpen}
+          aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
+        >
+          {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+      </div>
+
+      {/* Mobile Drawer Backdrop */}
+      {mobileNavOpen && (
+        <div
+          className="sidebar-mobile-backdrop is-open"
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar Navigation */}
+      <aside
+        className={`sidebar ${mobileNavOpen ? "mobile-open" : ""}`}
+        aria-label="Workspace navigation"
+      >
         <div className="sidebar-top">
-          <button className="wordmark" onClick={onExit}>
+          <button className="wordmark" onClick={onExit} aria-label="Return to Vanta home">
             <span className="wordmark-mark" /> Vanta
           </button>
+          {mobileNavOpen && (
+            <button
+              type="button"
+              className="close-btn"
+              onClick={() => setMobileNavOpen(false)}
+              aria-label="Close navigation"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Tenant Workspace Selector */}
@@ -293,7 +353,7 @@ export function Workspace({
             <div className="workspace-dropdown-wrap">
               <select
                 className="workspace-select"
-                aria-label="Tenant workspace"
+                aria-label="Switch tenant workspace"
                 value={activeWorkspace?.id || ""}
                 onChange={(e) => {
                   const selected = workspaces.find((w) => w.id === e.target.value);
@@ -325,59 +385,112 @@ export function Workspace({
           )}
         </div>
 
-        <nav className="sidebar-nav" aria-label="Workspace sections">
-          <button className={`side-link ${activePanel === "decision" ? "active" : ""}`} aria-current={activePanel === "decision" ? "page" : undefined} onClick={() => setActivePanel("decision")}>
+        <nav className="sidebar-nav" aria-label="Workspace panels">
+          <button
+            className={`side-link ${activePanel === "decision" ? "active" : ""}`}
+            aria-current={activePanel === "decision" ? "page" : undefined}
+            onClick={() => handleSelectPanel("decision")}
+          >
             <Layers3 size={17} /> Decision room
           </button>
-          <button className={`side-link ${activePanel === "brand" ? "active" : ""}`} aria-current={activePanel === "brand" ? "page" : undefined} onClick={() => setActivePanel("brand")}>
+          <button
+            className={`side-link ${activePanel === "brand" ? "active" : ""}`}
+            aria-current={activePanel === "brand" ? "page" : undefined}
+            onClick={() => handleSelectPanel("brand")}
+          >
             <Sparkles size={17} /> Brand Brain
           </button>
-          <button className={`side-link ${activePanel === "intake" ? "active" : ""}`} aria-current={activePanel === "intake" ? "page" : undefined} onClick={() => setActivePanel("intake")}>
+          <button
+            className={`side-link ${activePanel === "intake" ? "active" : ""}`}
+            aria-current={activePanel === "intake" ? "page" : undefined}
+            onClick={() => handleSelectPanel("intake")}
+          >
             <WandSparkles size={17} /> Creative intake
           </button>
           {selectedTwinId && (
-            <button className={`side-link ${activePanel === "twin" ? "active" : ""}`} aria-current={activePanel === "twin" ? "page" : undefined} onClick={() => setActivePanel("twin")}>
+            <button
+              className={`side-link ${activePanel === "twin" ? "active" : ""}`}
+              aria-current={activePanel === "twin" ? "page" : undefined}
+              onClick={() => handleSelectPanel("twin")}
+            >
               <Film size={17} /> Structured Twin
             </button>
           )}
           <button
-            className={`side-link ${activePanel === "matrix" ? "active" : ""}`} aria-current={activePanel === "matrix" ? "page" : undefined}
+            className={`side-link ${activePanel === "matrix" ? "active" : ""}`}
+            aria-current={activePanel === "matrix" ? "page" : undefined}
             onClick={() => {
-              setActivePanel("matrix");
+              handleSelectPanel("matrix");
               setMatrixRefreshToken((t) => t + 1);
             }}
           >
             <Columns3 size={17} /> Decision matrix
           </button>
-          <button className={`side-link ${activePanel === "sources" ? "active" : ""}`} aria-current={activePanel === "sources" ? "page" : undefined} onClick={() => setActivePanel("sources")}>
+          <button
+            className={`side-link ${activePanel === "sources" ? "active" : ""}`}
+            aria-current={activePanel === "sources" ? "page" : undefined}
+            onClick={() => handleSelectPanel("sources")}
+          >
             <Compass size={17} /> Source registry
           </button>
           {isFlagOn("connectors_panel") && (
-            <button className={`side-link ${activePanel === "connectors" ? "active" : ""}`} aria-current={activePanel === "connectors" ? "page" : undefined} onClick={() => setActivePanel("connectors")}>
+            <button
+              className={`side-link ${activePanel === "connectors" ? "active" : ""}`}
+              aria-current={activePanel === "connectors" ? "page" : undefined}
+              onClick={() => handleSelectPanel("connectors")}
+            >
               <Link2 size={17} /> Connectors
             </button>
           )}
-          <button className={`side-link ${activePanel === "experiments" ? "active" : ""}`} aria-current={activePanel === "experiments" ? "page" : undefined} onClick={() => setActivePanel("experiments")}>
+          <button
+            className={`side-link ${activePanel === "experiments" ? "active" : ""}`}
+            aria-current={activePanel === "experiments" ? "page" : undefined}
+            onClick={() => handleSelectPanel("experiments")}
+          >
             <FlaskConical size={17} /> Experiments
           </button>
-          <button className={`side-link ${activePanel === "simulations" ? "active" : ""}`} aria-current={activePanel === "simulations" ? "page" : undefined} onClick={() => setActivePanel("simulations")}>
+          <button
+            className={`side-link ${activePanel === "simulations" ? "active" : ""}`}
+            aria-current={activePanel === "simulations" ? "page" : undefined}
+            onClick={() => handleSelectPanel("simulations")}
+          >
             <FlaskConical size={17} /> Simulation Lab
           </button>
-          <button className={`side-link ${activePanel === "conversations" ? "active" : ""}`} aria-current={activePanel === "conversations" ? "page" : undefined} onClick={() => setActivePanel("conversations")}>
+          <button
+            className={`side-link ${activePanel === "conversations" ? "active" : ""}`}
+            aria-current={activePanel === "conversations" ? "page" : undefined}
+            onClick={() => handleSelectPanel("conversations")}
+          >
             <MessageSquare size={17} /> Conversations
           </button>
-          <button className={`side-link ${activePanel === "publishing" ? "active" : ""}`} aria-current={activePanel === "publishing" ? "page" : undefined} onClick={() => setActivePanel("publishing")}>
+          <button
+            className={`side-link ${activePanel === "publishing" ? "active" : ""}`}
+            aria-current={activePanel === "publishing" ? "page" : undefined}
+            onClick={() => handleSelectPanel("publishing")}
+          >
             <CalendarRange size={17} /> Test windows
           </button>
-          <button className={`side-link ${activePanel === "agents" ? "active" : ""}`} aria-current={activePanel === "agents" ? "page" : undefined} onClick={() => setActivePanel("agents")}>
+          <button
+            className={`side-link ${activePanel === "agents" ? "active" : ""}`}
+            aria-current={activePanel === "agents" ? "page" : undefined}
+            onClick={() => handleSelectPanel("agents")}
+          >
             <Bot size={17} /> Agent workflow
           </button>
           {isFlagOn("jobs_panel") && (
-            <button className={`side-link ${activePanel === "jobs" ? "active" : ""}`} aria-current={activePanel === "jobs" ? "page" : undefined} onClick={() => setActivePanel("jobs")}>
+            <button
+              className={`side-link ${activePanel === "jobs" ? "active" : ""}`}
+              aria-current={activePanel === "jobs" ? "page" : undefined}
+              onClick={() => handleSelectPanel("jobs")}
+            >
               <ListChecks size={17} /> Jobs
             </button>
           )}
-          <button className={`side-link ${activePanel === "status" ? "active" : ""}`} aria-current={activePanel === "status" ? "page" : undefined} onClick={() => setActivePanel("status")}>
+          <button
+            className={`side-link ${activePanel === "status" ? "active" : ""}`}
+            aria-current={activePanel === "status" ? "page" : undefined}
+            onClick={() => handleSelectPanel("status")}
+          >
             <SlidersHorizontal size={17} /> Setup and status
           </button>
         </nav>
@@ -409,15 +522,15 @@ export function Workspace({
         </div>
       </aside>
 
-      <section className="workspace-content">
+      <section className="workspace-content" role="region" aria-label={PANEL_TITLES[activePanel]}>
         <header className="workspace-header">
           <div>
             <p className="eyebrow">
-              {activeWorkspace ? `${activeWorkspace.name} · ${activeWorkspace.role}` : "Local demo session, nothing is stored"}
+              {activeWorkspace ? `${activeWorkspace.name} · ${activeWorkspace.role}` : "Local demo session · Unauthenticated"}
             </p>
             <h1>{PANEL_TITLES[activePanel]}</h1>
           </div>
-          <button className="ghost-button" onClick={onExit}>
+          <button className="ghost-button" onClick={onExit} aria-label="Return to website">
             Back to site
           </button>
         </header>
