@@ -269,11 +269,6 @@ a:hover { text-decoration: underline; }
 }
 .text-button:hover { color: var(--v-ink); }
 
-/* Destructive - semantic red, not action blue */
-.destructive { border-color: rgba(220,38,38,0.40); color: var(--v-error); }
-.destructive:hover:not(:disabled) { background: var(--v-error-bg); border-color: rgba(220,38,38,0.70); }
-.primary-button.destructive { background: rgba(220,38,38,0.15); }
-
 /* Destructive — semantic red, not action blue */
 .destructive { border-color: rgba(220,38,38,0.40); color: var(--v-error); }
 .destructive:hover:not(:disabled) { background: var(--v-error-bg); border-color: rgba(220,38,38,0.70); }
@@ -1195,6 +1190,7 @@ a:hover { text-decoration: underline; }
 
 /* ============================================================
    WORKSPACE SHELL (240px black sidebar · light-first parchment content)
+   Desktop/laptop only: 1024px minimum supported width.
    ============================================================ */
 
 .workspace-shell {
@@ -1203,6 +1199,22 @@ a:hover { text-decoration: underline; }
   background: var(--v-canvas-parchment);
   display: grid;
   grid-template-columns: 240px 1fr;
+  grid-template-rows: 1fr;
+}
+
+/* Guard: at 1024px+ the sidebar is always visible — no collapse. */
+@media (min-width: 1024px) {
+  .workspace-shell {
+    grid-template-columns: 240px 1fr;
+  }
+  .workspace-mobile-bar,
+  .sidebar-mobile-backdrop {
+    display: none !important;
+  }
+  .sidebar {
+    display: flex !important;
+    position: sticky;
+  }
 }
 
 .workspace-mobile-bar {
@@ -1213,9 +1225,11 @@ a:hover { text-decoration: underline; }
   display: none;
 }
 
+/* ── Sidebar ───────────────────────────────────────────────── */
+
 .sidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 18px 12px 18px 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 20px 10px 20px 12px;
   display: flex;
   flex-direction: column;
   background: var(--v-surface-black);
@@ -1224,79 +1238,103 @@ a:hover { text-decoration: underline; }
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   z-index: 100;
+  scrollbar-width: none;           /* Firefox */
+  -ms-overflow-style: none;        /* IE/Edge */
 }
+.sidebar::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+/* ── Sidebar top: wordmark ─────────────────────────────────── */
 
 .sidebar-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 6px;
+  padding: 0 4px 0 2px;
   min-height: 44px;
+  margin-bottom: 4px;
 }
 
+/* ── Workspace selector ────────────────────────────────────── */
+
 .workspace-selector-box {
-  margin: 16px 0 12px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 10px 0 10px;
+  padding: 9px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--r-sm);
 }
 
 .workspace-selector-box .workspace-label {
-  margin: 0 0 6px;
-  font-size: 10px;
+  margin: 0 0 5px;
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.40);
+  letter-spacing: 0.10em;
+  color: rgba(255, 255, 255, 0.32);
   text-transform: uppercase;
 }
 
 .workspace-dropdown-wrap {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
 }
 
 .workspace-select {
   flex: 1;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #ffffff;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 12px;
   font-family: var(--font);
-  padding: 6px 8px;
+  font-weight: 500;
+  letter-spacing: -0.12px;
+  padding: 5px 7px;
   border-radius: var(--r-xs);
   outline: none;
   transition: border-color var(--tr-fast);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.workspace-select:hover {
+  border-color: rgba(255, 255, 255, 0.20);
 }
 
 .workspace-select:focus-visible {
   border-color: var(--v-primary-dark);
-  outline: 2px solid var(--v-primary-dark);
+  outline: 2px solid rgba(41, 151, 255, 0.40);
+  outline-offset: 0;
 }
 
 .add-ws-button {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: var(--r-xs);
-  color: rgba(255, 255, 255, 0.70);
-  padding: 6px;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 5px;
   display: grid;
   place-items: center;
-  transition: background var(--tr-fast), color var(--tr-fast);
-  min-width: 28px;
-  min-height: 28px;
+  transition: background var(--tr-fast), color var(--tr-fast), border-color var(--tr-fast);
+  min-width: 26px;
+  min-height: 26px;
+  flex-shrink: 0;
   cursor: pointer;
 }
 
 .add-ws-button:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
   color: #ffffff;
 }
 
 .add-ws-button:focus-visible {
   outline: 2px solid var(--v-primary-dark);
+  outline-offset: 1px;
 }
 
 .demo-badge {
@@ -1304,37 +1342,55 @@ a:hover { text-decoration: underline; }
   flex-direction: column;
   gap: 4px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.40);
+  letter-spacing: -0.12px;
 }
+
+/* ── Sidebar nav ───────────────────────────────────────────── */
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: 6px;
+  gap: 1px;
+  margin-top: 4px;
 }
 
 .side-link {
   border: 0;
   border-radius: var(--r-sm);
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.50);
   background: transparent;
   text-align: left;
-  padding: 8px 10px;
+  padding: 7px 10px 7px 10px;
   display: flex;
   align-items: center;
-  gap: var(--sp-xs);
+  gap: 8px;
   font-size: 13px;
   font-weight: 400;
   letter-spacing: -0.12px;
   cursor: pointer;
-  min-height: 38px;
+  min-height: 36px;
+  width: 100%;
   transition: background var(--tr-fast), color var(--tr-fast);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.side-link svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity var(--tr-fast);
 }
 
 .side-link:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.90);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.side-link:hover svg {
+  opacity: 1;
 }
 
 .side-link:focus-visible {
@@ -1345,16 +1401,24 @@ a:hover { text-decoration: underline; }
 .side-link.active,
 .side-link[aria-current="page"] {
   color: #ffffff;
-  background: rgba(0, 102, 204, 0.22);
+  background: rgba(0, 102, 204, 0.18);
   font-weight: 600;
   border-left: 2px solid var(--v-primary-dark);
   padding-left: 8px;
 }
 
+.side-link.active svg,
+.side-link[aria-current="page"] svg {
+  opacity: 1;
+  color: var(--v-primary-dark);
+}
+
+/* ── Sidebar bottom: user profile ─────────────────────────── */
+
 .sidebar-bottom {
   margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 12px;
 }
 
@@ -1362,106 +1426,142 @@ a:hover { text-decoration: underline; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
+  padding: 4px 2px;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 0;
+  min-width: 0;           /* allow text-overflow ellipsis on children */
+  flex: 1;
 }
 
 .user-avatar {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: var(--v-primary);
+  background: var(--v-primary);  /* Action Blue — WCAG AA on white initial */
   color: #ffffff;
   font-weight: 700;
   font-size: 11px;
+  letter-spacing: 0;
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  user-select: none;
 }
 
 .user-details {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-width: 0;           /* required for ellipsis to trigger */
+  gap: 1px;
 }
 
 .user-details strong {
-  color: #ffffff;
+  color: rgba(255, 255, 255, 0.90);
   font-size: 12px;
   font-weight: 600;
+  letter-spacing: -0.12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .user-details span {
-  color: rgba(255, 255, 255, 0.40);
+  color: rgba(255, 255, 255, 0.35);
   font-size: 10px;
+  letter-spacing: -0.08px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .signout-button {
   background: transparent;
   border: 0;
-  color: rgba(255, 255, 255, 0.40);
-  padding: 6px;
+  color: rgba(255, 255, 255, 0.30);
+  padding: 5px;
   border-radius: var(--r-sm);
   display: grid;
   place-items: center;
   transition: color var(--tr-fast), background var(--tr-fast);
-  min-width: 32px;
-  min-height: 32px;
+  min-width: 30px;
+  min-height: 30px;
+  flex-shrink: 0;
   cursor: pointer;
 }
 
 .signout-button:hover {
   color: var(--v-error);
-  background: var(--v-error-bg);
+  background: rgba(220, 38, 38, 0.12);
 }
 
 .signout-button:focus-visible {
   outline: 2px solid var(--v-primary-dark);
+  outline-offset: 1px;
 }
 
 .auth-prompt {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  padding: 4px 2px;
 }
 
 .auth-prompt-text {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: rgba(255, 255, 255, 0.40);
+  color: rgba(255, 255, 255, 0.35);
   font-size: 11px;
+  letter-spacing: -0.08px;
+  min-width: 0;
 }
 
-/* --- Main Content Frame --- */
+/* ── Main content frame ────────────────────────────────────── */
+
 .workspace-content {
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 36px 48px 64px;
+  /* Clip children that overflow; sidebar sits in its own track */
+  min-width: 0;
+  padding: 32px 40px 56px;
   background: var(--v-canvas-parchment);
   color: var(--v-ink);
   min-height: 100vh;
 }
 
+/* Scale padding with viewport — more air on large displays */
+@media (min-width: 1440px) {
+  .workspace-content {
+    padding: 40px clamp(40px, 5vw, 72px) 64px;
+  }
+}
+@media (min-width: 1920px) {
+  .workspace-content {
+    padding: 48px clamp(40px, 4vw, 96px) 80px;
+    max-width: 1520px;
+    margin: 0 auto;
+  }
+}
+
+/* ── Workspace header ──────────────────────────────────────── */
+
 .workspace-header {
   display: flex;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+/* Prevent any flex child from clipping its text */
+.workspace-header > * {
+  min-width: 0;
 }
 
 .workspace-header .eyebrow {
@@ -1470,22 +1570,29 @@ a:hover { text-decoration: underline; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin: 0 0 6px;
+  margin: 0 0 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .workspace-header h1 {
   margin: 0;
-  font-size: clamp(24px, 3.2vw, 36px);
+  font-size: clamp(22px, 2.6vw, 34px);
   letter-spacing: -0.374px;
   font-weight: 600;
   color: var(--v-ink);
+  line-height: 1.10;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .workspace-header .ghost-button {
   background: var(--v-canvas);
-  color: var(--v-ink);
+  color: var(--v-ink-muted-80);
   border: 1px solid var(--v-hairline);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;   /* never let the Back button be squeezed */
 }
 
 .workspace-header .ghost-button:hover {
@@ -1494,71 +1601,73 @@ a:hover { text-decoration: underline; }
   color: var(--v-ink);
 }
 
-/* State Hero (Overview) */
+/* ── Decision panel: state-hero and overview cards ─────────── */
+
 .state-hero {
-  margin-top: 28px;
-  min-height: 160px;
-  padding: 26px 28px;
+  margin-top: 0;      /* margin-bottom on .workspace-header now provides spacing */
+  min-height: 140px;
+  padding: 22px 24px;
   display: grid;
-  grid-template-columns: 44px 1fr auto;
-  gap: 20px;
+  grid-template-columns: 40px 1fr auto;
+  gap: 18px;
   align-items: center;
   border: 1px solid var(--v-hairline);
   border-radius: var(--r-lg);
   background: var(--v-canvas);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
 .state-icon {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   border: 1px solid var(--v-hairline);
   color: var(--v-primary);
   border-radius: var(--r-md);
   background: var(--v-canvas-parchment);
+  flex-shrink: 0;
 }
 
 .state-hero h2 {
-  margin: 0 0 5px;
+  margin: 0 0 4px;
   letter-spacing: -0.374px;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--v-ink);
+  line-height: 1.24;
 }
 
 .state-hero p:not(.state-overline) {
   margin: 0;
   color: var(--v-ink-muted-80);
-  max-width: 670px;
+  max-width: 65ch;
   font-size: 14px;
   line-height: 1.47;
+  letter-spacing: -0.224px;
 }
 
 .state-overline {
   color: var(--v-ink-muted-48);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0 0 6px;
+  letter-spacing: 0.07em;
+  margin: 0 0 5px;
 }
 
 .workspace-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .workspace-card {
-  min-height: 220px;
+  min-height: 200px;
   border: 1px solid var(--v-hairline);
   border-radius: var(--r-lg);
   background: var(--v-canvas);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  padding: 22px;
+  padding: 20px;
   color: var(--v-ink);
 }
 
