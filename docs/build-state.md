@@ -590,4 +590,11 @@ Live verification deferred: the `denied` branch against a real non-member sessio
     - Verified strict Epistemic Invariants: `simulation` never appears as `observed`, `inference` drafts remain `inference` after human review, `unknown` baselines are honestly reported, and forbidden prediction claims (`predictedReach`, `viralityScore`, `conversionRateForecast`, `winnerBadge`) are 100% absent.
     - Clean disposable teardown verified: 100% of test observations, cohorts, and resources cleanly purged with 0 residual test records.
     - 53/53 Playwright E2E tests passing live.
+21. Design Slice 3 (Auth Modal & Workspace Creation Dialog Visual & Accessibility Integration) complete:
+    - `Modal.tsx` enhanced with accessible dialog semantics (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`, `aria-describedby`), focus trap with focus return, Escape dismissal, backdrop dismissal with click containment, and reduced motion safety.
+    - `AuthModal.tsx` visually redesigned with canonical light surface card, hairline borders, WAI-ARIA tablist semantics (`role="tablist"`, `role="tab"`, `role="tabpanel"`), keyboard arrow-key tab switching, visible focus rings, inline error alerting (`role="alert"`, `aria-live="assertive"`), input disabling during in-flight submission, and truthful footer text (`Tenant-scoped by design · Row-Level Security architecture`).
+    - `Workspace.tsx` creation modal updated with accessible labels (`htmlFor`/`id`), input disabled states, in-flight duplicate submission prevention (`creatingWs`), inline error alerts, and tenant isolation helper descriptions.
+    - Added unit test suite `src/components/Modal.test.ts` (9 tests) verifying dialog semantics, focus trap, tab navigation, fail-closed auth, secret redaction, and duplicate submit prevention.
+    - 965 Vitest tests + 15 Pytest tests passing cleanly (100% green); 0 lint errors, 0 typecheck errors, clean Vite production build.
+    - Responsive browser verification completed at 1440x900, 1024x768, and 390x844 with 0 console errors and 0 horizontal overflow.
 

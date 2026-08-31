@@ -260,7 +260,7 @@ export function Workspace({
 
   const handleCreateWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newWsName.trim() || !user) return;
+    if (!newWsName.trim() || !user || creatingWs) return;
     setCreatingWs(true);
     setWsError(null);
 
@@ -670,23 +670,56 @@ export function Workspace({
 
       </section>
 
-      <Modal open={newWsModalOpen} title="Create Workspace" onClose={() => setNewWsModalOpen(false)}>
-              <form onSubmit={handleCreateWorkspace} className="auth-form">
-                <label>
-                  Workspace Name
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Acme Creative Lab"
-                    value={newWsName}
-                    onChange={(e) => setNewWsName(e.target.value)}
-                  />
-                </label>
-                {wsError && <p className="error-text">{wsError}</p>}
-                <button type="submit" className="primary-button w-full" disabled={creatingWs}>
-                  {creatingWs ? "Creating..." : "Create Workspace"}
-                </button>
-              </form>
+      <Modal
+        open={newWsModalOpen}
+        title="Create Workspace"
+        onClose={() => {
+          if (!creatingWs) {
+            setNewWsModalOpen(false);
+            setWsError(null);
+          }
+        }}
+        ariaDescribedBy="ws-create-hint"
+      >
+        <form onSubmit={handleCreateWorkspace} className="auth-form" aria-busy={creatingWs}>
+          <label htmlFor="ws-create-name">
+            Workspace Name
+            <input
+              id="ws-create-name"
+              type="text"
+              required
+              placeholder="e.g. Acme Creative Lab"
+              value={newWsName}
+              onChange={(e) => {
+                setNewWsName(e.target.value);
+                if (wsError) setWsError(null);
+              }}
+              disabled={creatingWs}
+              aria-required="true"
+              aria-invalid={!!wsError}
+              aria-describedby={wsError ? "ws-create-error ws-create-hint" : "ws-create-hint"}
+              autoComplete="off"
+            />
+            <span id="ws-create-hint" className="form-field-hint">
+              Workspaces provide isolated tenant boundaries protected by Row-Level Security.
+            </span>
+          </label>
+
+          {wsError && (
+            <div className="error-text" role="alert" id="ws-create-error" aria-live="assertive">
+              {wsError}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="primary-button w-full"
+            disabled={creatingWs || !newWsName.trim()}
+            aria-busy={creatingWs}
+          >
+            {creatingWs ? "Creating..." : "Create Workspace"}
+          </button>
+        </form>
       </Modal>
     </main>
   );

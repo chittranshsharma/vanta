@@ -11,6 +11,10 @@ interface ModalProps {
   maxWidth?: number;
   /** Screen-reader label when the visible title is not plain text. */
   ariaLabel?: string;
+  /** Screen-reader description element ID. */
+  ariaDescribedBy?: string;
+  /** Optional additional class name for the card container. */
+  className?: string;
 }
 
 const FOCUSABLE =
@@ -19,14 +23,14 @@ const FOCUSABLE =
 /**
  * Accessible modal dialog.
  *
- * - role="dialog" + aria-modal + aria-labelledby
+ * - role="dialog" + aria-modal="true" + aria-labelledby / aria-describedby
  * - Escape closes
  * - Focus moves into the dialog on open and returns to the opener on close
- * - Tab is trapped inside the dialog
+ * - Tab cycle is trapped inside the dialog
  * - Backdrop click closes; clicks inside do not propagate
  * - Honors prefers-reduced-motion
  */
-export function Modal({ open, title, onClose, children, maxWidth, ariaLabel }: ModalProps) {
+export function Modal({ open, title, onClose, children, maxWidth, ariaLabel, ariaDescribedBy, className }: ModalProps) {
   const titleId = useId();
   const cardRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -89,12 +93,13 @@ export function Modal({ open, title, onClose, children, maxWidth, ariaLabel }: M
         >
           <motion.div
             ref={cardRef}
-            className="auth-card"
+            className={`auth-card ${className || ""}`.trim()}
             style={maxWidth ? { maxWidth } : undefined}
             role="dialog"
             aria-modal="true"
             aria-labelledby={ariaLabel ? undefined : titleId}
             aria-label={ariaLabel}
+            aria-describedby={ariaDescribedBy}
             tabIndex={-1}
             initial={reduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
