@@ -182,13 +182,13 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
               </span>
               <ul className="dr-list">
                 <li className="dr-list-item">
-                  <Check size={14} color="#16a34a" /> Approved claims
+                  <Check size={14} color="#16a34a" /> Approved claim context
                 </li>
                 <li className="dr-list-item">
-                  <Check size={14} color="#16a34a" /> Proof points
+                  <Check size={14} color="#16a34a" /> Verified proof points
                 </li>
                 <li className="dr-list-item">
-                  <Check size={14} color="#16a34a" /> Boundaries
+                  <Check size={14} color="#16a34a" /> Compliance boundaries
                 </li>
               </ul>
             </div>
@@ -201,14 +201,14 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
               <table className="dr-table">
                 <thead>
                   <tr>
-                    <th>Source</th>
-                    <th style={{ textAlign: "center" }}>Freshness</th>
-                    <th style={{ textAlign: "center" }}>Coverage</th>
+                    <th>Source Type</th>
+                    <th style={{ textAlign: "center" }}>Freshness Gate</th>
+                    <th style={{ textAlign: "center" }}>Citability</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Product proof</td>
+                    <td>Platform connector</td>
                     <td style={{ textAlign: "center" }}>
                       <span className="status-dot green" style={{ margin: 0 }} />
                     </td>
@@ -217,7 +217,7 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
                     </td>
                   </tr>
                   <tr>
-                    <td>Customer interview</td>
+                    <td>Direct outcome export</td>
                     <td style={{ textAlign: "center" }}>
                       <span className="status-dot green" style={{ margin: 0 }} />
                     </td>
@@ -226,7 +226,7 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
                     </td>
                   </tr>
                   <tr>
-                    <td>Campaign brief</td>
+                    <td>Manual URL citation</td>
                     <td style={{ textAlign: "center" }}>
                       <span className="status-dot blue" style={{ margin: 0 }} />
                     </td>
@@ -270,7 +270,7 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
                   <span className="dr-twin-time">0:00 – 0:05</span>
                   <div className="dr-twin-mid-callout">
                     <span className="dr-twin-time">0:05 – 0:15</span>
-                    <span className="dr-callout-badge">Human correction</span>
+                    <span className="dr-callout-badge">Human review point</span>
                   </div>
                   <span className="dr-twin-time">0:15 – 0:20</span>
                 </div>
@@ -284,10 +284,10 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
               </span>
               <ul className="dr-list">
                 <li className="dr-list-item" style={{ color: "var(--v-ink-muted-80)" }}>
-                  <Circle size={12} color="#9ca3af" /> Observed outcome not yet available
+                  <Circle size={12} color="#9ca3af" /> Outcome Calibration · Awaiting observed data
                 </li>
                 <li className="dr-list-item" style={{ color: "var(--v-ink-muted-80)" }}>
-                  <Circle size={12} color="#9ca3af" /> Claim requires source
+                  <Circle size={12} color="#9ca3af" /> Uncited claim flagged for source link
                 </li>
               </ul>
             </div>
@@ -367,76 +367,76 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
               <div className="twin-scene-card">
                 <div className="twin-scene-meta">
                   <span className="twin-scene-purpose">Hook</span>
-                  <span className="twin-scene-timing">0.0s – 3.2s · 142 WPM</span>
+                  <span className="twin-scene-timing">0.0s – 3.2s · Structured scene</span>
                 </div>
                 <p className="twin-scene-text">
                   “Stop guessing what worked in your last campaign. The evidence already exists.”
                 </p>
                 <span className="twin-scene-claim">
-                  <FileCheck size={13} /> Grounded: Brand Codex Core Proposition
+                  <FileCheck size={13} /> Brand Brain · Approved claim context
                 </span>
               </div>
 
               <div className="twin-scene-card">
                 <div className="twin-scene-meta">
                   <span className="twin-scene-purpose">Problem</span>
-                  <span className="twin-scene-timing">3.2s – 7.7s · 136 WPM</span>
+                  <span className="twin-scene-timing">3.2s – 7.7s · Structured scene</span>
                 </div>
                 <p className="twin-scene-text">
                   “Every platform optimization tool gives you a different black-box score without showing its work.”
                 </p>
                 <span className="twin-scene-claim">
-                  <CheckCircle2 size={13} /> Sourced Claim: Industry Diagnostic Benchmark
+                  <CheckCircle2 size={13} /> Sourced claim · Verifiable citation
                 </span>
               </div>
 
               <div className="twin-scene-card">
                 <div className="twin-scene-meta">
                   <span className="twin-scene-purpose">Proof</span>
-                  <span className="twin-scene-timing">7.7s – 12.8s · 128 WPM</span>
+                  <span className="twin-scene-timing">7.7s – 12.8s · Structured scene</span>
                 </div>
                 <p className="twin-scene-text">
                   “Vanta separates what is observed from what is inferred, so your team can challenge every move.”
                 </p>
                 <span className="twin-scene-claim">
-                  <ShieldCheck size={13} /> Grounded: Epistemic Invariant #1
+                  <ShieldCheck size={13} /> Simulation Lab · Structural deltas
                 </span>
               </div>
 
               <div className="twin-scene-card">
                 <div className="twin-scene-meta">
                   <span className="twin-scene-purpose">CTA</span>
-                  <span className="twin-scene-timing">12.8s – 15.8s · 120 WPM</span>
+                  <span className="twin-scene-timing">12.8s – 15.8s · Structured scene</span>
                 </div>
                 <p className="twin-scene-text">
                   “Enter your workspace, connect your sources, and inspect the evidence trail.”
                 </p>
                 <span className="twin-scene-claim">
-                  <FileCheck size={13} /> Verified Action Link
+                  <FileCheck size={13} /> Deterministic action cue
                 </span>
               </div>
             </div>
 
             <div className="twin-diagnostic-panel">
               <div className="diagnostic-item">
-                <span className="diagnostic-label">Pacing & Reading Burden</span>
-                <span className="diagnostic-value">132 WPM Average</span>
-                <span className="diagnostic-note">Optimal conversational cadence · zero dense spikes</span>
+                <span className="diagnostic-label">Reading Burden</span>
+                <span className="diagnostic-value">Reading burden · Deterministically calculated when provided</span>
+                <span className="diagnostic-note">WPM pacing evaluated per scene; never estimated without duration</span>
               </div>
               <div className="diagnostic-item">
-                <span className="diagnostic-label">Brand Codex Alignment</span>
-                <span className="diagnostic-value">3 of 3 Grounded</span>
-                <span className="diagnostic-note">Zero prohibited or unverified assertions detected</span>
+                <span className="diagnostic-label">Claim Alignment</span>
+                <span className="diagnostic-value">Brand Brain · Approved claim context</span>
+                <span className="diagnostic-note">Lexical matching against approved brand boundaries and proof points</span>
               </div>
               <div className="diagnostic-item">
-                <span className="diagnostic-label">Media Context</span>
-                <span className="diagnostic-value">Unknown · Flagged</span>
-                <span className="diagnostic-note">Audio layer not provided; never fabricated or assumed</span>
+                <span className="diagnostic-label">Outcome Calibration</span>
+                <span className="diagnostic-value">Outcome Calibration · Awaiting observed data</span>
+                <span className="diagnostic-note">Campaign outcome links require observed connector or import data</span>
               </div>
               <div className="diagnostic-item">
                 <span className="diagnostic-label">Evidence Coverage</span>
-                <span className="diagnostic-value">100% Citable</span>
-                <span className="diagnostic-note">All statements traceable to registered source records</span>
+                <span className="diagnostic-value">Evidence coverage · Shown only when backed by current sources</span>
+                <span className="diagnostic-note">Citability status evaluates verified timestamps and freshness windows</span>
               </div>
             </div>
           </div>
@@ -497,7 +497,7 @@ export function LandingPage({ sessionUser, profile, onOpenWorkspace, onOpenAuth,
           <span className="wordmark-mark" /> Vanta
         </span>
         <p>Creative decisions, backed by evidence.</p>
-        <span>Tenant-isolated · Supabase Auth & RLS active</span>
+        <span>Tenant-scoped by design · Row-Level Security architecture</span>
       </footer>
     </main>
   );
